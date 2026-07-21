@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Applies a saved theme choice before first paint, so there is no
+       flash of the wrong theme. Must run synchronously, before main.css
+       is applied — kept inline and tiny on purpose. -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("theme");
+        if (saved === "light" || saved === "dark") {
+          document.documentElement.setAttribute("data-theme", saved);
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <title>Timur Manjosov — Mathematics, Sport &amp; Code</title>
+  <meta
+    name="description"
+    content="The personal welcome page of Timur Manjosov — a mathematics student who coaches others in sport and loves programming."
+  />
+  <link rel="canonical" href="https://timurmanjosov.com/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://timurmanjosov.com/" />
+  <meta property="og:title" content="Timur Manjosov — Mathematics, Sport &amp; Code" />
+  <meta
+    property="og:description"
+    content="The personal welcome page of Timur Manjosov — a mathematics student who coaches others in sport and loves programming."
+  />
+  <meta property="og:image" content="https://timurmanjosov.com/assets/images/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Timur Manjosov — a mathematics student who coaches others in sport and loves programming." />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale:alternate" content="de_DE" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Timur Manjosov — Mathematics, Sport &amp; Code" />
+  <meta
+    name="twitter:description"
+    content="The personal welcome page of Timur Manjosov — a mathematics student who coaches others in sport and loves programming."
+  />
+  <meta name="twitter:image" content="https://timurmanjosov.com/assets/images/og-image.png" />
+  <meta name="twitter:image:alt" content="Timur Manjosov — a mathematics student who coaches others in sport and loves programming." />
+
+  <!-- Favicon: SVG for modern browsers, sized PNGs as fallback, plus iOS home screen -->
+  <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/assets/images/favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="icon" href="/assets/images/favicon-16.png" type="image/png" sizes="16x16" />
+  <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png" />
+
+  <meta name="color-scheme" content="dark light" />
+
+  <!-- Self-hosted variable fonts: preload so text renders in the final
+       typeface without a layout-shifting swap once main.css is parsed. -->
+  <link rel="preload" href="/assets/fonts/space-grotesk-variable-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/assets/fonts/inter-variable-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/assets/fonts/jetbrains-mono-variable-latin.woff2" as="font" type="font/woff2" crossorigin />
+
+  <link rel="stylesheet" href="/styles/reset.css" />
+  <link rel="stylesheet" href="/styles/main.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content" data-en="Skip to content" data-de="Zum Inhalt springen"
+    >Skip to content</a
+  >
+
+  <header>
+    <span class="brand" aria-hidden="true">TM</span>
+
+    <div class="controls">
+      <div class="lang-toggle" role="group" aria-label="Language" data-en-label="Language" data-de-label="Sprache">
+        <button type="button" id="lang-de" lang="de" aria-pressed="false" aria-label="Deutsch">DE</button>
+        <button type="button" id="lang-en" lang="en" aria-pressed="true" aria-label="English">EN</button>
+      </div>
+
+      <button
+        type="button"
+        id="theme-toggle"
+        aria-pressed="true"
+        data-en="Switch to light theme"
+        data-de="Zu hellem Design wechseln"
+      >
+        Switch to light theme
+      </button>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section id="hero" aria-labelledby="hero-heading">
+      <div class="hero-content">
+        <p class="hero-eyebrow" data-en="Welcome" data-de="Willkommen">Welcome</p>
+        <h1 id="hero-heading">Timur Manjosov</h1>
+        <p
+          class="hero-identity"
+          data-en="A mathematics student who coaches others in sport and loves programming."
+          data-de="Ein Mathematikstudent, der andere im Sport trainiert und das Programmieren liebt."
+        >
+          A mathematics student who coaches others in sport and loves programming.
+        </p>
+      </div>
+
+      <div class="hero-figure" aria-hidden="true">
+        <svg viewBox="0 0 240 240" focusable="false">
+          <path
+            d="M 216.0 120.0 L 215.65 125.48 L 214.59 130.94 L 212.85 136.37 L 210.42 141.74 L 207.32 147.05 L 203.59 152.26 L 199.25 157.37 L 194.32 162.36 L 188.84 167.21 L 182.87 171.9 L 176.43 176.43 L 169.57 180.77 L 162.36 184.91 L 154.83 188.84 L 147.05 192.55 L 139.06 196.02 L 130.94 199.25 L 122.74 202.21 L 114.52 204.91 L 106.34 207.32 L 98.26 209.46 L 90.33 211.3 L 82.63 212.85 L 75.2 214.09 L 68.1 215.02 L 61.38 215.65 L 55.09 215.96 L 49.27 215.96 L 43.98 215.65 L 39.24 215.02 L 35.09 214.09 L 31.57 212.85 L 28.7 211.3 L 26.49 209.46 L 24.98 207.32 L 24.16 204.91 L 24.04 202.21 L 24.63 199.25 L 25.91 196.02 L 27.89 192.55 L 30.54 188.84 L 33.85 184.91 L 37.79 180.77 L 42.33 176.43 L 47.45 171.9 L 53.09 167.21 L 59.23 162.36 L 65.81 157.37 L 72.79 152.26 L 80.12 147.05 L 87.74 141.74 L 95.6 136.37 L 103.63 130.94 L 111.78 125.48 L 120.0 120.0 L 128.22 114.52 L 136.37 109.06 L 144.4 103.63 L 152.26 98.26 L 159.88 92.95 L 167.21 87.74 L 174.19 82.63 L 180.77 77.64 L 186.91 72.79 L 192.55 68.1 L 197.67 63.57 L 202.21 59.23 L 206.15 55.09 L 209.46 51.16 L 212.11 47.45 L 214.09 43.98 L 215.37 40.75 L 215.96 37.79 L 215.84 35.09 L 215.02 32.68 L 213.51 30.54 L 211.3 28.7 L 208.43 27.15 L 204.91 25.91 L 200.76 24.98 L 196.02 24.35 L 190.73 24.04 L 184.91 24.04 L 178.62 24.35 L 171.9 24.98 L 164.8 25.91 L 157.37 27.15 L 149.67 28.7 L 141.74 30.54 L 133.66 32.68 L 125.48 35.09 L 117.26 37.79 L 109.06 40.75 L 100.94 43.98 L 92.95 47.45 L 85.17 51.16 L 77.64 55.09 L 70.43 59.23 L 63.57 63.57 L 57.13 68.1 L 51.16 72.79 L 45.68 77.64 L 40.75 82.63 L 36.41 87.74 L 32.68 92.95 L 29.58 98.26 L 27.15 103.63 L 25.41 109.06 L 24.35 114.52 L 24.0 120.0 L 24.35 125.48 L 25.41 130.94 L 27.15 136.37 L 29.58 141.74 L 32.68 147.05 L 36.41 152.26 L 40.75 157.37 L 45.68 162.36 L 51.16 167.21 L 57.13 171.9 L 63.57 176.43 L 70.43 180.77 L 77.64 184.91 L 85.17 188.84 L 92.95 192.55 L 100.94 196.02 L 109.06 199.25 L 117.26 202.21 L 125.48 204.91 L 133.66 207.32 L 141.74 209.46 L 149.67 211.3 L 157.37 212.85 L 164.8 214.09 L 171.9 215.02 L 178.62 215.65 L 184.91 215.96 L 190.73 215.96 L 196.02 215.65 L 200.76 215.02 L 204.91 214.09 L 208.43 212.85 L 211.3 211.3 L 213.51 209.46 L 215.02 207.32 L 215.84 204.91 L 215.96 202.21 L 215.37 199.25 L 214.09 196.02 L 212.11 192.55 L 209.46 188.84 L 206.15 184.91 L 202.21 180.77 L 197.67 176.43 L 192.55 171.9 L 186.91 167.21 L 180.77 162.36 L 174.19 157.37 L 167.21 152.26 L 159.88 147.05 L 152.26 141.74 L 144.4 136.37 L 136.37 130.94 L 128.22 125.48 L 120.0 120.0 L 111.78 114.52 L 103.63 109.06 L 95.6 103.63 L 87.74 98.26 L 80.12 92.95 L 72.79 87.74 L 65.81 82.63 L 59.23 77.64 L 53.09 72.79 L 47.45 68.1 L 42.33 63.57 L 37.79 59.23 L 33.85 55.09 L 30.54 51.16 L 27.89 47.45 L 25.91 43.98 L 24.63 40.75 L 24.04 37.79 L 24.16 35.09 L 24.98 32.68 L 26.49 30.54 L 28.7 28.7 L 31.57 27.15 L 35.09 25.91 L 39.24 24.98 L 43.98 24.35 L 49.27 24.04 L 55.09 24.04 L 61.38 24.35 L 68.1 24.98 L 75.2 25.91 L 82.63 27.15 L 90.33 28.7 L 98.26 30.54 L 106.34 32.68 L 114.52 35.09 L 122.74 37.79 L 130.94 40.75 L 139.06 43.98 L 147.05 47.45 L 154.83 51.16 L 162.36 55.09 L 169.57 59.23 L 176.43 63.57 L 182.87 68.1 L 188.84 72.79 L 194.32 77.64 L 199.25 82.63 L 203.59 87.74 L 207.32 92.95 L 210.42 98.26 L 212.85 103.63 L 214.59 109.06 L 215.65 114.52 L 216.0 120.0 Z"
+          />
+        </svg>
+      </div>
+    </section>
+
+    <section id="about" aria-labelledby="about-heading">
+      <h2 id="about-heading" class="section-heading" data-en="About" data-de="Über mich">About</h2>
+      <p
+        data-en="I'm a mathematics student, drawn to the clarity and structure the subject demands. Alongside my studies, I coach others in sport — I enjoy staying active and helping people get better at what they do. Programming is where both instincts meet: building things carefully, one clear step at a time."
+        data-de="Ich studiere Mathematik und schätze die Klarheit und Struktur, die das Fach verlangt. Neben dem Studium trainiere ich andere im Sport – ich bin gerne aktiv und helfe Menschen dabei, besser zu werden. Beim Programmieren treffen beide Seiten aufeinander: Ich baue Dinge sorgfältig auf, Schritt für Schritt."
+      >
+        I'm a mathematics student, drawn to the clarity and structure the subject demands. Alongside my studies, I
+        coach others in sport — I enjoy staying active and helping people get better at what they do. Programming is
+        where both instincts meet: building things carefully, one clear step at a time.
+      </p>
+    </section>
+
+    <section id="projects" aria-labelledby="projects-heading">
+      <h2 id="projects-heading" class="section-heading" data-en="Projects" data-de="Projekte">Projects</h2>
+
+      <ul class="project-grid" role="list" id="projects-list">
+        <li>
+          <article class="project-card" aria-labelledby="project-epiphyte-heading">
+            <h3 id="project-epiphyte-heading">Epiphyte</h3>
+            <p
+              data-en="A generative Discord bot: one plant grows per server, shaped by channel activity, and withers in silence."
+              data-de="Ein generativer Discord-Bot: Pro Server wächst eine Pflanze, geformt von der Aktivität im Kanal – sie verkümmert in der Stille."
+            >
+              A generative Discord bot: one plant grows per server, shaped by channel activity, and withers in
+              silence.
+            </p>
+            <ul class="tech-tags" role="list" aria-label="Technologies used">
+              <li>Python</li>
+              <li>discord.py</li>
+            </ul>
+            <a class="project-link" href="https://github.com/timur-manjosov/epiphyte">
+              <span data-en="View on GitHub" data-de="Auf GitHub ansehen">View on GitHub</span>
+              <span class="link-arrow" aria-hidden="true">&rarr;</span>
+            </a>
+          </article>
+        </li>
+
+        <li>
+          <article class="project-card" aria-labelledby="project-saeculum-heading">
+            <h3 id="project-saeculum-heading">Saeculum</h3>
+            <p data-en="A terminal-based world generator and simulation." data-de="Ein terminalbasierter Weltgenerator und Simulator.">
+              A terminal-based world generator and simulation.
+            </p>
+            <ul class="tech-tags" role="list" aria-label="Technologies used">
+              <li>Python</li>
+            </ul>
+            <a class="project-link" href="https://github.com/timur-manjosov/saeculum">
+              <span data-en="View on GitHub" data-de="Auf GitHub ansehen">View on GitHub</span>
+              <span class="link-arrow" aria-hidden="true">&rarr;</span>
+            </a>
+          </article>
+        </li>
+        <!-- Future projects: add another <li><article class="project-card">…</article></li> here. -->
+      </ul>
+    </section>
+
+    <section id="contact" aria-labelledby="contact-heading">
+      <h2 id="contact-heading" class="section-heading" data-en="Contact" data-de="Kontakt">Contact</h2>
+      <ul class="contact-list" role="list">
+        <li>
+          <span class="contact-label" data-en="GitHub" data-de="GitHub">GitHub</span>
+          <a class="contact-link" href="https://github.com/timur-manjosov">
+            <span>github.com/timur-manjosov</span>
+            <span class="link-arrow" aria-hidden="true">&rarr;</span>
+          </a>
+        </li>
+        <!-- Future contact methods: add another <li> here, same structure. -->
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Timur Manjosov</p>
+  </footer>
+
+  <script src="/scripts/main.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,542 @@
+/* ==========================================================================
+   Fonts — self-hosted variable fonts, Latin subset (covers DE umlauts/ß).
+   font-display: swap keeps text visible during load (no render-block/FOIT).
+   ========================================================================== */
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../assets/fonts/space-grotesk-variable-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../assets/fonts/inter-variable-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("../assets/fonts/jetbrains-mono-variable-latin.woff2") format("woff2");
+}
+
+/* ==========================================================================
+   Design tokens
+   ========================================================================== */
+
+:root {
+  /* --- Nord source values (reference only — don't use these directly in
+     component CSS, go through the semantic tokens below so theming works) --- */
+  --nord0: #2e3440;
+  --nord1: #3b4252;
+  --nord2: #434c5e;
+  --nord3: #4c566a;
+  --nord4: #d8dee9;
+  --nord5: #e5e9f0;
+  --nord6: #eceff4;
+  --nord8: #88c0d0;
+
+  /* --- Semantic color tokens: DARK is the base/default theme.
+     prefers-color-scheme and [data-theme] blocks below override these. --- */
+  --color-canvas: var(--nord0);
+  --color-surface: var(--nord1);
+  --color-surface-2: var(--nord2);
+  --color-ink: var(--nord6);
+  --color-mute: var(--nord4);
+  --color-rule: color-mix(in srgb, var(--color-ink) 16%, transparent);
+
+  /* --color-signal is the constant Nord-8 accent — reserve it for
+     large/decorative graphics (≥3:1 need only). For links, focus rings,
+     pressed states and anything text-sized, use --color-signal-ink,
+     which is contrast-checked per theme (WCAG AA, ≥4.5:1). */
+  --color-signal: var(--nord8);
+  --color-signal-ink: var(--color-signal);
+
+  color-scheme: dark;
+
+  /* --- Typography --- */
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* Fluid type scale (clamp: mobile-min, viewport-relative, desktop-max) */
+  --step--1: clamp(0.8rem, 0.775rem + 0.14vw, 0.889rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --step-1: clamp(1.25rem, 1.18rem + 0.35vw, 1.5rem);
+  --step-2: clamp(1.563rem, 1.42rem + 0.65vw, 2rem);
+  --step-3: clamp(1.953rem, 1.7rem + 1.15vw, 2.75rem);
+  --step-4: clamp(2.441rem, 1.95rem + 2.2vw, 3.75rem);
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+
+  --measure: 65ch;
+
+  /* --- Spacing scale --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: clamp(3rem, 2.3rem + 3vw, 5.5rem);
+  --space-9: clamp(4rem, 2.8rem + 5vw, 8rem);
+
+  /* --- Layout --- */
+  --content-max: 75rem;
+  --gutter: clamp(1.25rem, 1rem + 2vw, 3rem);
+
+  /* --- Radii --- */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-full: 999px;
+
+  /* --- Motion (prefers-reduced-motion is handled globally in reset.css) --- */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms ease;
+}
+
+/* Light theme via system preference, unless a manual choice overrides it. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --color-canvas: var(--nord6);
+    --color-surface: var(--nord5);
+    --color-surface-2: var(--nord4);
+    --color-ink: var(--nord0);
+    --color-mute: var(--nord3);
+    --color-rule: color-mix(in srgb, var(--color-ink) 14%, transparent);
+
+    /* Nord-8 alone is ~1.7:1 on this canvas — fails AA. Darken it toward
+       ink until it clears 4.5:1 (measured ~4.8:1 at this mix ratio). */
+    --color-signal-ink: color-mix(in srgb, var(--color-signal) 40%, var(--color-ink) 60%);
+
+    color-scheme: light;
+  }
+}
+
+/* Manual overrides — set by the theme toggle in Phase 4. Explicit blocks
+   for both values so either can win over the system preference above. */
+:root[data-theme="light"] {
+  --color-canvas: var(--nord6);
+  --color-surface: var(--nord5);
+  --color-surface-2: var(--nord4);
+  --color-ink: var(--nord0);
+  --color-mute: var(--nord3);
+  --color-rule: color-mix(in srgb, var(--color-ink) 14%, transparent);
+  --color-signal-ink: color-mix(in srgb, var(--color-signal) 40%, var(--color-ink) 60%);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --color-canvas: var(--nord0);
+  --color-surface: var(--nord1);
+  --color-surface-2: var(--nord2);
+  --color-ink: var(--nord6);
+  --color-mute: var(--nord4);
+  --color-rule: color-mix(in srgb, var(--color-ink) 16%, transparent);
+  --color-signal-ink: var(--color-signal);
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   Base layout — container + vertical rhythm.
+   Section-specific internal layouts (grids, hero split, etc.) are further
+   down, grouped with each section's own styling.
+   ========================================================================== */
+
+header,
+main > section,
+footer {
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+}
+
+main > section {
+  padding-block-start: var(--space-8);
+}
+
+main > section:first-of-type {
+  padding-block-start: var(--space-9);
+}
+
+main > section:last-of-type {
+  padding-block-end: var(--space-8);
+}
+
+footer {
+  padding-block: var(--space-6);
+}
+
+main p {
+  max-width: var(--measure);
+}
+
+/* ==========================================================================
+   Global element styling
+   ========================================================================== */
+
+html {
+  color-scheme: dark light;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: var(--leading-normal);
+  transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  color: var(--color-ink);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+h1 {
+  font-size: var(--step-4);
+}
+
+h2 {
+  font-size: var(--step-2);
+  font-weight: 500;
+  margin-block-end: var(--space-4);
+}
+
+h3 {
+  font-size: var(--step-1);
+  font-weight: 500;
+}
+
+a {
+  color: var(--color-signal-ink);
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-signal-ink) 45%, transparent);
+  text-underline-offset: 0.15em;
+  transition: text-decoration-color var(--transition-fast), color var(--transition-fast);
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+button {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.02em;
+  background: none;
+  color: var(--color-mute);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+button:hover {
+  color: var(--color-ink);
+  border-color: color-mix(in srgb, var(--color-ink) 40%, transparent);
+}
+
+button[aria-pressed="true"] {
+  color: var(--color-signal-ink);
+  border-color: var(--color-signal-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-signal-ink);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+header {
+  border-block-end: 1px solid var(--color-rule);
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--step-1);
+  color: var(--color-ink);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.lang-toggle {
+  display: flex;
+  gap: var(--space-1);
+}
+
+/* Shared decorative arrow used on project/contact links. Kept out of the
+   translated text node so Phase 4's language swap only ever touches copy. */
+.link-arrow {
+  display: inline-block;
+  transition: transform var(--transition-fast);
+}
+
+a:hover .link-arrow {
+  transform: translateX(0.2em);
+}
+
+/* ==========================================================================
+   Hero — the signature moment.
+   Two-zone layout: welcome/name/identity next to a static Lissajous curve
+   (x = sin(3t + π/2), y = sin(2t)) rendered in --color-signal-ink. It's the
+   one bold move on the page; everything else stays quiet by comparison.
+   ========================================================================== */
+
+#hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: var(--space-7);
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+}
+
+.hero-identity {
+  font-size: var(--step-1);
+  font-weight: 400;
+  color: var(--color-mute);
+  max-width: 42ch;
+}
+
+.hero-figure {
+  width: clamp(11rem, 55vw, 20rem);
+  margin-inline: auto;
+  color: var(--color-signal-ink);
+}
+
+.hero-figure svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.hero-figure path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+@media (min-width: 60rem) {
+  #hero {
+    grid-template-columns: 1.3fr 1fr;
+    gap: var(--space-8);
+  }
+
+  .hero-figure {
+    width: min(100%, 22rem);
+  }
+}
+
+/* ==========================================================================
+   Section labels (About / Projects / Contact) — quiet mono labels rather
+   than a second display-font statement; the hero already spent that weight.
+   ========================================================================== */
+
+.section-heading {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+  margin-block-end: var(--space-5);
+}
+
+/* ==========================================================================
+   About
+   ========================================================================== */
+
+#about p {
+  color: var(--color-ink);
+}
+
+/* ==========================================================================
+   Projects
+   ========================================================================== */
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  align-items: start;
+  gap: var(--space-6);
+}
+
+.project-card {
+  container: project-card / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), background-color var(--transition-base);
+}
+
+.project-card:hover {
+  border-color: var(--color-signal-ink);
+  background-color: var(--color-surface-2);
+}
+
+.project-card p {
+  color: var(--color-mute);
+}
+
+.tech-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tech-tags li {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--color-mute);
+  background-color: color-mix(in srgb, var(--color-ink) 8%, transparent);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-full);
+  padding: 0.15em 0.7em;
+  line-height: 1.5;
+}
+
+.project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  text-decoration: none;
+}
+
+.project-link:hover,
+.contact-link:hover {
+  text-decoration-line: underline;
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.15em;
+}
+
+/* Wider cards (e.g. a two-column desktop grid with room to spare) get a
+   little more room to breathe — a genuine container-driven adjustment,
+   independent of the viewport's own breakpoints. */
+@container project-card (min-width: 24rem) {
+  .project-card {
+    padding: var(--space-6);
+  }
+}
+
+/* ==========================================================================
+   Contact
+   ========================================================================== */
+
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.contact-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-3);
+}
+
+.contact-label {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+  min-width: 6ch;
+}
+
+.contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+footer {
+  border-block-start: 1px solid var(--color-rule);
+  color: var(--color-mute);
+  font-size: var(--step--1);
+}
+
+/* ==========================================================================
+   Motion (Phase 4). These classes are only ever added by scripts/main.js,
+   never present in the markup itself — without JS, nothing here applies
+   and content stays fully visible. prefers-reduced-motion is honored by
+   main.js not even adding these classes in the first place, and as a
+   second line of defense reset.css collapses any transition duration
+   that does slip through to near-zero.
+   ========================================================================== */
+
+.reveal-init {
+  opacity: 0;
+  transform: translateY(1rem);
+  transition: opacity var(--transition-slow), transform var(--transition-slow);
+}
+
+.reveal-init.is-visible {
+  opacity: 1;
+  transform: none;
+}

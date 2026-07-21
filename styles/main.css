@@ -95,6 +95,16 @@
   --content-max: 75rem;
   --gutter: clamp(1.25rem, 1rem + 2vw, 3rem);
 
+  /* --- Golden ratio, used deliberately (not decoratively) where a
+     proportion needs picking: the hero column split, the divider glyph. --- */
+  --phi: 1.618;
+
+  /* --- Lattice background: a coordinate/dot grid, the page's structural
+     ground. Cell size follows the spacing scale so it stays in rhythm
+     with everything sitting on top of it. --- */
+  --lattice-cell: var(--space-5);
+  --color-lattice-dot: color-mix(in srgb, var(--color-ink) 14%, transparent);
+
   /* --- Radii --- */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
@@ -206,6 +216,29 @@ body {
   font-size: var(--step-0);
   line-height: var(--leading-normal);
   transition: background-color var(--transition-base), color var(--transition-base);
+  position: relative;
+}
+
+/* Coordinate lattice — the page's mathematical ground. Fixed so it reads
+   as one continuous plane behind scrolling content, not a per-section
+   tile. --lattice-shift-x/y are nudged by main.js on pointer move (a
+   few px at most); they default to 0, so the grid is fully static
+   without JS or under reduced motion. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(circle, var(--color-lattice-dot) 1px, transparent 1px);
+  background-size: var(--lattice-cell) var(--lattice-cell);
+  background-position: var(--lattice-shift-x, 0px) var(--lattice-shift-y, 0px);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body::before {
+    transition: background-position 600ms ease-out;
+  }
 }
 
 h1,
@@ -370,7 +403,7 @@ a:hover .link-arrow {
 
 @media (min-width: 60rem) {
   #hero {
-    grid-template-columns: 1.3fr 1fr;
+    grid-template-columns: 1.618fr 1fr; /* golden ratio (--phi) column split */
     gap: var(--space-8);
   }
 
@@ -394,12 +427,53 @@ a:hover .link-arrow {
   margin-block-end: var(--space-5);
 }
 
+/* Section divider — a tiny axis marked at Fibonacci positions
+   (0, 1, 2, 3, 5, 8, 13, 21, 34), the sequence that converges to phi.
+   The final tick becomes a point in the accent color: the "golden"
+   mark the rest of the axis is building toward. */
+.section-divider {
+  width: clamp(3.5rem, 6vw, 5.5rem);
+  margin-block-end: var(--space-3);
+  color: var(--color-mute);
+}
+
+.section-divider svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.divider-line,
+.divider-tick {
+  stroke: currentColor;
+  stroke-width: 0.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.divider-line {
+  opacity: 0.5;
+}
+
+.divider-tick {
+  opacity: 0.7;
+}
+
+.divider-point {
+  fill: var(--color-signal-ink);
+}
+
 /* ==========================================================================
    About
    ========================================================================== */
 
-#about p {
+#about p,
+#sport p {
   color: var(--color-ink);
+}
+
+#sport p + p {
+  margin-block-start: var(--space-4);
 }
 
 /* ==========================================================================
@@ -540,3 +614,38 @@ footer {
   opacity: 1;
   transform: none;
 }
+
+/* Section-divider draw-on: the Fibonacci axis extends outward tick by
+   tick as its section reveals. pathLength="1" (set in the markup)
+   normalizes dasharray/dashoffset to 0..1 regardless of each line's
+   actual geometry, so every tick can share the same simple rule. */
+.reveal-init .divider-line,
+.reveal-init .divider-tick {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 550ms ease;
+}
+
+.reveal-init .divider-point {
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.is-visible .divider-line,
+.is-visible .divider-tick {
+  stroke-dashoffset: 0;
+}
+
+.is-visible .divider-point {
+  opacity: 1;
+  transition-delay: 380ms;
+}
+
+.is-visible .divider-tick:nth-of-type(2) { transition-delay: 40ms; }
+.is-visible .divider-tick:nth-of-type(3) { transition-delay: 80ms; }
+.is-visible .divider-tick:nth-of-type(4) { transition-delay: 120ms; }
+.is-visible .divider-tick:nth-of-type(5) { transition-delay: 160ms; }
+.is-visible .divider-tick:nth-of-type(6) { transition-delay: 200ms; }
+.is-visible .divider-tick:nth-of-type(7) { transition-delay: 240ms; }
+.is-visible .divider-tick:nth-of-type(8) { transition-delay: 280ms; }
+.is-visible .divider-tick:nth-of-type(9) { transition-delay: 320ms; }

@@ -95,16 +95,6 @@
   --content-max: 75rem;
   --gutter: clamp(1.25rem, 1rem + 2vw, 3rem);
 
-  /* --- Golden ratio, used deliberately (not decoratively) where a
-     proportion needs picking: the hero column split, the divider glyph. --- */
-  --phi: 1.618;
-
-  /* --- Lattice background: a coordinate/dot grid, the page's structural
-     ground. Cell size follows the spacing scale so it stays in rhythm
-     with everything sitting on top of it. --- */
-  --lattice-cell: var(--space-5);
-  --color-lattice-dot: color-mix(in srgb, var(--color-ink) 14%, transparent);
-
   /* --- Radii --- */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
@@ -161,7 +151,7 @@
 
 /* ==========================================================================
    Base layout — container + vertical rhythm.
-   Section-specific internal layouts (grids, hero split, etc.) are further
+   Section-specific internal layouts (project grid, hero, etc.) are further
    down, grouped with each section's own styling.
    ========================================================================== */
 
@@ -219,26 +209,18 @@ body {
   position: relative;
 }
 
-/* Coordinate lattice — the page's mathematical ground. Fixed so it reads
-   as one continuous plane behind scrolling content, not a per-section
-   tile. --lattice-shift-x/y are nudged by main.js on pointer move (a
-   few px at most); they default to 0, so the grid is fully static
-   without JS or under reduced motion. */
-body::before {
-  content: "";
+/* The page's mathematical ground: a full-viewport canvas, fixed behind
+   all scrolling content, drawn entirely by scripts/system.js. Sized in
+   both CSS (here) and JS (backing-store resolution + devicePixelRatio) —
+   this half just has to make it cover the viewport and stay out of the
+   way of everything painted above it. */
+#system-canvas {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
   z-index: -1;
-  background-image: radial-gradient(circle, var(--color-lattice-dot) 1px, transparent 1px);
-  background-size: var(--lattice-cell) var(--lattice-cell);
-  background-position: var(--lattice-shift-x, 0px) var(--lattice-shift-y, 0px);
   pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  body::before {
-    transition: background-position 600ms ease-out;
-  }
 }
 
 h1,
@@ -348,16 +330,18 @@ a:hover .link-arrow {
 
 /* ==========================================================================
    Hero — the signature moment.
-   Two-zone layout: welcome/name/identity next to a static Lissajous curve
-   (x = sin(3t + π/2), y = sin(2t)) rendered in --color-signal-ink. It's the
-   one bold move on the page; everything else stays quiet by comparison.
+   The figure itself is no longer markup here: it's the de Jong attractor
+   drawn by #system-canvas, fixed behind the whole page and at its most
+   visible while this section is on screen. This block only has to give
+   the text room to sit in front of it and hold the viewport for a while,
+   so the attractor actually gets a moment before the page scrolls past.
    ========================================================================== */
 
 #hero {
-  display: grid;
-  grid-template-columns: 1fr;
-  align-items: center;
-  gap: var(--space-7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: min(80vh, 42rem);
 }
 
 .hero-content {
@@ -382,36 +366,6 @@ a:hover .link-arrow {
   max-width: 42ch;
 }
 
-.hero-figure {
-  width: clamp(11rem, 55vw, 20rem);
-  margin-inline: auto;
-  color: var(--color-signal-ink);
-}
-
-.hero-figure svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.hero-figure path {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-}
-
-@media (min-width: 60rem) {
-  #hero {
-    grid-template-columns: 1.618fr 1fr; /* golden ratio (--phi) column split */
-    gap: var(--space-8);
-  }
-
-  .hero-figure {
-    width: min(100%, 22rem);
-  }
-}
-
 /* ==========================================================================
    Section labels (About / Projects / Contact) — quiet mono labels rather
    than a second display-font statement; the hero already spent that weight.
@@ -427,10 +381,11 @@ a:hover .link-arrow {
   margin-block-end: var(--space-5);
 }
 
-/* Section divider — a tiny axis marked at Fibonacci positions
-   (0, 1, 2, 3, 5, 8, 13, 21, 34), the sequence that converges to phi.
-   The final tick becomes a point in the accent color: the "golden"
-   mark the rest of the axis is building toward. */
+/* Section divider — a single generated curve (main.js computes a damped
+   sine wave from a hash of the section's own id, see initGenerativeDividers)
+   rather than four identical hand-drawn axes: same principle, a related
+   but non-repeating line per section. The endpoint stays a fixed accent
+   point, the one constant landmark the varying curve resolves toward. */
 .section-divider {
   width: clamp(3.5rem, 6vw, 5.5rem);
   margin-block-end: var(--space-3);
@@ -444,19 +399,12 @@ a:hover .link-arrow {
   overflow: visible;
 }
 
-.divider-line,
-.divider-tick {
+.divider-line {
   stroke: currentColor;
   stroke-width: 0.4;
+  fill: none;
   vector-effect: non-scaling-stroke;
-}
-
-.divider-line {
-  opacity: 0.5;
-}
-
-.divider-tick {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .divider-point {
@@ -506,6 +454,21 @@ a:hover .link-arrow {
 
 .project-card p {
   color: var(--color-mute);
+}
+
+/* Live miniature: each card's own small, independent simulation (see
+   scripts/system.js's card-previews section) -- not the background
+   #system-canvas, just styled consistently with it. */
+.project-preview {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--color-ink) 5%, transparent);
+}
+
+.project-preview canvas {
+  display: block;
+  width: 100%;
+  height: clamp(5.5rem, 20vw, 7rem);
 }
 
 .tech-tags {
@@ -586,10 +549,20 @@ a:hover .link-arrow {
 }
 
 /* ==========================================================================
-   Footer
+   Footer — the Fourier-epicycle signature's anchor (see #system-canvas):
+   given enough height for that closing visual to actually have a moment
+   on screen, unlike its previous single-line-of-padding size. Not as
+   tall as the hero, since this is a quiet closing beat, not the primary
+   moment, but still real presence rather than a sliver.
    ========================================================================== */
 
 footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: min(45vh, 24rem);
   border-block-start: 1px solid var(--color-rule);
   color: var(--color-mute);
   font-size: var(--step--1);
@@ -615,12 +588,11 @@ footer {
   transform: none;
 }
 
-/* Section-divider draw-on: the Fibonacci axis extends outward tick by
-   tick as its section reveals. pathLength="1" (set in the markup)
-   normalizes dasharray/dashoffset to 0..1 regardless of each line's
-   actual geometry, so every tick can share the same simple rule. */
-.reveal-init .divider-line,
-.reveal-init .divider-tick {
+/* Section-divider draw-on: the generated curve extends outward as its
+   section reveals. pathLength="1" (set in the markup) normalizes
+   dasharray/dashoffset to 0..1 regardless of the actual path geometry,
+   so this rule stays the same no matter what main.js computed for d. */
+.reveal-init .divider-line {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   transition: stroke-dashoffset 550ms ease;
@@ -631,8 +603,7 @@ footer {
   transition: opacity 300ms ease;
 }
 
-.is-visible .divider-line,
-.is-visible .divider-tick {
+.is-visible .divider-line {
   stroke-dashoffset: 0;
 }
 
@@ -640,12 +611,3 @@ footer {
   opacity: 1;
   transition-delay: 380ms;
 }
-
-.is-visible .divider-tick:nth-of-type(2) { transition-delay: 40ms; }
-.is-visible .divider-tick:nth-of-type(3) { transition-delay: 80ms; }
-.is-visible .divider-tick:nth-of-type(4) { transition-delay: 120ms; }
-.is-visible .divider-tick:nth-of-type(5) { transition-delay: 160ms; }
-.is-visible .divider-tick:nth-of-type(6) { transition-delay: 200ms; }
-.is-visible .divider-tick:nth-of-type(7) { transition-delay: 240ms; }
-.is-visible .divider-tick:nth-of-type(8) { transition-delay: 280ms; }
-.is-visible .divider-tick:nth-of-type(9) { transition-delay: 320ms; }

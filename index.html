@@ -68,6 +68,8 @@
   <link rel="stylesheet" href="/styles/main.css" />
 </head>
 <body>
+  <canvas id="system-canvas" aria-hidden="true"></canvas>
+
   <a class="skip-link" href="#main-content" data-en="Skip to content" data-de="Zum Inhalt springen"
     >Skip to content</a
   >
@@ -106,28 +108,12 @@
           A mathematics student who loves programming.
         </p>
       </div>
-
-      <div class="hero-figure" aria-hidden="true">
-        <svg viewBox="0 0 240 240" focusable="false">
-          <path
-            d="M 216.0 120.0 L 215.65 125.48 L 214.59 130.94 L 212.85 136.37 L 210.42 141.74 L 207.32 147.05 L 203.59 152.26 L 199.25 157.37 L 194.32 162.36 L 188.84 167.21 L 182.87 171.9 L 176.43 176.43 L 169.57 180.77 L 162.36 184.91 L 154.83 188.84 L 147.05 192.55 L 139.06 196.02 L 130.94 199.25 L 122.74 202.21 L 114.52 204.91 L 106.34 207.32 L 98.26 209.46 L 90.33 211.3 L 82.63 212.85 L 75.2 214.09 L 68.1 215.02 L 61.38 215.65 L 55.09 215.96 L 49.27 215.96 L 43.98 215.65 L 39.24 215.02 L 35.09 214.09 L 31.57 212.85 L 28.7 211.3 L 26.49 209.46 L 24.98 207.32 L 24.16 204.91 L 24.04 202.21 L 24.63 199.25 L 25.91 196.02 L 27.89 192.55 L 30.54 188.84 L 33.85 184.91 L 37.79 180.77 L 42.33 176.43 L 47.45 171.9 L 53.09 167.21 L 59.23 162.36 L 65.81 157.37 L 72.79 152.26 L 80.12 147.05 L 87.74 141.74 L 95.6 136.37 L 103.63 130.94 L 111.78 125.48 L 120.0 120.0 L 128.22 114.52 L 136.37 109.06 L 144.4 103.63 L 152.26 98.26 L 159.88 92.95 L 167.21 87.74 L 174.19 82.63 L 180.77 77.64 L 186.91 72.79 L 192.55 68.1 L 197.67 63.57 L 202.21 59.23 L 206.15 55.09 L 209.46 51.16 L 212.11 47.45 L 214.09 43.98 L 215.37 40.75 L 215.96 37.79 L 215.84 35.09 L 215.02 32.68 L 213.51 30.54 L 211.3 28.7 L 208.43 27.15 L 204.91 25.91 L 200.76 24.98 L 196.02 24.35 L 190.73 24.04 L 184.91 24.04 L 178.62 24.35 L 171.9 24.98 L 164.8 25.91 L 157.37 27.15 L 149.67 28.7 L 141.74 30.54 L 133.66 32.68 L 125.48 35.09 L 117.26 37.79 L 109.06 40.75 L 100.94 43.98 L 92.95 47.45 L 85.17 51.16 L 77.64 55.09 L 70.43 59.23 L 63.57 63.57 L 57.13 68.1 L 51.16 72.79 L 45.68 77.64 L 40.75 82.63 L 36.41 87.74 L 32.68 92.95 L 29.58 98.26 L 27.15 103.63 L 25.41 109.06 L 24.35 114.52 L 24.0 120.0 L 24.35 125.48 L 25.41 130.94 L 27.15 136.37 L 29.58 141.74 L 32.68 147.05 L 36.41 152.26 L 40.75 157.37 L 45.68 162.36 L 51.16 167.21 L 57.13 171.9 L 63.57 176.43 L 70.43 180.77 L 77.64 184.91 L 85.17 188.84 L 92.95 192.55 L 100.94 196.02 L 109.06 199.25 L 117.26 202.21 L 125.48 204.91 L 133.66 207.32 L 141.74 209.46 L 149.67 211.3 L 157.37 212.85 L 164.8 214.09 L 171.9 215.02 L 178.62 215.65 L 184.91 215.96 L 190.73 215.96 L 196.02 215.65 L 200.76 215.02 L 204.91 214.09 L 208.43 212.85 L 211.3 211.3 L 213.51 209.46 L 215.02 207.32 L 215.84 204.91 L 215.96 202.21 L 215.37 199.25 L 214.09 196.02 L 212.11 192.55 L 209.46 188.84 L 206.15 184.91 L 202.21 180.77 L 197.67 176.43 L 192.55 171.9 L 186.91 167.21 L 180.77 162.36 L 174.19 157.37 L 167.21 152.26 L 159.88 147.05 L 152.26 141.74 L 144.4 136.37 L 136.37 130.94 L 128.22 125.48 L 120.0 120.0 L 111.78 114.52 L 103.63 109.06 L 95.6 103.63 L 87.74 98.26 L 80.12 92.95 L 72.79 87.74 L 65.81 82.63 L 59.23 77.64 L 53.09 72.79 L 47.45 68.1 L 42.33 63.57 L 37.79 59.23 L 33.85 55.09 L 30.54 51.16 L 27.89 47.45 L 25.91 43.98 L 24.63 40.75 L 24.04 37.79 L 24.16 35.09 L 24.98 32.68 L 26.49 30.54 L 28.7 28.7 L 31.57 27.15 L 35.09 25.91 L 39.24 24.98 L 43.98 24.35 L 49.27 24.04 L 55.09 24.04 L 61.38 24.35 L 68.1 24.98 L 75.2 25.91 L 82.63 27.15 L 90.33 28.7 L 98.26 30.54 L 106.34 32.68 L 114.52 35.09 L 122.74 37.79 L 130.94 40.75 L 139.06 43.98 L 147.05 47.45 L 154.83 51.16 L 162.36 55.09 L 169.57 59.23 L 176.43 63.57 L 182.87 68.1 L 188.84 72.79 L 194.32 77.64 L 199.25 82.63 L 203.59 87.74 L 207.32 92.95 L 210.42 98.26 L 212.85 103.63 L 214.59 109.06 L 215.65 114.52 L 216.0 120.0 Z"
-          />
-        </svg>
-      </div>
     </section>
 
     <section id="about" aria-labelledby="about-heading">
       <div class="section-divider" aria-hidden="true">
         <svg viewBox="0 0 34 6" focusable="false">
-          <line class="divider-line" pathLength="1" x1="0" y1="5" x2="34" y2="5" />
-          <line class="divider-tick" pathLength="1" x1="0" y1="5" x2="0" y2="1" />
-          <line class="divider-tick" pathLength="1" x1="1" y1="5" x2="1" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="2" y1="5" x2="2" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="3" y1="5" x2="3" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="5" y1="5" x2="5" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="8" y1="5" x2="8" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="13" y1="5" x2="13" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="21" y1="5" x2="21" y2="1.6" />
+          <path class="divider-line" pathLength="1" d="" />
           <circle class="divider-point" cx="34" cy="5" r="1.1" />
         </svg>
       </div>
@@ -144,15 +130,7 @@
     <section id="projects" aria-labelledby="projects-heading">
       <div class="section-divider" aria-hidden="true">
         <svg viewBox="0 0 34 6" focusable="false">
-          <line class="divider-line" pathLength="1" x1="0" y1="5" x2="34" y2="5" />
-          <line class="divider-tick" pathLength="1" x1="0" y1="5" x2="0" y2="1" />
-          <line class="divider-tick" pathLength="1" x1="1" y1="5" x2="1" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="2" y1="5" x2="2" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="3" y1="5" x2="3" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="5" y1="5" x2="5" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="8" y1="5" x2="8" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="13" y1="5" x2="13" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="21" y1="5" x2="21" y2="1.6" />
+          <path class="divider-line" pathLength="1" d="" />
           <circle class="divider-point" cx="34" cy="5" r="1.1" />
         </svg>
       </div>
@@ -160,8 +138,19 @@
 
       <ul class="project-grid" role="list" id="projects-list">
         <li>
-          <article class="project-card" aria-labelledby="project-epiphyte-heading">
+          <article class="project-card" id="epiphyte-card" aria-labelledby="project-epiphyte-heading">
             <h3 id="project-epiphyte-heading">Epiphyte</h3>
+            <div class="project-preview">
+              <canvas data-preview="lsystem" aria-hidden="true"></canvas>
+              <span
+                class="visually-hidden"
+                data-en="Live preview: a small generative plant grows and slowly fades in a repeating cycle, echoing Epiphyte's own server-driven growth."
+                data-de="Live-Vorschau: Eine kleine generative Pflanze wächst und verblasst in einem wiederkehrenden Zyklus – ein Echo von Epiphytes eigenem, servergesteuertem Wachstum."
+              >
+                Live preview: a small generative plant grows and slowly fades in a repeating cycle, echoing
+                Epiphyte's own server-driven growth.
+              </span>
+            </div>
             <p
               data-en="A generative Discord bot: one plant grows per server, shaped by channel activity, and withers in silence."
               data-de="Ein generativer Discord-Bot: Pro Server wächst eine Pflanze, geformt von der Aktivität im Kanal – sie verkümmert in der Stille."
@@ -181,8 +170,19 @@
         </li>
 
         <li>
-          <article class="project-card" aria-labelledby="project-saeculum-heading">
+          <article class="project-card" id="saeculum-card" aria-labelledby="project-saeculum-heading">
             <h3 id="project-saeculum-heading">Saeculum</h3>
+            <div class="project-preview">
+              <canvas data-preview="ca" aria-hidden="true"></canvas>
+              <span
+                class="visually-hidden"
+                data-en="Live preview: a small terminal-style simulation generates a new strip of procedural terrain, cycling endlessly."
+                data-de="Live-Vorschau: Eine kleine Terminal-Simulation generiert fortlaufend einen neuen Streifen prozeduralen Geländes."
+              >
+                Live preview: a small terminal-style simulation generates a new strip of procedural terrain, cycling
+                endlessly.
+              </span>
+            </div>
             <p data-en="A terminal-based world generator and simulation." data-de="Ein terminalbasierter Weltgenerator und Simulator.">
               A terminal-based world generator and simulation.
             </p>
@@ -202,15 +202,7 @@
     <section id="sport" aria-labelledby="sport-heading">
       <div class="section-divider" aria-hidden="true">
         <svg viewBox="0 0 34 6" focusable="false">
-          <line class="divider-line" pathLength="1" x1="0" y1="5" x2="34" y2="5" />
-          <line class="divider-tick" pathLength="1" x1="0" y1="5" x2="0" y2="1" />
-          <line class="divider-tick" pathLength="1" x1="1" y1="5" x2="1" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="2" y1="5" x2="2" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="3" y1="5" x2="3" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="5" y1="5" x2="5" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="8" y1="5" x2="8" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="13" y1="5" x2="13" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="21" y1="5" x2="21" y2="1.6" />
+          <path class="divider-line" pathLength="1" d="" />
           <circle class="divider-point" cx="34" cy="5" r="1.1" />
         </svg>
       </div>
@@ -234,15 +226,7 @@
     <section id="contact" aria-labelledby="contact-heading">
       <div class="section-divider" aria-hidden="true">
         <svg viewBox="0 0 34 6" focusable="false">
-          <line class="divider-line" pathLength="1" x1="0" y1="5" x2="34" y2="5" />
-          <line class="divider-tick" pathLength="1" x1="0" y1="5" x2="0" y2="1" />
-          <line class="divider-tick" pathLength="1" x1="1" y1="5" x2="1" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="2" y1="5" x2="2" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="3" y1="5" x2="3" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="5" y1="5" x2="5" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="8" y1="5" x2="8" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="13" y1="5" x2="13" y2="1.6" />
-          <line class="divider-tick" pathLength="1" x1="21" y1="5" x2="21" y2="1.6" />
+          <path class="divider-line" pathLength="1" d="" />
           <circle class="divider-point" cx="34" cy="5" r="1.1" />
         </svg>
       </div>
@@ -260,10 +244,19 @@
     </section>
   </main>
 
-  <footer>
+  <footer id="site-footer">
     <p>&copy; 2026 Timur Manjosov</p>
+    <span
+      class="visually-hidden"
+      data-en="A signature animation traces these initials as a chain of rotating circles (a Fourier-epicycle decomposition of a hand-drawn 'TM'), completing the shape in a slow, repeating loop."
+      data-de="Eine Signatur-Animation zeichnet diese Initialen als Kette rotierender Kreise nach (eine Fourier-Epizyklen-Zerlegung eines handgezeichneten „TM“) und vollendet den Schriftzug in einem langsamen, wiederkehrenden Zyklus."
+    >
+      A signature animation traces these initials as a chain of rotating circles (a Fourier-epicycle decomposition
+      of a hand-drawn 'TM'), completing the shape in a slow, repeating loop.
+    </span>
   </footer>
 
+  <script src="/scripts/system.js" defer></script>
   <script src="/scripts/main.js" defer></script>
 </body>
 </html>

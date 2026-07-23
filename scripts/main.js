@@ -149,166 +149,49 @@
   }
 
   /* --------------------------------------------------------------------
-     Hero signature: a Lissajous curve (x = sin(a·t + delta), y = sin(b·t))
-     that draws itself in, then hands off to a slow continuous drift —
-     delta breathes around its base value, b eases toward a value nudged
-     by pointer position. Every frame is still a real member of the same
-     curve family, never an arbitrary wobble. Reduced motion leaves the
-     hand-authored static path (a = 3, b = 2, delta = pi/2) untouched.
+     Generative dividers: one shared curve-drawing principle (a damped
+     sine wave) instead of four identical hand-drawn axes. Each section's
+     own id is hashed into that curve's frequency/phase/decay/amplitude,
+     so every divider is a variation on the same idea rather than a
+     repeat of it -- deterministic per id (stable across reloads), not
+     randomized, matching the rest of the page's "precise, not decorative"
+     use of math. Runs once at load; nothing here is reduced-motion-
+     sensitive since it only ever sets a static path's `d`, the same as
+     if it had been hand-authored -- the draw-on reveal is still handled
+     entirely by main.css's existing .reveal-init/.is-visible rules.
      -------------------------------------------------------------------- */
 
-  var HERO_A = 3;
-  var HERO_B_BASE = 2;
-  var HERO_DELTA_BASE = Math.PI / 2;
-  var HERO_NUM_POINTS = 120;
-  var HERO_CX = 120;
-  var HERO_CY = 120;
-  var HERO_R = 96;
-
-  function lissajousPath(a, b, delta, numPoints, cx, cy, r) {
-    var parts = [];
-    var step = (Math.PI * 2) / numPoints;
-    for (var i = 0; i <= numPoints; i++) {
-      var t = i * step;
-      var x = cx + r * Math.sin(a * t + delta);
-      var y = cy + r * Math.sin(b * t);
-      parts.push((i === 0 ? "M" : "L") + " " + x.toFixed(2) + " " + y.toFixed(2));
+  function hashSeed(str) {
+    var h = 0;
+    for (var i = 0; i < str.length; i++) {
+      h = (h * 31 + str.charCodeAt(i)) >>> 0;
     }
-    return parts.join(" ") + " Z";
+    return h;
   }
 
-  function startHeroDrift(path, heroFigure) {
-    var active = true;
-    var looping = false;
-    var frame = 0;
-    var start = null;
-    var currentB = HERO_B_BASE;
-    var targetB = HERO_B_BASE;
+  function dividerPathD(seed) {
+    var freq = 1.4 + (seed % 100) / 100 * 2.2;
+    var phase = ((seed >>> 8) % 100) / 100 * Math.PI * 2;
+    var decay = 0.5 + ((seed >>> 16) % 100) / 100 * 1.5;
+    var amp = 0.7 + ((seed >>> 24) % 100) / 100 * 1.1;
 
-    function onPointerMove(e) {
-      if (!heroFigure) return;
-      var rect = heroFigure.getBoundingClientRect();
-      var half = rect.width / 2 || 1;
-      var rel = (e.clientX - (rect.left + half)) / half;
-      rel = Math.max(-1, Math.min(1, rel));
-      targetB = HERO_B_BASE + rel * 0.22;
+    var width = 34, baseY = 5, steps = 40;
+    var d = "";
+    for (var i = 0; i <= steps; i++) {
+      var t = i / steps;
+      var x = t * width;
+      var y = baseY - amp * Math.exp(-decay * t * 3) * Math.sin(freq * t * Math.PI * 2 + phase);
+      d += (i === 0 ? "M " : "L ") + x.toFixed(2) + " " + y.toFixed(2) + " ";
     }
+    return d.trim();
+  }
 
-    function onPointerLeave() {
-      targetB = HERO_B_BASE;
-    }
-
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    if (heroFigure) heroFigure.addEventListener("pointerleave", onPointerLeave, { passive: true });
-
-    function tick(ts) {
-      if (!active) {
-        looping = false;
-        return;
-      }
-      if (start === null) start = ts;
-      frame++;
-
-      // Throttled to ~20fps: the drift is slow enough that a higher
-      // rate would burn frames without being perceptibly smoother.
-      if (frame % 3 === 0) {
-        var elapsed = (ts - start) / 1000;
-        var delta = HERO_DELTA_BASE + Math.sin(elapsed * 0.12) * 0.35;
-        currentB += (targetB - currentB) * 0.04;
-        path.setAttribute(
-          "d",
-          lissajousPath(HERO_A, currentB, delta, HERO_NUM_POINTS, HERO_CX, HERO_CY, HERO_R)
-        );
-      }
-
-      requestAnimationFrame(tick);
-    }
-
-    function resume() {
-      if (looping || !active) return;
-      looping = true;
-      start = null;
-      requestAnimationFrame(tick);
-    }
-
-    document.addEventListener("visibilitychange", function () {
-      active = !document.hidden;
-      if (active) resume();
+  function initGenerativeDividers() {
+    document.querySelectorAll(".section-divider .divider-line").forEach(function (path) {
+      var section = path.closest("section");
+      var seedSource = (section && section.id) || "divider";
+      path.setAttribute("d", dividerPathD(hashSeed(seedSource)));
     });
-
-    if ("IntersectionObserver" in window && heroFigure) {
-      var io = new IntersectionObserver(
-        function (entries) {
-          active = entries[0].isIntersecting && !document.hidden;
-          if (active) resume();
-        },
-        { threshold: 0 }
-      );
-      io.observe(heroFigure);
-    }
-
-    resume();
-  }
-
-  function initHeroSignature() {
-    if (prefersReducedMotion()) return;
-    var path = document.querySelector(".hero-figure path");
-    var heroFigure = document.querySelector(".hero-figure");
-    if (!path || typeof path.getTotalLength !== "function") return;
-
-    var length;
-    try {
-      length = path.getTotalLength();
-    } catch (e) {
-      return;
-    }
-
-    path.style.strokeDasharray = String(length);
-    path.style.strokeDashoffset = String(length);
-
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        path.style.transition = "stroke-dashoffset 1400ms ease";
-        path.style.strokeDashoffset = "0";
-      });
-    });
-
-    window.setTimeout(function () {
-      path.style.transition = "";
-      path.style.strokeDasharray = "none";
-      path.style.strokeDashoffset = "0";
-      startHeroDrift(path, heroFigure);
-    }, 1450);
-  }
-
-  /* --------------------------------------------------------------------
-     Lattice parallax: the coordinate grid drifts a few px toward the
-     pointer. Purely a background-position nudge (no layout cost); CSS
-     eases it back via transition, so this just sets two custom
-     properties, throttled to one write per animation frame.
-     -------------------------------------------------------------------- */
-
-  function initLatticeParallax() {
-    if (prefersReducedMotion()) return;
-    var root = document.documentElement;
-    var ticking = false;
-    var maxShift = 6;
-
-    window.addEventListener(
-      "pointermove",
-      function (e) {
-        if (ticking) return;
-        ticking = true;
-        requestAnimationFrame(function () {
-          var nx = (e.clientX / window.innerWidth) * 2 - 1;
-          var ny = (e.clientY / window.innerHeight) * 2 - 1;
-          root.style.setProperty("--lattice-shift-x", (nx * maxShift).toFixed(1) + "px");
-          root.style.setProperty("--lattice-shift-y", (ny * maxShift).toFixed(1) + "px");
-          ticking = false;
-        });
-      },
-      { passive: true }
-    );
   }
 
   function initScrollReveal() {
@@ -337,8 +220,7 @@
     });
   }
 
+  initGenerativeDividers();
   revealHeroContent();
-  initHeroSignature();
   initScrollReveal();
-  initLatticeParallax();
 })();

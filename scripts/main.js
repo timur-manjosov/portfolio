@@ -198,7 +198,9 @@
     if (prefersReducedMotion()) return;
     if (!("IntersectionObserver" in window)) return;
 
-    var targets = document.querySelectorAll("#about, #projects, #sport, #contact");
+    var targets = document.querySelectorAll(
+      "#chapter-1, #project-epiphyte, #chapter-2, #project-saeculum, #project-aura, #chapter-3, #contact"
+    );
     targets.forEach(function (el) {
       el.classList.add("reveal-init");
     });

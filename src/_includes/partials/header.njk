@@ -1,0 +1,38 @@
+<header>
+  <span class="brand" aria-hidden="true">TM</span>
+
+  {# Real <nav> landmark (AUDIT.md §4/§6): jump links into this page's own
+     sections plus a cross-page link to /lab/, the hub's second, genuinely
+     independent page. `active` comes from the calling page's front matter
+     so a future microsite including this same partial can highlight its
+     own current entry without editing this file. #}
+  <nav class="site-nav" aria-label="Site">
+    <ul role="list">
+      <li><a href="/#about-heading" data-en="About" data-de="Über mich">About</a></li>
+      <li><a href="/#works-heading" data-en="Works" data-de="Werke">Works</a></li>
+      <li><a href="/#contact-heading" data-en="Contact" data-de="Kontakt">Contact</a></li>
+      <li>
+        <a href="/lab/" data-en="Lab" data-de="Lab"{% if active == "lab" %} aria-current="page"{% endif %}
+          >Lab</a
+        >
+      </li>
+    </ul>
+  </nav>
+
+  <div class="controls">
+    <div class="lang-toggle" role="group" aria-label="Language" data-en-label="Language" data-de-label="Sprache">
+      <button type="button" id="lang-de" lang="de" aria-pressed="false" aria-label="Deutsch">DE</button>
+      <button type="button" id="lang-en" lang="en" aria-pressed="true" aria-label="English">EN</button>
+    </div>
+
+    <button
+      type="button"
+      id="theme-toggle"
+      aria-pressed="true"
+      data-en="Switch to light theme"
+      data-de="Zu hellem Design wechseln"
+    >
+      Switch to light theme
+    </button>
+  </div>
+</header>

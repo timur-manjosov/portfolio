@@ -1,0 +1,238 @@
+---
+layout: layouts/base.njk
+title: "Timur Manjosov — Mathematics & Code"
+description: "The personal welcome page of Timur Manjosov — a mathematics student who believes you only truly understand something once you've built it yourself."
+active: home
+lastmod: "2026-07-29"
+sitemapPriority: "1.0"
+tags: sitemap
+---
+<section id="hero" aria-labelledby="hero-heading">
+  <div class="hero-content">
+    <p class="hero-eyebrow" data-en="Welcome" data-de="Willkommen">Welcome</p>
+    <h1 id="hero-heading">Timur Manjosov</h1>
+    <p
+      class="hero-identity"
+      data-en="Mathematics, code — and the conviction that you only truly understand something once you've built it yourself."
+      data-de="Mathematik, Code — und die Überzeugung, dass man Dinge erst wirklich versteht, wenn man sie selbst baut."
+    >
+      Mathematics, code — and the conviction that you only truly understand something once you've built it
+      yourself.
+    </p>
+  </div>
+</section>
+
+<section id="about" aria-labelledby="about-heading">
+  <div class="section-divider" aria-hidden="true">
+    <svg viewBox="0 0 34 6" focusable="false">
+      <path class="divider-line" pathLength="1" d="" />
+      <circle class="divider-point" cx="34" cy="5" r="1.1" />
+    </svg>
+  </div>
+  <h2 id="about-heading" class="section-heading" data-en="About" data-de="Über mich">About</h2>
+  <p
+    data-en="I'm Timur Manjosov. I study mathematics via distance learning at FernUni Hagen, and programming isn't a counterbalance to my studies for me — it's where mathematical ideas become tangible. This site itself is one such attempt. My approach to problems is thorough and independent: I'd rather examine conventions myself than simply adopt them, and I keep only what actually moves me forward. Game theory is my tool of choice for reading behavior, negotiation, and cooperation — even where textbooks prescribe something other than what people actually do. The same stance shows up in my infrastructure: Arch Linux, Neovim, containerized personal projects instead of cloud convenience — not out of purism, but because I want to understand what's happening beneath the surface. That's also true of the four mathematical systems carrying this page's background: built myself, not imported from a library, because you only truly understand something once you've built it yourself."
+    data-de="Ich bin Timur Manjosov. Ich studiere Mathematik im Fernstudium an der FernUni Hagen, und Programmieren ist für mich kein Ausgleich zum Studium, sondern der Ort, an dem mathematische Ideen greifbar werden — diese Seite selbst ist so ein Versuch. Mein Zugang zu Problemen ist gründlich-unabhängig: Ich prüfe Konventionen lieber selbst, als sie zu übernehmen, und behalte nur, was mich tatsächlich vorwärtsbringt. Spieltheorie ist dabei mein bevorzugtes Werkzeug, um Verhalten, Verhandlung und Kooperation zu lesen — auch dort, wo Lehrbücher etwas anderes vorschreiben, als Menschen tatsächlich tun. Dieselbe Haltung zeigt sich in meiner Infrastruktur: Arch Linux, Neovim, containerisierte Eigenprojekte statt Cloud-Bequemlichkeit — nicht aus Purismus, sondern weil ich verstehen will, was unter der Oberfläche passiert. Das gilt auch für die vier mathematischen Systeme, die diese Seite im Hintergrund trägt: selbst gebaut, nicht aus einer Bibliothek importiert, weil man Dinge erst wirklich versteht, wenn man sie selbst konstruiert."
+  >
+    I'm Timur Manjosov. I study mathematics via distance learning at FernUni Hagen, and programming isn't a
+    counterbalance to my studies for me — it's where mathematical ideas become tangible. This site itself is
+    one such attempt. My approach to problems is thorough and independent: I'd rather examine conventions
+    myself than simply adopt them, and I keep only what actually moves me forward. Game theory is my tool of
+    choice for reading behavior, negotiation, and cooperation — even where textbooks prescribe something
+    other than what people actually do. The same stance shows up in my infrastructure: Arch Linux, Neovim,
+    containerized personal projects instead of cloud convenience — not out of purism, but because I want to
+    understand what's happening beneath the surface. That's also true of the four mathematical systems
+    carrying this page's background: built myself, not imported from a library, because you only truly
+    understand something once you've built it yourself.
+  </p>
+</section>
+
+<section id="works" aria-labelledby="works-heading">
+  <div class="section-divider" aria-hidden="true">
+    <svg viewBox="0 0 34 6" focusable="false">
+      <path class="divider-line" pathLength="1" d="" />
+      <circle class="divider-point" cx="34" cy="5" r="1.1" />
+    </svg>
+  </div>
+  <h2 id="works-heading" class="section-heading" data-en="Works" data-de="Werke">Works</h2>
+
+  <div class="works-grid">
+    <section id="project-epiphyte" class="project-section" aria-labelledby="project-epiphyte-heading">
+      <div class="section-divider" aria-hidden="true">
+        <svg viewBox="0 0 34 6" focusable="false">
+          <path class="divider-line" pathLength="1" d="" />
+          <circle class="divider-point" cx="34" cy="5" r="1.1" />
+        </svg>
+      </div>
+      <article class="project-card" id="epiphyte-card" aria-labelledby="project-epiphyte-heading">
+        <h3 id="project-epiphyte-heading">
+          <button
+            type="button"
+            class="project-toggle"
+            aria-expanded="false"
+            aria-controls="epiphyte-detail"
+          >
+            <span>Epiphyte</span>
+            <span class="toggle-icon" aria-hidden="true">+</span>
+          </button>
+        </h3>
+        <div class="project-preview">
+          <canvas data-preview="lsystem" aria-hidden="true"></canvas>
+          <span
+            class="visually-hidden"
+            data-en="Live preview: a small generative plant grows and slowly fades in a repeating cycle, echoing Epiphyte's own server-driven growth."
+            data-de="Live-Vorschau: Eine kleine generative Pflanze wächst und verblasst in einem wiederkehrenden Zyklus – ein Echo von Epiphytes eigenem, servergesteuertem Wachstum."
+          >
+            Live preview: a small generative plant grows and slowly fades in a repeating cycle, echoing
+            Epiphyte's own server-driven growth.
+          </span>
+        </div>
+        <ul class="tech-tags" role="list" aria-label="Technologies used">
+          <li>Python</li>
+          <li>discord.py</li>
+        </ul>
+        <div class="project-detail" id="epiphyte-detail">
+          <div class="project-detail-inner">
+            <p
+              data-en="A Discord bot that grows one living plant per server from six independent, honest signals — message volume, how many different people take part, how evenly they talk over time, reactions, thread depth, and shared voice presence — each shaping a different part of the plant so none of it can be gamed by one person alone. Growth and death are permanent: a branch a drought killed stays a scar for good, and a tended plant can eventually bloom, set seed, or even grow a smaller epiphyte of its own on an old limb. When neglect is total the plant dies and a new, related generation sprouts in its place. Built with discord.py's default, non-privileged intents only — it knows a message arrived, never what it said."
+              data-de="Ein Discord-Bot, der pro Server eine einzige lebende Pflanze wachsen lässt — gespeist von sechs unabhängigen, ehrlichen Signalen: Nachrichtenvolumen, wie viele unterschiedliche Personen mitreden, wie gleichmäßig über die Zeit gesprochen wird, Reaktionen, Thread-Tiefe und gemeinsame Sprachpräsenz — jedes davon prägt einen anderen Teil der Pflanze, sodass sie nicht von Einzelnen manipuliert werden kann. Wachstum und Tod sind dauerhaft: Ein Ast, den eine Dürre tötet, bleibt für immer eine Narbe, und eine gut gepflegte Pflanze kann irgendwann blühen, Samen ansetzen oder sogar eine kleinere Epiphyte auf einem alten Ast hervorbringen. Bei völliger Vernachlässigung stirbt die Pflanze, und eine neue, verwandte Generation keimt an ihrer Stelle. Gebaut ausschließlich mit discord.pys Standard-Intents ohne besondere Rechte — der Bot merkt, dass eine Nachricht ankam, nie, was darin stand."
+            >
+              A Discord bot that grows one living plant per server from six independent, honest signals — message
+              volume, how many different people take part, how evenly they talk over time, reactions, thread
+              depth, and shared voice presence — each shaping a different part of the plant so none of it can be
+              gamed by one person alone. Growth and death are permanent: a branch a drought killed stays a scar for
+              good, and a tended plant can eventually bloom, set seed, or even grow a smaller epiphyte of its own on
+              an old limb. When neglect is total the plant dies and a new, related generation sprouts in its place.
+              Built with discord.py's default, non-privileged intents only — it knows a message arrived, never what
+              it said.
+            </p>
+            <!-- Sources: epiphyte/README.md — "The thesis", "Six ways a server shows up in the plant" (table),
+                 "A body that keeps the record", "What it refuses to do" (no privileged gateway intents). -->
+            <a class="project-link" href="https://github.com/timur-manjosov/epiphyte">
+              <span data-en="View on GitHub" data-de="Auf GitHub ansehen">View on GitHub</span>
+              <span class="link-arrow" aria-hidden="true">&rarr;</span>
+            </a>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section id="project-saeculum" class="project-section" aria-labelledby="project-saeculum-heading">
+      <div class="section-divider" aria-hidden="true">
+        <svg viewBox="0 0 34 6" focusable="false">
+          <path class="divider-line" pathLength="1" d="" />
+          <circle class="divider-point" cx="34" cy="5" r="1.1" />
+        </svg>
+      </div>
+      <article class="project-card" id="saeculum-card" aria-labelledby="project-saeculum-heading">
+        <h3 id="project-saeculum-heading">
+          <button
+            type="button"
+            class="project-toggle"
+            aria-expanded="false"
+            aria-controls="saeculum-detail"
+          >
+            <span>Saeculum</span>
+            <span class="toggle-icon" aria-hidden="true">+</span>
+          </button>
+        </h3>
+        <div class="project-preview">
+          <canvas data-preview="ca" aria-hidden="true"></canvas>
+          <span
+            class="visually-hidden"
+            data-en="Live preview: a small terminal-style simulation generates a new strip of procedural terrain, cycling endlessly."
+            data-de="Live-Vorschau: Eine kleine Terminal-Simulation generiert fortlaufend einen neuen Streifen prozeduralen Geländes."
+          >
+            Live preview: a small terminal-style simulation generates a new strip of procedural terrain, cycling
+            endlessly.
+          </span>
+        </div>
+        <ul class="tech-tags" role="list" aria-label="Technologies used">
+          <li>Python</li>
+        </ul>
+        <div class="project-detail" id="saeculum-detail">
+          <div class="project-detail-inner">
+            <p
+              data-en="A terminal world simulator whose history is never scripted: continents come from tectonics, rivers from the climate that follows, and nations are run by trait-driven rulers who only react to what's next to them rather than planning ahead. Every meaningful change emits an immutable event carrying the named, weighted factors that produced it and links to the events that caused it, so any collapse or war can be interrogated with a 'why?' all the way back through its causal chain. A world is a pure function of one seed — sharing that single number reproduces the exact same history, down to identical event ids."
+              data-de="Ein Terminal-Weltsimulator, dessen Geschichte niemals geskriptet ist: Kontinente entstehen aus Tektonik, Flüsse aus dem Klima, das darauf folgt, und Nationen werden von trait-gesteuerten Herrschern regiert, die nur auf ihre unmittelbare Umgebung reagieren, statt zu planen. Jede bedeutsame Änderung erzeugt ein unveränderliches Ereignis mit benannten, gewichteten Faktoren, die es verursacht haben, sowie Verweisen auf die Ereignisse, die es ausgelöst haben — jeder Krieg oder Zusammenbruch lässt sich so mit einem „Warum?“ bis zum Anfang seiner kausalen Kette befragen. Eine Welt ist eine reine Funktion eines einzigen Seeds — wer diese eine Zahl teilt, reproduziert exakt dieselbe Geschichte, bis hin zu identischen Ereignis-IDs."
+            >
+              A terminal world simulator whose history is never scripted: continents come from tectonics, rivers
+              from the climate that follows, and nations are run by trait-driven rulers who only react to what's
+              next to them rather than planning ahead. Every meaningful change emits an immutable event carrying
+              the named, weighted factors that produced it and links to the events that caused it, so any collapse
+              or war can be interrogated with a "why?" all the way back through its causal chain. A world is a pure
+              function of one seed — sharing that single number reproduces the exact same history, down to
+              identical event ids.
+            </p>
+            <!-- Sources: saeculum/README.md — intro paragraph, "Highlights", "How it works". -->
+            <a class="project-link" href="https://github.com/timur-manjosov/saeculum">
+              <span data-en="View on GitHub" data-de="Auf GitHub ansehen">View on GitHub</span>
+              <span class="link-arrow" aria-hidden="true">&rarr;</span>
+            </a>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section id="project-aura" class="project-section" aria-labelledby="project-aura-heading">
+      <div class="section-divider" aria-hidden="true">
+        <svg viewBox="0 0 34 6" focusable="false">
+          <path class="divider-line" pathLength="1" d="" />
+          <circle class="divider-point" cx="34" cy="5" r="1.1" />
+        </svg>
+      </div>
+      <article class="project-card" id="aura-card" aria-labelledby="project-aura-heading">
+        <h3 id="project-aura-heading">
+          <button
+            type="button"
+            class="project-toggle"
+            aria-expanded="false"
+            aria-controls="aura-detail"
+          >
+            <span>Aura</span>
+            <span class="toggle-icon" aria-hidden="true">+</span>
+          </button>
+        </h3>
+        <span class="status-badge" data-en="Work in progress" data-de="In Arbeit">Work in progress</span>
+        <div class="project-detail" id="aura-detail">
+          <div class="project-detail-inner">
+            <p
+              data-en="A Discord bot built around one function: knowing the server, not archiving it. Instead of a searchable chat log, it aims to maintain a small, continuously distilled knowledge model of what's actually true about a server right now — including what used to be true and no longer is — to answer questions directly, proactively surface answers when confident enough, greet new members with a live summary, and post a periodic digest of what changed. It has no moderation authority: no kicks, bans, deletions, or role management. Currently at Phase 0 — the bot skeleton connects to Discord and responds to a translated /ping; the knowledge model itself starts in the next phase."
+              data-de="Ein Discord-Bot mit genau einer Funktion: den Server zu kennen, statt ihn zu archivieren. Statt eines durchsuchbaren Chat-Verlaufs soll er ein kleines, fortlaufend destilliertes Wissensmodell dessen pflegen, was auf einem Server gerade tatsächlich zutrifft — einschließlich dessen, was früher galt und nicht mehr gilt —, um Fragen direkt zu beantworten, bei ausreichender Sicherheit von sich aus Antworten zu liefern, neue Mitglieder mit einer aktuellen Zusammenfassung zu begrüßen und regelmäßig zusammenzufassen, was sich geändert hat. Er hat keine Moderationsrechte: kein Kicken, Bannen, Löschen von Nachrichten oder Verwalten von Rollen. Aktuell befindet sich das Projekt in Phase 0 — das Bot-Grundgerüst verbindet sich mit Discord und antwortet auf ein übersetztes /ping; das eigentliche Wissensmodell beginnt in der nächsten Phase."
+            >
+              A Discord bot built around one function: knowing the server, not archiving it. Instead of a
+              searchable chat log, it aims to maintain a small, continuously distilled knowledge model of what's
+              actually true about a server right now — including what used to be true and no longer is — to answer
+              questions directly, proactively surface answers when confident enough, greet new members with a live
+              summary, and post a periodic digest of what changed. It has no moderation authority: no kicks, bans,
+              deletions, or role management. Currently at Phase 0 — the bot skeleton connects to Discord and
+              responds to a translated /ping; the knowledge model itself starts in the next phase.
+            </p>
+            <!-- Sources: aura-bot/README.md — intro paragraph, "This repository is currently at Phase 0" note. -->
+          </div>
+        </div>
+      </article>
+      <!-- Future projects: add another <section class="project-section"> block, following this pattern, as the last child of .works-grid. -->
+    </section>
+  </div>
+</section>
+
+<section id="contact" aria-labelledby="contact-heading">
+  <div class="section-divider" aria-hidden="true">
+    <svg viewBox="0 0 34 6" focusable="false">
+      <path class="divider-line" pathLength="1" d="" />
+      <circle class="divider-point" cx="34" cy="5" r="1.1" />
+    </svg>
+  </div>
+  <h2 id="contact-heading" class="section-heading" data-en="Contact" data-de="Kontakt">Contact</h2>
+  <ul class="contact-list" role="list">
+    <li>
+      <span class="contact-label" data-en="GitHub" data-de="GitHub">GitHub</span>
+      <a class="contact-link" href="https://github.com/timur-manjosov">
+        <span>github.com/timur-manjosov</span>
+        <span class="link-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </li>
+    <!-- Future contact methods: add another <li> here, same structure. -->
+  </ul>
+</section>

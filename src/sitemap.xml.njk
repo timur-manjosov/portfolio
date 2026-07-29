@@ -1,0 +1,15 @@
+---
+permalink: sitemap.xml
+eleventyExcludeFromCollections: true
+---
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{%- for entry in collections.sitemap %}
+  <url>
+    <loc>https://timurmanjosov.com{{ entry.url }}</loc>
+    <lastmod>{{ entry.data.lastmod }}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>{{ entry.data.sitemapPriority }}</priority>
+  </url>
+{%- endfor %}
+</urlset>

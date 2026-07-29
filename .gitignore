@@ -11,3 +11,15 @@ desktop.ini
 # Local tooling / logs
 *.log
 .cache/
+
+# 11ty build (authoring-time only — see CLAUDE.md)
+node_modules/
+_site/
+_site.a/
+_site.b/
+_site.bootstrap/
+current
+current.tmp
+
+# Prompts
+prompts/*

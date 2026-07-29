@@ -1,8 +1,12 @@
 # timurmanjosov.com
 
 My personal welcome page — a small, honest "this is me" introduction, not a
-portfolio showcase. Vanilla HTML/CSS/JS, no build step, no framework,
-deployed as static files behind Caddy.
+portfolio showcase. Vanilla HTML/CSS/JS, no runtime framework, deployed as
+static files behind Caddy. **See `CLAUDE.md` for the current project
+structure and rules — it supersedes the "Structure" section below, which
+is kept only as a historical/conceptual reference** (this repo now uses
+11ty as an authoring-time build step; see `MIGRATION.md` for what changed
+and why).
 
 Design direction: Nord palette (light/dark, manual toggle + system default),
 Space Grotesk/Inter/JetBrains Mono, bilingual DE/EN content. The signature
@@ -12,26 +16,29 @@ four mathematical systems — see "The generative system" below.
 
 ## Preview locally
 
-No build step — any static file server works:
-
 ```sh
-python3 -m http.server 8000
-# then open http://localhost:8000
+npm install
+npm start   # eleventy --serve, live reload, http://localhost:8080
 ```
 
-Or just open `index.html` directly in a browser; the only things that won't
-work from a plain `file://` URL are the two toggles reading `localStorage`
-in some browsers' stricter local-file security modes, and possibly
-`IntersectionObserver` root behavior in older engines — serve it over HTTP
-if you want to test those.
+Or `npm run build` once, then serve the generated `_site/` directory with
+any static file server — the *deployed* artifact is still plain static
+HTML/CSS/JS, 11ty just composes it at build time (see `CLAUDE.md`).
 
-## Structure
+## Deploying
+
+`./ship.sh` — one command, run from this repo on the ThinkPad. It commits
+and pushes any pending changes, then SSHes into the VPS and runs its
+`deploy.sh`, which builds the site in a disposable Docker container and
+atomically swaps it live. See `CLAUDE.md`'s "Build & deploy" for details.
+
+## Structure (conceptual — see `CLAUDE.md` for the authoritative layout)
 
 ```
-index.html          Semantic HTML, all page content, both languages inline
 styles/
+  tokens.css        Fonts, colors, type scale, spacing, radii, motion timings
   reset.css         Minimal modern CSS reset — no colors/type/layout here
-  main.css          Design tokens, theming, layout, every section's styling
+  main.css          Layout, theming, every section's component styling
 scripts/
   system.js         The generative engine (see below) — background canvas
                      + the two project-card live previews
@@ -40,7 +47,6 @@ scripts/
 assets/
   fonts/            Self-hosted variable fonts (woff2, Latin subset)
   images/           Favicon (svg + png fallbacks) and the OG share image
-sitemap.xml
 robots.txt
 ```
 
@@ -107,6 +113,11 @@ degradation priority above. Both carry a visually-hidden text description
 for screen readers (the canvases themselves are `aria-hidden`).
 
 ## Adding a project
+
+*(Note: this section predates the three-chapter narrative rebuild — actual
+project markup now lives in `src/index.njk` as one `<section
+class="project-section">` per project, no `#projects-list`/`<li>` wrapper.
+See `CLAUDE.md`'s "Adding a project" for the accurate current template.)*
 
 Projects live in `#projects-list` in `index.html`, one `<li><article
 class="project-card">` per project. Copy an existing one:

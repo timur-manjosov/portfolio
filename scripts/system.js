@@ -36,18 +36,100 @@
 
   /* --------------------------------------------------------------------
      Colour: resolve the live Nord custom properties (one of which is a
-     color-mix() in the light theme) to concrete RGB by handing the CSS
-     string to a scratch canvas and reading the pixel back -- reuses the
-     browser's own color parser instead of a hand-rolled one. Shared by
-     the background engine and the card previews alike.
+     color-mix() in the light theme) to concrete RGB.
+     Fix for AUDIT.md §4 (Kritische Funde #1): a live custom property can't
+     be resolved by getComputedStyle() alone when it contains a function
+     like color-mix() -- var() substitution happens, the function call
+     itself doesn't -- so the previous implementation always painted the
+     value onto a 1x1 scratch canvas and read it back with getImageData()
+     to borrow the browser's own color parser. That technique is also the
+     textbook canvas-fingerprinting readout, so privacy-hardened browsers
+     (Tor Browser, Brave/Firefox with resistFingerprinting, etc.) quietly
+     add noise to exactly that getImageData() call, which would make the
+     whole generative system render in slightly wrong, unstable colours.
+     Fixed by resolving both plain values and the one color-mix() shape
+     this site actually uses by hand, with no canvas involved; the canvas
+     roundtrip only remains as a last-resort path for CSS colour syntax
+     this parser doesn't recognize, and even then only once a canary probe
+     confirms the readback isn't being tampered with -- otherwise a
+     hardcoded fallback (the caller's own fallback color) is used instead.
+     Shared by the background engine and the card previews alike.
      -------------------------------------------------------------------- */
+
+  function parseColorToken(token) {
+    if (!token) return null;
+    token = token.trim();
+    var hex = token.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (hex) {
+      var h = hex[1];
+      if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+      return { r: parseInt(h.substr(0, 2), 16), g: parseInt(h.substr(2, 2), 16), b: parseInt(h.substr(4, 2), 16) };
+    }
+    var rgb = token.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
+    if (rgb) return { r: +rgb[1], g: +rgb[2], b: +rgb[3] };
+    return null;
+  }
+
+  // Handles exactly the one color-mix() shape used in main.css/tokens.css
+  // (--color-signal-ink in the light theme): two plain colors blended by
+  // percentage, "in srgb" -- which is a straight per-channel weighted
+  // average, no different math than what the browser does for this case.
+  // Not a general color-mix() implementation (doesn't need to be one).
+  function parseColorMix(value) {
+    var m = value.match(/^color-mix\(\s*in\s+srgb\s*,\s*(.+?)\s+([\d.]+)%\s*,\s*(.+?)\s+([\d.]+)%\s*\)$/i);
+    if (!m) return null;
+    var c1 = parseColorToken(m[1]), p1 = parseFloat(m[2]);
+    var c2 = parseColorToken(m[3]), p2 = parseFloat(m[4]);
+    if (!c1 || !c2) return null;
+    var total = p1 + p2 || 100;
+    return {
+      r: Math.round((c1.r * p1 + c2.r * p2) / total),
+      g: Math.round((c1.g * p1 + c2.g * p2) / total),
+      b: Math.round((c1.b * p1 + c2.b * p2) / total),
+    };
+  }
+
+  function resolveColorDirect(value) {
+    if (!value) return null;
+    var direct = parseColorToken(value);
+    if (direct) return direct;
+    if (/^color-mix\(/i.test(value)) return parseColorMix(value);
+    return null;
+  }
 
   var swatch = document.createElement("canvas");
   swatch.width = 1;
   swatch.height = 1;
   var swatchCtx = swatch.getContext("2d");
 
+  var canvasTrustChecked = false;
+  var canvasTrusted = true;
+  // Canary probe: paint a known reference color and read it straight
+  // back. An untampered canvas returns exactly what was painted; a
+  // fingerprinting guard perturbs the readback, which this catches
+  // without ever touching the page's own theme colors.
+  function canvasReadbackTrusted() {
+    if (canvasTrustChecked) return canvasTrusted;
+    canvasTrustChecked = true;
+    try {
+      swatchCtx.fillStyle = "#123456";
+      swatchCtx.fillRect(0, 0, 1, 1);
+      var d = swatchCtx.getImageData(0, 0, 1, 1).data;
+      canvasTrusted = d[0] === 0x12 && d[1] === 0x34 && d[2] === 0x56;
+    } catch (e) {
+      canvasTrusted = false;
+    }
+    return canvasTrusted;
+  }
+
   function resolveColor(cssValue, fallback) {
+    var direct = resolveColorDirect(cssValue);
+    if (direct) return direct;
+
+    if (!canvasReadbackTrusted()) {
+      return parseColorToken(fallback) || { r: 46, g: 52, b: 64 };
+    }
+
     swatchCtx.fillStyle = "#000";
     swatchCtx.fillStyle = cssValue || fallback;
     swatchCtx.fillRect(0, 0, 1, 1);
@@ -268,10 +350,18 @@
     var ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    var heroEl = document.getElementById("hero");
-    var epiphyteCardEl = document.getElementById("epiphyte-card");
-    var saeculumCardEl = document.getElementById("saeculum-card");
-    var footerEl = document.getElementById("site-footer");
+    // Fix for AUDIT.md §6: anchor elements are read from data-* attributes
+    // on #system-canvas instead of hardcoded ids, so a future microsite
+    // can reuse this file unchanged with its own anchor names -- just by
+    // setting e.g. data-anchor-hero="my-hero" on its own canvas element.
+    // Missing attributes fall back to this page's current ids.
+    function anchorFromData(attr, fallbackId) {
+      return document.getElementById(canvas.getAttribute(attr) || fallbackId);
+    }
+    var heroEl = anchorFromData("data-anchor-hero", "hero");
+    var epiphyteCardEl = anchorFromData("data-anchor-epiphyte", "epiphyte-card");
+    var saeculumCardEl = anchorFromData("data-anchor-saeculum", "saeculum-card");
+    var footerEl = anchorFromData("data-anchor-footer", "site-footer");
 
     /* ------------------------------------------------------------------
        Shared input, exactly Phase 1's state manager: pointer position
@@ -283,7 +373,6 @@
 
     var shared = {
       pointerX: 0, pointerY: 0, pointerTargetX: 0, pointerTargetY: 0,
-      scrollProgress: 0,
       disturbances: [], // { start: performance.now() }
       disturbanceBoost: 0,
     };
@@ -359,7 +448,32 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       needsHardClear = true;
     }
-    window.addEventListener("resize", function () { resizePending = true; }, { passive: true });
+
+    // Fix for AUDIT.md §4: a single resize listener with one clear path,
+    // replacing what used to be two independent ones (an unconditional
+    // top-level listener that only ever set a flag `tick()` would consume
+    // -- except tick() never runs at all under reduced motion, since
+    // start() is never called there -- plus reducedMotionInit()'s own
+    // second listener doing the real work). motionState.reduced (below)
+    // decides the one path a resize takes; maybeDrawStatic/motionState
+    // are declared further down but already in scope by the time this
+    // ever actually fires, same as any other function in this closure.
+    function handleResize() {
+      if (motionState.reduced) {
+        resize();
+        maybeDrawStatic(true);
+      } else {
+        resizePending = true;
+      }
+    }
+    window.addEventListener("resize", handleResize, { passive: true });
+
+    // Fix for AUDIT.md §4: prefers-reduced-motion used to be read only
+    // once at init (prefersReducedMotion(), used below); this holds the
+    // live value instead, kept current by the matchMedia "change"
+    // listener near the end of this IIFE, the same pattern already used
+    // for prefers-color-scheme via refreshThemeColors.
+    var motionState = { reduced: prefersReducedMotion() };
 
     function refreshThemeColors() {
       readThemeColors();
@@ -428,8 +542,16 @@
       return {
         id: "dejong",
         anchorEl: heroEl,
-        weight: 1,
-        targetWeight: 1,
+        // Fix for AUDIT.md §4/§6: used to start at 1 (the only one of the
+        // four systems that did), a hardcoded assumption that the hero is
+        // always the initially-dominant anchor. Now starts at 0 like the
+        // others and is driven entirely by the real IntersectionObserver
+        // callback below -- if a page reusing this file has no #hero (or
+        // no matching data-anchor-hero target), anchorEl is null, that
+        // callback never fires for it, and it correctly never renders,
+        // instead of getting stuck permanently at full opacity.
+        weight: 0,
+        targetWeight: 0,
         qualityScale: 1,
 
         update: function (shared) {
@@ -883,9 +1005,9 @@
 
       shared.pointerX = ease(shared.pointerX, shared.pointerTargetX, 0.06);
       shared.pointerY = ease(shared.pointerY, shared.pointerTargetY, 0.06);
-      var scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      var scrollY = window.scrollY || window.pageYOffset || 0;
-      shared.scrollProgress = scrollable > 0 ? Math.min(1, Math.max(0, scrollY / scrollable)) : 0;
+      // Fix for AUDIT.md §4: shared.scrollProgress used to be recomputed
+      // here every frame but never read by any system -- removed rather
+      // than kept as a dead field.
       updateDisturbanceBoost(timestamp);
 
       renderFrame(timestamp);
@@ -918,57 +1040,85 @@
     /* ------------------------------------------------------------------
        Reduced motion: no animated crossfade, no rAF loop at all -- just
        jump to whichever anchor is currently most visible and draw ONE
-       static frame for it. IntersectionObserver callbacks are the only
-       thing still listened to here: they fire on real visibility
-       changes, driven by the user's own scrolling, not autoplaying
-       motion, so re-picking the dominant system on each one stays
-       within the spirit of "reduce motion", not just the letter of it.
+       static frame for it.
+
+       Fix for AUDIT.md §4 (Kritische Funde #2): prefers-reduced-motion
+       used to be read exactly once at load, so changing the OS setting
+       mid-visit did nothing until a reload -- the one documented gap in
+       an otherwise careful pattern (color-scheme *was* already live).
+       The two previously-separate IntersectionObservers (one driving the
+       animated crossfade's targetWeight, one separately re-deriving "most
+       visible anchor" for the static mode) are now the same observer:
+       every callback always updates targetWeight, and additionally drives
+       a static redraw when motionState.reduced is true. That's what lets
+       enterReducedMotion()/enterAnimatedMotion() below just flip a mode
+       and reuse the same observer, instead of tearing one down and
+       building the other from scratch on every OS-level toggle.
        ------------------------------------------------------------------ */
 
-    function reducedMotionInit() {
-      resize();
-      var view = { ctx: ctx, width: cssWidth, height: cssHeight };
-      var current = dejong;
+    var currentStatic = null;
 
-      function drawStatic(sys) {
-        current = sys;
-        ctx.fillStyle = rgba(colors.canvas, 1);
-        ctx.fillRect(0, 0, cssWidth, cssHeight);
-        sys.renderStatic(view);
+    function drawStatic(sys) {
+      currentStatic = sys;
+      ctx.fillStyle = rgba(colors.canvas, 1);
+      ctx.fillRect(0, 0, cssWidth, cssHeight);
+      sys.renderStatic({ ctx: ctx, width: cssWidth, height: cssHeight });
+    }
+
+    // Only ever considers systems whose anchor actually exists on this
+    // page -- see the dejong weight fix above, same idea applied here:
+    // a page missing an anchor must never have that system forced onto
+    // screen just because it's first in the array.
+    function pickDominantSystem() {
+      var best = null, bestWeight = -1;
+      for (var i = 0; i < systems.length; i++) {
+        var s = systems[i];
+        if (!s.anchorEl) continue;
+        if (s.targetWeight > bestWeight) { bestWeight = s.targetWeight; best = s; }
       }
+      return { sys: best, weight: bestWeight };
+    }
 
-      drawStatic(dejong);
+    function maybeDrawStatic(force) {
+      var pick = pickDominantSystem();
+      if (!pick.sys) return;
+      if (force || (pick.sys !== currentStatic && pick.weight > 0.1)) drawStatic(pick.sys);
+    }
 
-      if (window.IntersectionObserver) {
-        var ratios = {};
-        var staticIo = new IntersectionObserver(
-          function (entries) {
-            entries.forEach(function (entry) {
-              for (var i = 0; i < systems.length; i++) {
-                if (systems[i].anchorEl === entry.target) ratios[systems[i].id] = entry.intersectionRatio;
-              }
-            });
-            var best = dejong, bestRatio = -1;
-            systems.forEach(function (s) {
-              var r = ratios[s.id] || 0;
-              if (r > bestRatio) { bestRatio = r; best = s; }
-            });
-            if (best !== current && bestRatio > 0.1) drawStatic(best);
-          },
-          { threshold: thresholds, rootMargin: "25% 0px 25% 0px" }
-        );
-        systems.forEach(function (s) { if (s.anchorEl) staticIo.observe(s.anchorEl); });
-      }
-
-      window.addEventListener(
-        "resize",
-        function () {
-          resize();
-          view.width = cssWidth; view.height = cssHeight;
-          drawStatic(current);
+    var weightObserver = null;
+    function ensureWeightObserver() {
+      if (weightObserver || !window.IntersectionObserver) return;
+      weightObserver = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            var sys = null;
+            for (var i = 0; i < systems.length; i++) {
+              if (systems[i].anchorEl === entry.target) { sys = systems[i]; break; }
+            }
+            if (!sys) return;
+            sys.targetWeight = entry.intersectionRatio;
+            if (motionState.reduced) maybeDrawStatic(false);
+          });
         },
-        { passive: true }
+        { threshold: thresholds, rootMargin: "25% 0px 25% 0px" }
       );
+      systems.forEach(function (s) { if (s.anchorEl) weightObserver.observe(s.anchorEl); });
+    }
+
+    function enterReducedMotion() {
+      motionState.reduced = true;
+      stop();
+      resize();
+      currentStatic = null;
+      ensureWeightObserver();
+      maybeDrawStatic(true);
+    }
+
+    function enterAnimatedMotion() {
+      motionState.reduced = false;
+      ensureWeightObserver();
+      needsHardClear = true; // avoid a stale static frame smearing into the crossfade
+      start();
     }
 
     /* ------------------------------------------------------------------
@@ -978,29 +1128,19 @@
     readThemeColors();
     resize();
 
-    if (prefersReducedMotion()) {
-      reducedMotionInit();
+    if (motionState.reduced) {
+      enterReducedMotion();
     } else {
-      // Crossfade weight observer: only wired up here, not under reduced
-      // motion, so that mode truly registers no scroll/pointer/click
-      // listeners at all beyond the (separate, simpler) one inside
-      // reducedMotionInit.
-      if (window.IntersectionObserver) {
-        var io = new IntersectionObserver(
-          function (entries) {
-            entries.forEach(function (entry) {
-              var sys = null;
-              for (var i = 0; i < systems.length; i++) {
-                if (systems[i].anchorEl === entry.target) { sys = systems[i]; break; }
-              }
-              if (sys) sys.targetWeight = entry.intersectionRatio;
-            });
-          },
-          { threshold: thresholds, rootMargin: "25% 0px 25% 0px" }
-        );
-        systems.forEach(function (s) { if (s.anchorEl) io.observe(s.anchorEl); });
+      enterAnimatedMotion();
+    }
+
+    if (window.matchMedia) {
+      var reducedMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+      if (reducedMQ.addEventListener) {
+        reducedMQ.addEventListener("change", function (e) {
+          if (e.matches) enterReducedMotion(); else enterAnimatedMotion();
+        });
       }
-      start();
     }
   })();
 

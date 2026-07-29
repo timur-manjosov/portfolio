@@ -1,0 +1,18 @@
+{
+  "name": "timurmanjosov.com",
+  "version": "1.0.0",
+  "private": true,
+  "description": "timurmanjosov.com — 11ty as an authoring-time build step only; the deployed output is still static HTML/CSS/JS behind Caddy, no runtime framework.",
+  "scripts": {
+    "build": "eleventy",
+    "start": "eleventy --serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timur-manjosov/timurmanjosov.com.git"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.6"
+  }
+}

@@ -198,9 +198,7 @@
     if (prefersReducedMotion()) return;
     if (!("IntersectionObserver" in window)) return;
 
-    var targets = document.querySelectorAll(
-      "#chapter-1, #project-epiphyte, #chapter-2, #project-saeculum, #project-aura, #chapter-3, #contact"
-    );
+    var targets = document.querySelectorAll("#about, #contact");
     targets.forEach(function (el) {
       el.classList.add("reveal-init");
     });
@@ -222,7 +220,94 @@
     });
   }
 
+  /* --------------------------------------------------------------------
+     Works reveal: the three project entries fade in together, staggered,
+     the moment #works itself scrolls into view — one IntersectionObserver
+     on the section as a whole (not one per entry, unlike initScrollReveal
+     above), reusing the same .reveal-init/.is-visible CSS mechanism; the
+     cascade itself is pure CSS (per-entry transition-delay in main.css).
+     Returns early under reduced motion exactly like the other reveals
+     above, so entries simply stay fully visible with no stagger at all
+     instead of a partial/uncontrolled motion effect.
+     -------------------------------------------------------------------- */
+
+  function initWorksReveal() {
+    if (prefersReducedMotion()) return;
+    if (!("IntersectionObserver" in window)) return;
+
+    var works = document.getElementById("works");
+    if (!works) return;
+    var entries = works.querySelectorAll(".project-section");
+    if (!entries.length) return;
+
+    entries.forEach(function (el) {
+      el.classList.add("reveal-init");
+    });
+
+    var observer = new IntersectionObserver(
+      function (obsEntries, obs) {
+        obsEntries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entries.forEach(function (el) {
+              el.classList.add("is-visible");
+            });
+            obs.disconnect();
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(works);
+  }
+
+  /* --------------------------------------------------------------------
+     Project tiles: :hover/:focus-within in main.css already reveal a
+     tile's full detail on real hover or keyboard focus with zero JS. This
+     only adds what CSS can't do on its own -- a persisted click/tap
+     toggle for touch devices that have no hover at all, with a real
+     aria-expanded state, plus closing any other open tile so at most one
+     tile is expanded at a time (the brief's "avoid layout collision" on
+     the desktop grid). Not reduced-motion-sensitive: the CSS transitions
+     it triggers are already collapsed globally by reset.css.
+     -------------------------------------------------------------------- */
+
+  function initProjectTiles() {
+    var cards = document.querySelectorAll("#works .project-card");
+    if (!cards.length) return;
+
+    function collapse(card) {
+      if (!card.classList.contains("is-expanded")) return;
+      card.classList.remove("is-expanded");
+      var toggle = card.querySelector(".project-toggle");
+      if (toggle) toggle.setAttribute("aria-expanded", "false");
+    }
+
+    function collapseOthers(current) {
+      cards.forEach(function (card) {
+        if (card !== current) collapse(card);
+      });
+    }
+
+    cards.forEach(function (card) {
+      var toggle = card.querySelector(".project-toggle");
+      if (!toggle) return;
+
+      card.addEventListener("pointerenter", function () { collapseOthers(card); });
+      card.addEventListener("focusin", function () { collapseOthers(card); });
+
+      toggle.addEventListener("click", function () {
+        var willExpand = !card.classList.contains("is-expanded");
+        collapseOthers(card);
+        card.classList.toggle("is-expanded", willExpand);
+        toggle.setAttribute("aria-expanded", String(willExpand));
+      });
+    });
+  }
+
   initGenerativeDividers();
   revealHeroContent();
   initScrollReveal();
+  initWorksReveal();
+  initProjectTiles();
 })();

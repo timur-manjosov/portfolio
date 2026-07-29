@@ -1,0 +1,161 @@
+/* ==========================================================================
+   Design tokens — page-agnostic on purpose (see AUDIT.md §6 / CLAUDE.md):
+   fonts, colors, type scale, spacing, radii, motion timings. No layout or
+   component rules here, so any future microsite can include this file
+   alone and inherit the same Nord look without also inheriting main.css's
+   section-specific styling.
+   ========================================================================== */
+
+/* ==========================================================================
+   Fonts — self-hosted variable fonts, Latin subset (covers DE umlauts/ß).
+   font-display: swap keeps text visible during load (no render-block/FOIT).
+   ========================================================================== */
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../assets/fonts/space-grotesk-variable-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../assets/fonts/inter-variable-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("../assets/fonts/jetbrains-mono-variable-latin.woff2") format("woff2");
+}
+
+:root {
+  /* --- Nord source values (reference only — don't use these directly in
+     component CSS, go through the semantic tokens below so theming works) --- */
+  --nord0: #2e3440;
+  --nord1: #3b4252;
+  --nord2: #434c5e;
+  --nord3: #4c566a;
+  --nord4: #d8dee9;
+  --nord5: #e5e9f0;
+  --nord6: #eceff4;
+  --nord8: #88c0d0;
+
+  /* --- Semantic color tokens: DARK is the base/default theme.
+     prefers-color-scheme and [data-theme] blocks below override these. --- */
+  --color-canvas: var(--nord0);
+  --color-surface: var(--nord1);
+  --color-surface-2: var(--nord2);
+  --color-ink: var(--nord6);
+  --color-mute: var(--nord4);
+  --color-rule: color-mix(in srgb, var(--color-ink) 16%, transparent);
+
+  /* --color-signal is the constant Nord-8 accent — reserve it for
+     large/decorative graphics (≥3:1 need only). For links, focus rings,
+     pressed states and anything text-sized, use --color-signal-ink,
+     which is contrast-checked per theme (WCAG AA, ≥4.5:1). */
+  --color-signal: var(--nord8);
+  --color-signal-ink: var(--color-signal);
+
+  color-scheme: dark;
+
+  /* --- Typography --- */
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* Fluid type scale (clamp: mobile-min, viewport-relative, desktop-max) */
+  --step--1: clamp(0.8rem, 0.775rem + 0.14vw, 0.889rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --step-1: clamp(1.25rem, 1.18rem + 0.35vw, 1.5rem);
+  --step-2: clamp(1.563rem, 1.42rem + 0.65vw, 2rem);
+  --step-3: clamp(1.953rem, 1.7rem + 1.15vw, 2.75rem);
+  --step-4: clamp(2.441rem, 1.95rem + 2.2vw, 3.75rem);
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+
+  --measure: 65ch;
+
+  /* --- Spacing scale --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: clamp(3rem, 2.3rem + 3vw, 5.5rem);
+  --space-9: clamp(4rem, 2.8rem + 5vw, 8rem);
+  /* Content restructuring (#about/#works, see MIGRATION.md): the gap between
+     the page's four main areas (hero, about, works, contact) needed to read
+     as more generous than the old chapter-to-project rhythm (--space-8) —
+     --space-9 was already spoken for (hero's own top padding) and reusing it
+     here would make the hero gap and the inter-section gap look identical,
+     losing the hero's distinctness. One more step on the existing curve. */
+  --space-10: clamp(5rem, 3.3rem + 6.5vw, 10rem);
+
+  /* --- Layout --- */
+  --content-max: 75rem;
+  --gutter: clamp(1.25rem, 1rem + 2vw, 3rem);
+
+  /* --- Radii --- */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-full: 999px;
+
+  /* --- Motion (prefers-reduced-motion is handled globally in reset.css) --- */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms ease;
+}
+
+/* Light theme via system preference, unless a manual choice overrides it. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --color-canvas: var(--nord6);
+    --color-surface: var(--nord5);
+    --color-surface-2: var(--nord4);
+    --color-ink: var(--nord0);
+    --color-mute: var(--nord3);
+    --color-rule: color-mix(in srgb, var(--color-ink) 14%, transparent);
+
+    /* Nord-8 alone is ~1.7:1 on this canvas — fails AA. Darken it toward
+       ink until it clears 4.5:1 (measured ~4.8:1 at this mix ratio). */
+    --color-signal-ink: color-mix(in srgb, var(--color-signal) 40%, var(--color-ink) 60%);
+
+    color-scheme: light;
+  }
+}
+
+/* Manual overrides — set by the theme toggle in scripts/main.js. Explicit
+   blocks for both values so either can win over the system preference above. */
+:root[data-theme="light"] {
+  --color-canvas: var(--nord6);
+  --color-surface: var(--nord5);
+  --color-surface-2: var(--nord4);
+  --color-ink: var(--nord0);
+  --color-mute: var(--nord3);
+  --color-rule: color-mix(in srgb, var(--color-ink) 14%, transparent);
+  --color-signal-ink: color-mix(in srgb, var(--color-signal) 40%, var(--color-ink) 60%);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --color-canvas: var(--nord0);
+  --color-surface: var(--nord1);
+  --color-surface-2: var(--nord2);
+  --color-ink: var(--nord6);
+  --color-mute: var(--nord4);
+  --color-rule: color-mix(in srgb, var(--color-ink) 16%, transparent);
+  --color-signal-ink: var(--color-signal);
+  color-scheme: dark;
+}

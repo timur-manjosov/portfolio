@@ -59,9 +59,15 @@
   /* --color-signal is the constant Nord-8 accent — reserve it for
      large/decorative graphics (≥3:1 need only). For links, focus rings,
      pressed states and anything text-sized, use --color-signal-ink,
-     which is contrast-checked per theme (WCAG AA, ≥4.5:1). */
+     which is contrast-checked per theme (WCAG AA, ≥4.5:1) against
+     --color-surface-2 specifically — the lightest surface in this theme,
+     so also the hardest background this token renders on (.project-link
+     and .status-badge only ever sit on --color-surface-2, since both
+     live inside a .project-card's hover/focus-within/is-expanded state).
+     Raw Nord-8 measures ~4.31:1 there; nudged toward --color-ink until
+     it clears with margin (measured ~4.64:1). */
   --color-signal: var(--nord8);
-  --color-signal-ink: var(--color-signal);
+  --color-signal-ink: color-mix(in srgb, var(--color-signal) 88%, var(--color-ink) 12%);
 
   color-scheme: dark;
 
@@ -128,9 +134,12 @@
     --color-mute: var(--nord3);
     --color-rule: color-mix(in srgb, var(--color-ink) 14%, transparent);
 
-    /* Nord-8 alone is ~1.7:1 on this canvas — fails AA. Darken it toward
-       ink until it clears 4.5:1 (measured ~4.8:1 at this mix ratio). */
-    --color-signal-ink: color-mix(in srgb, var(--color-signal) 40%, var(--color-ink) 60%);
+    /* Nord-8 alone is ~1.7:1 on this canvas — fails AA outright. Darken it
+       toward ink until it clears 4.5:1 against --color-surface-2 — the
+       darkest surface in this theme and so the hardest background this
+       token renders on (see the --color-signal-ink comment above;
+       measured ~4.81:1 at this mix ratio). */
+    --color-signal-ink: color-mix(in srgb, var(--color-signal) 32%, var(--color-ink) 68%);
 
     color-scheme: light;
   }
@@ -145,7 +154,7 @@
   --color-ink: var(--nord0);
   --color-mute: var(--nord3);
   --color-rule: color-mix(in srgb, var(--color-ink) 14%, transparent);
-  --color-signal-ink: color-mix(in srgb, var(--color-signal) 40%, var(--color-ink) 60%);
+  --color-signal-ink: color-mix(in srgb, var(--color-signal) 32%, var(--color-ink) 68%);
   color-scheme: light;
 }
 
@@ -156,6 +165,6 @@
   --color-ink: var(--nord6);
   --color-mute: var(--nord4);
   --color-rule: color-mix(in srgb, var(--color-ink) 16%, transparent);
-  --color-signal-ink: var(--color-signal);
+  --color-signal-ink: color-mix(in srgb, var(--color-signal) 88%, var(--color-ink) 12%);
   color-scheme: dark;
 }

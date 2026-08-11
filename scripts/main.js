@@ -276,11 +276,26 @@
     var cards = document.querySelectorAll("#works .project-card");
     if (!cards.length) return;
 
+    // main.css's .project-card:hover/:focus-within/.is-expanded selector
+    // list is the actual source of truth for what "expanded" looks like —
+    // three independent triggers sharing one visual state. aria-expanded
+    // has to mirror that same union, not just the click-persisted class,
+    // or assistive tech gets told the opposite of what's on screen the
+    // moment a card expands via hover or focus alone.
+    function syncAria(card) {
+      var toggle = card.querySelector(".project-toggle");
+      if (!toggle) return;
+      var expanded =
+        card.classList.contains("is-expanded") ||
+        card.matches(":hover") ||
+        card.matches(":focus-within");
+      toggle.setAttribute("aria-expanded", String(expanded));
+    }
+
     function collapse(card) {
       if (!card.classList.contains("is-expanded")) return;
       card.classList.remove("is-expanded");
-      var toggle = card.querySelector(".project-toggle");
-      if (toggle) toggle.setAttribute("aria-expanded", "false");
+      syncAria(card);
     }
 
     function collapseOthers(current) {
@@ -293,14 +308,28 @@
       var toggle = card.querySelector(".project-toggle");
       if (!toggle) return;
 
-      card.addEventListener("pointerenter", function () { collapseOthers(card); });
-      card.addEventListener("focusin", function () { collapseOthers(card); });
+      card.addEventListener("pointerenter", function () {
+        collapseOthers(card);
+        syncAria(card);
+      });
+      card.addEventListener("pointerleave", function () { syncAria(card); });
+
+      card.addEventListener("focusin", function () {
+        collapseOthers(card);
+        syncAria(card);
+      });
+      card.addEventListener("focusout", function () {
+        // Deferred: while focus is moving between two elements inside the
+        // same card (toggle -> link), :focus-within hasn't settled onto
+        // the new target yet at the moment focusout fires.
+        setTimeout(function () { syncAria(card); }, 0);
+      });
 
       toggle.addEventListener("click", function () {
         var willExpand = !card.classList.contains("is-expanded");
         collapseOthers(card);
         card.classList.toggle("is-expanded", willExpand);
-        toggle.setAttribute("aria-expanded", String(willExpand));
+        syncAria(card);
       });
     });
   }

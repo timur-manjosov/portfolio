@@ -60,6 +60,10 @@ body {
   line-height: var(--leading-normal);
   transition: background-color var(--transition-base), color var(--transition-base);
   position: relative;
+  /* Defensive backstop: no single component should be able to force a
+     page-wide horizontal scrollbar (see #1, .works-grid's auto-fit
+     minmax floor). */
+  overflow-x: hidden;
 }
 
 /* The page's mathematical ground: a full-viewport canvas, fixed behind
@@ -309,7 +313,7 @@ a:hover .link-arrow {
   /* auto-fit rather than a fixed breakpoint: naturally 3-up on desktop,
      folding down to fewer columns and finally a single stacked column on
      narrow viewports with no separate media query needed. */
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
   align-items: start;
   gap: var(--space-6) var(--space-5);
 }

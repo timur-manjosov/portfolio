@@ -449,6 +449,16 @@
       needsHardClear = true;
     }
 
+    // The animated branch's throttle is "free": tick() already runs every
+    // frame regardless, so it just consumes resizePending once it sees it.
+    // Reduced motion has no such loop to piggyback on (start() is never
+    // called there), so it needs its own one-shot rAF gate -- without one,
+    // a continuous drag-resize fires the native "resize" event many times
+    // a second, and each call landed directly on resize()+maybeDrawStatic()
+    // synchronously, i.e. a full renderStatic() burn-in (dejong's is ~42k
+    // attractor iterations plus ~50k fillRect calls) per event, unthrottled.
+    var reducedResizeRafId = null;
+
     // Fix for AUDIT.md §4: a single resize listener with one clear path,
     // replacing what used to be two independent ones (an unconditional
     // top-level listener that only ever set a flag `tick()` would consume
@@ -460,8 +470,13 @@
     // ever actually fires, same as any other function in this closure.
     function handleResize() {
       if (motionState.reduced) {
-        resize();
-        maybeDrawStatic(true);
+        if (reducedResizeRafId === null) {
+          reducedResizeRafId = requestAnimationFrame(function () {
+            reducedResizeRafId = null;
+            resize();
+            maybeDrawStatic(true);
+          });
+        }
       } else {
         resizePending = true;
       }
@@ -1116,6 +1131,14 @@
 
     function enterAnimatedMotion() {
       motionState.reduced = false;
+      // A resize mid-drag could have left the reduced-motion path's own
+      // one-shot rAF still pending (see handleResize above) -- drop it so
+      // it can't fire a stray static redraw one frame into the crossfade
+      // tick() is about to start driving instead.
+      if (reducedResizeRafId !== null) {
+        cancelAnimationFrame(reducedResizeRafId);
+        reducedResizeRafId = null;
+      }
       ensureWeightObserver();
       needsHardClear = true; // avoid a stale static frame smearing into the crossfade
       start();

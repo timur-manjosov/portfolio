@@ -89,11 +89,20 @@ each script's own comments for the exact mechanics, and `MIGRATION.md`
 CI/CD pipeline exists or is planned — this stays a manually triggered,
 single command.
 
-`npm audit` currently reports a high-severity advisory in a transitive
-dependency of `@11ty/eleventy`'s passthrough-copy machinery
-(`brace-expansion`, a build-time-only DoS via pathological glob input).
-It only matters if untrusted glob patterns reach the build tool, which
-they don't here — noted for transparency, not treated as blocking.
+`npm audit` reports 0 vulnerabilities as of 2026-08-14. Two high-severity
+advisories were previously present, both in transitive dependencies of
+`@11ty/eleventy` and both resolved by `npm audit fix` bumping within the
+existing semver ranges (no major-version jumps, no code changes):
+`brace-expansion` (build-time-only DoS via pathological glob input, fixed
+1.1.16 → 1.1.18) and `js-yaml` (quadratic CPU consumption in `!!omap`
+resolution, CVE-2026-59870 — present twice in the graph, once via
+`gray-matter`'s bundled 3.x line at 3.15.0 → 3.15.1 and once via 11ty's
+own direct 4.x dependency at 4.3.0 → 4.3.1). `gray-matter` is 11ty's
+front-matter parser, so the `js-yaml` finding was a content-parsing attack
+surface rather than the glob-pattern one `brace-expansion` covers — worth
+distinguishing if a future advisory shows up in either dependency again.
+Re-run `npm audit` after any `npm install`/lockfile change to confirm
+this note is still accurate.
 
 ## Adding a new page to the hub
 

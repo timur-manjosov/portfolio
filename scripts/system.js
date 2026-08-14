@@ -1177,6 +1177,14 @@
 
   (function cardPreviews() {
     var reduced = prefersReducedMotion();
+    var previewInstances = [];
+
+    document.addEventListener("visibilitychange", function () {
+      previewInstances.forEach(function (inst) {
+        if (document.hidden) inst.stop();
+        else if (inst.isVisible()) inst.start();
+      });
+    });
 
     function makePreview(canvas, draw, drawStatic) {
       if (!canvas || !canvas.getContext) return;
@@ -1210,6 +1218,13 @@
 
       function start() {
         if (rafId !== null) return;
+        // Guards against every caller, not just the visibilitychange
+        // listener below: the IntersectionObserver callback also calls
+        // start() directly, and can still fire (a layout reflow, a font
+        // swap, the page loading straight into a background tab) while
+        // the tab is hidden -- without this check that path restarts the
+        // loop regardless of page visibility.
+        if (document.hidden) return;
         resize();
         loop();
       }
@@ -1242,6 +1257,16 @@
       }
 
       window.addEventListener("resize", function () { if (visible) resize(); }, { passive: true });
+
+      // Mirrors backgroundEngine's explicit document.hidden handling: the
+      // IntersectionObserver above only tracks viewport position, so a
+      // card already scrolled into view keeps `visible` true (and this
+      // loop scheduling) even while the tab itself is backgrounded.
+      previewInstances.push({
+        start: start,
+        stop: stop,
+        isVisible: function () { return visible; },
+      });
     }
 
     /* ---- Epiphyte: mini L-system, hover = a small growth burst ---- */

@@ -1031,6 +1031,13 @@
 
     function start() {
       if (running) return;
+      // Guards against every caller, not just the visibilitychange
+      // listener below: enterAnimatedMotion() also calls start()
+      // directly, from the live prefers-reduced-motion media-query
+      // listener -- which fires regardless of tab visibility, so without
+      // this check an OS-level accessibility toggle flipped while the
+      // tab is backgrounded would restart the loop anyway.
+      if (document.hidden) return;
       running = true;
       lastTs = null;
       requestAnimationFrame(tick);

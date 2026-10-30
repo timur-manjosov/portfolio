@@ -1,0 +1,28 @@
+---
+/** Bilingual fallback 404 (dist/404.html) for unknown paths outside /de/ and /en/. */
+import Head from "../components/Head.astro";
+import NotFound from "../components/NotFound.astro";
+import { globalGraph } from "../lib/seo";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <Head
+      lang="en"
+      fullTitle="404 – Timur Manjosov"
+      description="Page not found / Seite nicht gefunden"
+      jsonLd={globalGraph("en")}
+      noindex
+    />
+  </head>
+  <body>
+    <main id="main" class="container door">
+      <h1>404</h1>
+      <div class="door__options">
+        <NotFound lang="de" level={2} />
+        <NotFound lang="en" level={2} />
+      </div>
+    </main>
+  </body>
+</html>

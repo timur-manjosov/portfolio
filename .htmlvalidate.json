@@ -1,0 +1,10 @@
+{
+  "$schema": "https://html-validate.org/schemas/config.json",
+  "extends": ["html-validate:recommended", "html-validate:a11y"],
+  "elements": ["html5"],
+  "rules": {
+    "no-inline-style": "error",
+    "require-sri": "off",
+    "long-title": ["error", { "maxlength": 90 }]
+  }
+}

@@ -1,0 +1,79 @@
+# Private data for timurmanjosov.com: field reference.
+#
+# Copy this file to private/site.private.yaml (git-ignored) and fill in real
+# values. Schema and validation: src/lib/private-schema.ts. A typo in a field
+# name or a malformed value fails the build with the field path.
+#
+#   cp site.private.example.yaml private/site.private.yaml
+#
+# Everything here that is rendered ends up on the PUBLIC website. `private/`
+# only keeps these values out of the git repository; it does not make them
+# secret. Values in this example use the reserved domain example.invalid,
+# which a release build refuses (tools/build.mjs --release).
+#
+# The public build (`npm run build`, CI) works without this file and simply
+# leaves out every section that needs a value from it. The release build
+# (`npm run build:release`, used by deploy/build-release.sh) needs at least
+# contact.email and legal.controller.
+
+contact:
+  # Public contact address. Shown on /contact (HTML-entity-encoded, works
+  # without JavaScript) and used for /.well-known/security.txt.
+  # Required for a release.
+  email: hello@example.invalid
+
+  # Optional: OpenPGP key. With key_file, /pgp-key.asc is published and
+  # /contact links it next to the fingerprint. Export the PUBLIC key only:
+  #   gpg --armor --export you@your-domain > private/pgp-key.asc
+  # The fingerprint (40 hex digits, spaces allowed):
+  #   gpg --fingerprint you@your-domain
+  # Paths are relative to the directory of the YAML file and must stay inside
+  # it. In private/site.private.yaml that is e.g. `key_file: pgp-key.asc`
+  # (= private/pgp-key.asc). This example points at a dummy key in
+  # tools/fixtures/ so that CI can build with it.
+  pgp:
+    fingerprint: "0000 1111 2222 3333 4444  5555 6666 7777 8888 9999"
+    key_file: tools/fixtures/private-example/pgp-key.asc
+
+# Optional: further public profiles. Each one appears on /links, /contact and
+# in the About facts, and (with me: true) as rel="me" link and in JSON-LD
+# sameAs. GitHub is already public data in src/data/site.ts; do not repeat it.
+accounts:
+  - id: mastodon # lowercase letters, digits, dashes
+    label: Mastodon # name of the platform
+    handle: "@someone@example.invalid"
+    url: https://social.example.invalid/@someone # https only
+    me: true # false for links that are not your own profile
+
+legal:
+  # Controller in the sense of the GDPR, named in the privacy policy.
+  # Required for a release.
+  controller:
+    name: Example Person
+    email: privacy@example.invalid
+
+  # Optional: imprint. The imprint page and its footer link are generated
+  # ONLY when name, address and email are all set. Leave the whole block out
+  # (or incomplete) and there is no imprint page at all.
+  imprint:
+    name: Example Person
+    address: # one entry per line, at least two lines
+      - Example Street 1
+      - 12345 Example Town
+      - Germany
+    email: imprint@example.invalid
+    phone: "+49 000 0000000" # optional
+
+# Optional: extra Markdown appended to the About page, per language. Without
+# this entry the conventional files are used if they exist:
+# private/content/de/about-extra.md and private/content/en/about-extra.md
+# (relative to this file: content/<lang>/about-extra.md). Set a path here only
+# to use a different file; paths are relative to the directory of this file
+# and must stay inside it. Whatever is in these files is published on the
+# site; private/ only keeps it out of the repository.
+about_extra:
+  de: tools/fixtures/private-example/about.de.md
+  en: tools/fixtures/private-example/about.en.md
+
+# There are no server settings in this file: the deploy scripts read the web
+# root from the live Caddy block (docs/DEPLOY.md).

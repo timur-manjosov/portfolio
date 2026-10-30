@@ -1,0 +1,1973 @@
+@import "./tokens.css";
+
+/*
+ * Revision 2 design (docs/DECISIONS.md R2-D4…D6), refined in revision 3
+ * (R3-D*) and revision 4 (R4-D*): light weights, one box construction after
+ * Material 3 (outlined, filled, elevated; section "Boxes"), gradients only
+ * as accents, quiet motion on interaction and when content first appears.
+ * Colours only through tokens (tools/check-contrast.mjs fails on literal
+ * colours here). Every newer CSS feature sits behind @supports or degrades
+ * on its own; the fallbacks per browser are listed in docs/VERIFICATION.md.
+ *
+ * Motion rules (R4-D4): only opacity and transform move, never layout.
+ * Hover effects only inside `@media (hover: hover)` (touch screens get the
+ * pressed state); anything that shifts position is also inside
+ * `@media (prefers-reduced-motion: no-preference)`; with "reduce" colours
+ * still change, in under 100 ms.
+ */
+
+/* ---------- Reset (minimal) ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+input,
+button,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: var(--duration-reduced) !important;
+    transition-delay: 0s !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Cross-document view transitions (Chromium, Safari 18.2+): a short, calm
+   crossfade; the nav indicator glides to the new item. Firefox navigates as
+   usual. Only when the visitor has not asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-group(*) {
+    animation-duration: var(--duration-slow);
+    animation-timing-function: var(--ease);
+  }
+}
+
+/* ---------- Base ---------- */
+html {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 100%;
+  font-weight: var(--weight-body);
+  line-height: var(--leading-normal);
+  font-feature-settings: "cv11", "ss01";
+  scroll-padding-top: calc(var(--header-height) + var(--space-4));
+}
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: var(--text-base);
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+main {
+  flex: 1;
+  background-image: var(--gradient-page);
+  background-repeat: no-repeat;
+}
+.main--home {
+  background-image: var(--gradient-home);
+}
+main:focus {
+  outline: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-heading);
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+h1 {
+  font-size: var(--text-3xl);
+  letter-spacing: -0.026em;
+  line-height: 1.12;
+}
+h2 {
+  font-size: var(--text-2xl);
+}
+h3 {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-strong);
+}
+h4 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-strong);
+}
+p,
+li {
+  text-wrap: pretty;
+}
+strong,
+b {
+  font-weight: 600;
+}
+
+/* Links: always underlined in text (WCAG 1.4.1), but quietly; the line takes
+   the full accent on hover. text-decoration-color is animatable everywhere. */
+a {
+  color: var(--color-accent);
+  text-decoration-line: underline;
+  text-decoration-color: var(--color-underline);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition:
+    color var(--duration-fast) var(--ease),
+    text-decoration-color var(--duration-fast) var(--ease);
+}
+a:hover {
+  color: var(--color-accent-hover);
+  text-decoration-color: currentColor;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+/* The ring fades in and settles onto the element. An animation (not a
+   transition) runs every time :focus-visible starts to match, without
+   touching the transition lists of the elements. */
+@keyframes focus-ring {
+  from {
+    outline-color: transparent;
+    outline-offset: 7px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :focus-visible,
+  .card:has(.card__link:focus-visible),
+  .link-row:has(.link-row__link:focus-visible) {
+    animation: focus-ring var(--duration) var(--ease);
+  }
+}
+
+::selection {
+  background: var(--color-mark);
+  color: var(--color-text);
+}
+
+code,
+kbd,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--space-6) 0;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Controls that only work with JS are `hidden` in the HTML and revealed by
+   their module script. /theme-init.js (blocking, in <head>) sets `.js` on
+   <html> before first paint, so with JS their place is taken from the start
+   and the reveal moves nothing (CLS 0). Without JS they stay hidden. */
+.js [data-theme-toggle][hidden] {
+  display: inline-grid !important;
+}
+.js [data-project-filters][hidden] {
+  display: flex !important;
+}
+.js [data-filter-status][hidden] {
+  display: block !important;
+}
+.js [data-filter-status] {
+  min-height: calc(var(--text-sm) * 1.65);
+}
+.js [data-search][hidden] {
+  display: flex !important;
+}
+.js [data-search-nojs] {
+  display: none;
+}
+
+/* ---------- Layout ---------- */
+.container {
+  width: 100%;
+  max-width: calc(var(--content-width) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.container--wide {
+  max-width: calc(var(--wide-width) + 2 * var(--gutter));
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: -10rem;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-text);
+  color: var(--color-bg);
+  border-radius: var(--radius-pill);
+  z-index: 40;
+}
+.skip-link:focus {
+  top: var(--space-2);
+  color: var(--color-bg);
+}
+
+/* ---------- Header ---------- */
+.site-header {
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  z-index: 30;
+}
+@media (min-width: 40rem) {
+  .site-header {
+    position: sticky;
+    top: 0;
+  }
+}
+/* Translucent bar where supported; solid otherwise (rule above). */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-header {
+    background: var(--color-header);
+    -webkit-backdrop-filter: saturate(1.5) blur(14px);
+    backdrop-filter: saturate(1.5) blur(14px);
+  }
+}
+.site-header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  min-height: var(--header-height);
+  padding-block: var(--space-2);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: var(--weight-heading);
+  letter-spacing: -0.012em;
+  color: var(--color-text);
+  text-decoration: none;
+  margin-inline-end: auto;
+  border-radius: var(--radius-pill);
+}
+.brand:hover {
+  color: var(--color-text);
+}
+.brand__mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+  background: var(--gradient-accent);
+  color: var(--color-on-accent);
+  font-size: 0.6875rem;
+  font-weight: var(--weight-heading);
+  letter-spacing: 0.01em;
+}
+
+.site-nav {
+  order: 3;
+  flex-basis: 100%;
+}
+.site-nav ul,
+.header-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+  padding: 0;
+}
+.site-nav a {
+  position: relative;
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-label);
+  text-decoration: none;
+  transition:
+    color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+.site-nav a:active {
+  background: var(--color-surface);
+}
+/* A hairline under the label: fades in on hover, full gradient for the
+   current page. The current page also has aria-current, and the line is a
+   non-colour cue (shape), so colour is never the only signal. */
+.site-nav a::after,
+.nav-indicator {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.1rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--gradient-accent);
+}
+.site-nav a::after {
+  opacity: 0;
+  transition:
+    opacity var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+.site-nav a:hover {
+  color: var(--color-text);
+}
+.site-nav a:hover::after {
+  opacity: 0.45;
+}
+.site-nav a[aria-current="page"] {
+  color: var(--color-text);
+}
+.site-nav a[aria-current="page"]::after {
+  content: none;
+}
+/* The current item's line is a real element, so a cross-document view
+   transition can move it from the old item to the new one. */
+.nav-indicator {
+  view-transition-name: nav-indicator;
+}
+/* Pointer devices: a state layer behind the item, the hairline grows in. */
+@media (hover: hover) {
+  .site-nav a:hover {
+    background: var(--color-surface);
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .site-nav a::after {
+    transform: scaleX(0.4);
+  }
+  .site-nav a:hover::after {
+    transform: scaleX(1);
+  }
+}
+@media (max-width: 30rem) {
+  .site-nav ul {
+    gap: 0;
+  }
+  .site-nav a {
+    padding-inline: 0.55rem;
+  }
+  .site-nav a::after,
+  .nav-indicator {
+    left: 0.55rem;
+    right: 0.55rem;
+  }
+}
+@media (min-width: 56rem) {
+  .site-nav {
+    order: 0;
+    flex-basis: auto;
+  }
+}
+
+.header-tools {
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+.lang-switch a,
+.lang-switch span {
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  color: var(--color-muted);
+  transition:
+    color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+.lang-switch [aria-current="true"] {
+  color: var(--color-on-tonal);
+  background: var(--color-tonal);
+  font-weight: var(--weight-label);
+}
+@media (hover: hover) {
+  .lang-switch a:hover {
+    color: var(--color-text);
+    background: var(--color-surface);
+  }
+}
+.lang-switch .lang-missing {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    transform var(--duration-fast) var(--ease);
+}
+@media (hover: hover) {
+  .icon-button:hover {
+    color: var(--color-text);
+    background: var(--color-surface);
+    border-color: var(--color-border-strong);
+  }
+}
+.icon-button svg {
+  width: 1rem;
+  height: 1rem;
+}
+/* Both icons share one grid cell; the inactive one is faded out and turned
+   away, so switching crossfades with a quarter turn (instant under reduced
+   motion). aria-pressed is the only state, set by src/scripts/theme.ts. */
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+}
+.theme-toggle svg {
+  grid-area: 1 / 1;
+  transition:
+    opacity var(--duration-slow) var(--ease),
+    transform var(--duration-slow) var(--ease);
+}
+.theme-toggle .icon-sun,
+.theme-toggle[aria-pressed="true"] .icon-moon {
+  opacity: 0;
+}
+.theme-toggle[aria-pressed="true"] .icon-sun {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .theme-toggle .icon-sun,
+  .theme-toggle[aria-pressed="true"] .icon-moon {
+    transform: rotate(-90deg) scale(0.6);
+  }
+  .theme-toggle[aria-pressed="true"] .icon-sun {
+    transform: none;
+  }
+  .icon-button:active {
+    transform: scale(0.94);
+  }
+}
+
+/* ---------- Buttons and chips ---------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+/* Buttons after Material 3: "filled" (primary) and "outlined" (secondary),
+   full corners. Hover: a state layer (filled: the darker primary; outlined:
+   the surface tone), filled buttons rise to elevation 1. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: 0.9375rem;
+  font-weight: var(--weight-label);
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease),
+    box-shadow var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+.btn svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+.btn--primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+.btn--secondary {
+  background: transparent;
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+/* "Filled tonal" (the primary container) and "text" buttons, for quieter
+   actions inside boxes (empty state). */
+.btn--tonal {
+  background: var(--color-tonal);
+  color: var(--color-on-tonal);
+}
+.btn--text {
+  padding-inline: 0.75rem;
+  color: var(--color-accent);
+}
+.btn--primary:active {
+  background: var(--color-accent-hover);
+}
+.btn--secondary:active,
+.btn--text:active {
+  background: var(--color-surface);
+}
+@media (hover: hover) {
+  .btn:hover {
+    text-decoration: none;
+  }
+  .btn--primary:hover {
+    background: var(--color-accent-hover);
+    color: var(--color-on-accent);
+    box-shadow: var(--shadow-1);
+  }
+  .btn--secondary:hover {
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+  .btn--tonal:hover {
+    color: var(--color-on-tonal);
+    box-shadow: var(--shadow-1);
+  }
+  .btn--text:hover {
+    background: var(--color-raised);
+    color: var(--color-accent-hover);
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn:not(.btn--text):hover {
+    transform: translateY(var(--lift-button));
+  }
+  .btn--text:hover .arrow {
+    transform: var(--arrow-to);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn:active {
+    transform: translateY(0) scale(0.98);
+    transition-duration: var(--duration-press);
+  }
+}
+
+/* Chips (stack, tags) and status: Material's small corner (8 px). */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 0.71875rem;
+  line-height: 1.5;
+  white-space: nowrap;
+  transition:
+    color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    background-color var(--duration-fast) var(--ease);
+}
+a.chip {
+  text-decoration: none;
+}
+@media (hover: hover) {
+  a.chip:hover {
+    color: var(--color-text);
+    border-color: var(--color-border-strong);
+    background: var(--color-surface);
+  }
+}
+
+/* Status of a project. Colour is never the only signal: the label is text. */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.status::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status[data-stage="active"],
+.status[data-stage="maintained"] {
+  background: var(--color-success-container);
+  color: var(--color-on-success-container);
+}
+.status[data-stage="in-development"] {
+  background: var(--color-tonal);
+  color: var(--color-on-tonal);
+}
+.status[data-stage="paused"] {
+  background: var(--color-warning-container);
+  color: var(--color-on-warning-container);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.71875rem;
+  line-height: 1.5;
+  padding: 0 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+.badge--accent {
+  border-color: var(--color-underline);
+  color: var(--color-accent);
+}
+
+/* Action indicator (src/components/Arrow.astro): every clickable box and
+   "more" link ends in one; it moves forward a few pixels on hover. */
+.arrow {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  transition: transform var(--duration) var(--ease);
+  /* Links leaving the site point (and move) up and to the right. */
+  --arrow-to: translateX(var(--nudge));
+}
+.arrow--external {
+  --arrow-to: translate(calc(0.7 * var(--nudge)), calc(-0.7 * var(--nudge)));
+}
+
+/* Small label above a heading: mono, sentence case, a short line before it. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+  letter-spacing: 0.01em;
+  color: var(--color-accent-2);
+  margin-bottom: var(--space-3);
+}
+.eyebrow::before {
+  content: "";
+  width: 1rem;
+  height: 1px;
+  background: currentColor;
+}
+
+/* ---------- Gradient text (hero name) ---------- */
+.gradient-text {
+  color: var(--color-accent);
+}
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .gradient-text {
+    background-image: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+  margin-top: var(--space-section);
+  padding-block: var(--space-6);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.site-footer__inner {
+  display: grid;
+  gap: var(--space-3);
+}
+.site-footer ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  list-style: none;
+  padding: 0;
+}
+.site-footer a {
+  color: var(--color-muted);
+  text-decoration-color: transparent;
+}
+.site-footer a:hover {
+  color: var(--color-text);
+  text-decoration-color: currentColor;
+}
+
+/* ---------- Page structure ---------- */
+.page {
+  padding-top: var(--space-8);
+}
+.page-header {
+  margin-bottom: var(--space-7);
+}
+.page-header h1 {
+  max-width: 22ch;
+}
+.page-header > p:not(.eyebrow) {
+  margin-top: var(--space-4);
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+  max-width: var(--measure);
+}
+.page-header .meta {
+  margin-top: var(--space-4);
+}
+.section {
+  margin-top: var(--space-8);
+}
+.section > h2 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-4);
+}
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-5);
+  margin-bottom: var(--space-5);
+}
+.section-head h2 {
+  font-size: var(--text-2xl);
+}
+.section-head .eyebrow {
+  margin-bottom: var(--space-2);
+}
+.section-head__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: 0.25rem;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-label);
+  text-decoration-color: transparent;
+  white-space: nowrap;
+}
+.section-head__link:hover {
+  text-decoration-color: currentColor;
+}
+.section-footer {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+}
+/* A link alone on its line is a target, not text: at least 24px high
+   (WCAG 2.2, 2.5.8), found by axe on the category pages. */
+.section-footer > a {
+  display: inline-block;
+  padding-block: 0.25rem;
+}
+/* Category pages: the feed link sits right above the post list. */
+.section-footer + .entry-list {
+  margin-top: var(--space-6);
+}
+
+.breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  margin-bottom: var(--space-5);
+}
+.breadcrumb li + li::before {
+  content: "/";
+  margin-inline-end: var(--space-2);
+  color: var(--color-border-strong);
+}
+
+/* Notices (opinion note, series navigation): a small filled box; the accent
+   bar on the leading edge marks it as a note, not as content. */
+.notice {
+  position: relative;
+  background: var(--color-surface);
+  padding: var(--box-pad-sm) var(--box-pad-sm) var(--box-pad-sm) calc(var(--box-pad-sm) + 0.25rem);
+  border-radius: var(--radius-md);
+  margin-block: var(--space-5);
+  overflow: hidden;
+}
+.notice::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.25rem;
+  background: var(--gradient-accent);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+/* Inline rows of links (categories, tags, project links): enough gap that
+   they read as separate targets, not as one underlined run. */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  list-style: none;
+  padding: 0;
+}
+.tag-list a {
+  font-size: var(--text-sm);
+}
+
+/* ---------- Boxes (R4-D3) ---------- */
+/* One construction for every box, after Material 3 cards:
+   - outlined (default for cards, .box--outlined): card surface, a 1px
+     outline-variant contour, elevation 0 at rest;
+   - filled (.box--filled): the surface-container tone, no visible contour;
+     quiet groups that are not links (fact tiles, filter bar, notices, /now);
+   - elevated (.box--elevated): card surface, contour and elevation 1 at
+     rest; only the hero's spec sheet floats.
+   Corner by size (--radius-md small boxes, --radius-lg cards), padding on the
+   4/8 grid (--box-pad). Inside a card: top row (status, badges), title,
+   body, foot (chips, then meta and the action arrow on one line).
+   Interaction (R4-D4) lives on the card's main link: a state layer (the
+   text colour at 8 % hover, 10 % focus/press), elevation 0 → 2, a lift of
+   4 px, the gradient contour, the title in the accent colour, the arrow
+   moving forward and the chips following one after another. Hover only on
+   devices that can hover; touch screens get the pressed state. */
+.box,
+.card {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  padding: var(--box-pad);
+}
+.box--outlined,
+.card {
+  background: var(--color-raised);
+  border-color: var(--color-border);
+}
+.box--elevated {
+  background: var(--color-raised);
+  border-color: var(--elevated-border);
+  box-shadow: var(--shadow-1);
+}
+.box--filled,
+.card.box--filled {
+  background: var(--color-surface);
+  border-color: transparent;
+}
+.box--sm {
+  border-radius: var(--radius-md);
+  padding: var(--box-pad-sm);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--box-gap);
+  transition:
+    box-shadow var(--duration) var(--ease),
+    transform var(--duration) var(--ease),
+    border-color var(--duration) var(--ease);
+}
+.card h2,
+.card h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-strong);
+  letter-spacing: -0.012em;
+}
+.card p:not(.eyebrow) {
+  color: var(--color-muted);
+}
+/* Card body text a step below running text; labels and meta keep their size. */
+.card p:not(.eyebrow, .meta) {
+  font-size: 1rem;
+}
+.card__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.card__top > :last-child:not(:first-child) {
+  margin-inline-start: auto;
+}
+.card__link {
+  color: var(--color-text);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease);
+}
+/* The whole card is the click target of its main link, and the same layer
+   is the state layer. Other links inside stay clickable above it. */
+.card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--radius-lg) - 1px);
+  background: var(--color-text);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+.card__link:focus-visible {
+  outline: none;
+}
+.card:has(.card__link:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-color: var(--color-border-strong);
+}
+.card__link:focus-visible::after {
+  opacity: var(--state-focus);
+}
+.card__link:active::after {
+  opacity: var(--state-pressed);
+}
+.card .meta a,
+.card .chips a {
+  position: relative;
+  z-index: 1;
+}
+.card__foot {
+  margin-top: auto;
+  padding-top: var(--space-2);
+  display: grid;
+  gap: var(--space-3);
+}
+/* Meta on the left, the action arrow on the right, one line. */
+.card__action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.card__action .arrow {
+  color: var(--color-accent);
+}
+
+/* Gradient contour: a 1px ring masked out of a gradient layer. Only where
+   mask compositing exists (Chrome 120, Firefox 53, Safari 15.4; -webkit-
+   variant before); otherwise the plain border-colour change remains. */
+@supports (mask-composite: exclude) or (-webkit-mask-composite: xor) {
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    padding: 1px;
+    border-radius: inherit;
+    background: var(--gradient-accent);
+    -webkit-mask:
+      var(--mask-solid) content-box,
+      var(--mask-solid);
+    -webkit-mask-composite: xor;
+    mask:
+      var(--mask-solid) content-box exclude,
+      var(--mask-solid);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration) var(--ease);
+  }
+  .card:has(.card__link:focus-visible)::before {
+    opacity: 1;
+  }
+}
+
+/* Chips of a hovered card follow one after another (--chip-stagger). */
+.card .chip:nth-child(2) {
+  transition-delay: var(--chip-stagger);
+}
+.card .chip:nth-child(3) {
+  transition-delay: calc(2 * var(--chip-stagger));
+}
+.card .chip:nth-child(n + 4) {
+  transition-delay: calc(3 * var(--chip-stagger));
+}
+
+@media (hover: hover) {
+  .card:has(.card__link:hover) {
+    box-shadow: var(--shadow-2);
+    border-color: var(--color-border-strong);
+  }
+  .card:has(.card__link:hover)::before {
+    opacity: 1;
+  }
+  .card__link:hover {
+    color: var(--color-accent);
+  }
+  .card__link:hover::after {
+    opacity: var(--state-hover);
+  }
+  .card:has(.card__link:hover) .chip {
+    color: var(--color-text);
+    border-color: var(--color-border-strong);
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .card:has(.card__link:hover) {
+    transform: translateY(var(--lift-card));
+  }
+  .card:has(.card__link:hover) .card__action .arrow,
+  .section-head__link:hover .arrow,
+  .link-row:has(.link-row__link:hover) .arrow,
+  .link-list a:hover .arrow {
+    transform: var(--arrow-to);
+  }
+}
+
+/* Featured project: the gradient contour is always there (two backgrounds;
+   works without mask support). */
+.card--featured {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--color-raised), var(--color-raised)) padding-box,
+    var(--gradient-accent) border-box;
+}
+
+/* ---------- Empty state (blog without posts) ---------- */
+/* A large filled panel, not a dashed placeholder: the empty blog is the
+   launch state, not an error (R4-D6). */
+.empty-state {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--box-pad);
+}
+.empty-state p {
+  max-width: 56ch;
+  color: var(--color-muted);
+}
+.empty-state__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  background: var(--color-tonal);
+  color: var(--color-on-tonal);
+}
+.empty-state__title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-strong);
+}
+.empty-state .actions {
+  list-style: none;
+  padding: 0;
+  margin-top: var(--space-2);
+  gap: var(--space-2);
+}
+@media (min-width: 48rem) {
+  .empty-state {
+    padding: var(--space-7) var(--space-7);
+  }
+}
+
+/* ---------- Link rows (/links): small outlined boxes ---------- */
+/* The same construction as a card at a smaller size: the main link covers
+   the box and carries the state layer, the arrow sits in its own column. */
+.link-rows {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: var(--space-3);
+}
+.link-rows--wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+.section-intro {
+  color: var(--color-muted);
+  margin-bottom: var(--space-4);
+}
+.link-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  transition: border-color var(--duration-fast) var(--ease);
+}
+.link-row > * {
+  grid-column: 1;
+}
+.link-row > .arrow {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  color: var(--color-accent);
+}
+.link-row__link {
+  font-weight: var(--weight-strong);
+  color: var(--color-text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: color var(--duration-fast) var(--ease);
+}
+.link-row__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--radius-md) - 1px);
+  background: var(--color-text);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease);
+}
+.link-row__link:focus-visible {
+  outline: none;
+}
+.link-row:has(.link-row__link:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+.link-row__link:focus-visible::after {
+  opacity: var(--state-focus);
+}
+.link-row__link:active::after {
+  opacity: var(--state-pressed);
+}
+.link-row p {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+.link-row .meta {
+  position: relative;
+  z-index: 1;
+}
+@media (hover: hover) {
+  .link-row:has(.link-row__link:hover) {
+    border-color: var(--color-border-strong);
+  }
+  .link-row__link:hover {
+    color: var(--color-accent);
+  }
+  .link-row__link:hover::after {
+    opacity: var(--state-hover);
+  }
+}
+
+/* ---------- Bento grid ---------- */
+.bento {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--grid-gap);
+  list-style: none;
+  padding: 0;
+}
+/* Tablet: two equal columns, full-width tiles stay full width. Desktop:
+   the 4/2 and 2/2/2 splits from the markup. */
+@media (min-width: 48rem) {
+  .bento {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .bento > * {
+    grid-column: span 3;
+  }
+  .bento > .span-6 {
+    grid-column: span 6;
+  }
+}
+/* Two columns, odd count: the last tile takes the whole row instead of
+   leaving a hole next to it (R3 screenshot pass P4, 768 px). */
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+  .bento > :last-child:nth-child(odd) {
+    grid-column: span 6;
+  }
+}
+@media (min-width: 64rem) {
+  .bento > .span-2 {
+    grid-column: span 2;
+  }
+  .bento > .span-4 {
+    grid-column: span 4;
+  }
+}
+
+/* ---------- Home: hero ---------- */
+/* No framed box: the hero sits on the page with the home tints behind it. */
+.hero {
+  padding-top: clamp(3rem, 1.5rem + 6vw, 7rem);
+  display: grid;
+  gap: var(--space-7);
+}
+@media (min-width: 64rem) {
+  .hero {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    align-items: center;
+  }
+}
+.hero__title {
+  font-size: var(--text-display);
+  font-weight: var(--weight-heading);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  /* Room for descenders with background-clip: text. */
+  padding-bottom: 0.1em;
+  /* The gradient spans the text, not the whole column. */
+  width: fit-content;
+}
+.hero__claim {
+  margin-top: var(--space-5);
+  font-size: clamp(1.2rem, 1.06rem + 0.6vw, 1.5rem);
+  line-height: 1.38;
+  font-weight: 450;
+  letter-spacing: -0.012em;
+  color: var(--color-text);
+  max-width: 34ch;
+}
+.hero__lead {
+  margin-top: var(--space-4);
+  color: var(--color-muted);
+  max-width: 54ch;
+}
+.hero .actions {
+  margin-top: var(--space-6);
+}
+
+/* A small spec sheet, set like terminal output: the one elevated box. */
+.spec {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  /* Below the two-column hero it would span the full width with short
+     lines; it keeps the width of a text column instead (R3 pass P5). */
+  max-width: 36rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+.spec dt {
+  color: var(--color-accent-2);
+}
+.spec dd {
+  margin: 0;
+  color: var(--color-text);
+}
+@media (max-width: 26rem) {
+  .spec {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .spec dd:not(:last-child) {
+    margin-bottom: var(--space-2);
+  }
+}
+
+.home-section {
+  margin-top: var(--space-section);
+}
+
+.now-card h2 {
+  font-size: var(--text-xl);
+}
+.now-card__text {
+  max-width: 52ch;
+}
+.card.now-card .now-card__text {
+  color: var(--color-text);
+}
+
+/* Contact box on the home page: a filled box with a list of links, each
+   ending in its arrow (diagonal when it leaves the site). */
+.reach .eyebrow {
+  margin-bottom: var(--space-2);
+}
+.link-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+}
+.link-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: 0.375rem;
+  font-size: 1rem;
+  text-decoration-color: transparent;
+}
+.link-list a:hover {
+  text-decoration-color: currentColor;
+}
+.link-list li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+/* ---------- 404 ---------- */
+.not-found > p:not(.eyebrow) {
+  margin-top: var(--space-4);
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+}
+.not-found .actions {
+  list-style: none;
+  padding: 0;
+  margin-top: var(--space-6);
+}
+.door .not-found .actions {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* ---------- Language fallback ("/") and root 404 ---------- */
+.door {
+  padding-block: var(--space-9);
+}
+.door__links {
+  margin-top: var(--space-5);
+  font-size: var(--text-xl);
+}
+.door__options {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+@media (min-width: 40rem) {
+  .door__options {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.door__options h2 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-2);
+}
+.door__options ul {
+  padding-left: var(--space-5);
+  margin-top: var(--space-3);
+}
+
+/* ---------- Lists (posts, projects) ---------- */
+.entry-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+.entry-list--grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: var(--grid-gap);
+}
+/* Home posts: the grid has at most two columns up to ~1015 px; an odd last
+   card fills its row there (in one column this changes nothing). */
+@media (max-width: 63rem) {
+  .home-section .entry-list--grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+.entry h2,
+.entry h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-strong);
+  letter-spacing: -0.01em;
+}
+.entry > p {
+  color: var(--color-muted);
+}
+.entry-list .entry:not(.card) > :is(h2, h3) + p {
+  margin-top: var(--space-1);
+}
+.entry-list .entry:not(.card) {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.entry-list .entry:not(.card) h2 a,
+.entry-list .entry:not(.card) h3 a {
+  color: var(--color-text);
+  text-decoration-color: transparent;
+}
+.entry-list .entry:not(.card) h2 a:hover,
+.entry-list .entry:not(.card) h3 a:hover {
+  color: var(--color-accent);
+  text-decoration-color: currentColor;
+}
+.entry .meta {
+  margin-top: var(--space-1);
+}
+
+.archive-year {
+  margin-top: var(--space-6);
+}
+.archive-year h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-label);
+  margin-bottom: var(--space-3);
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+}
+
+/* ---------- Filters ---------- */
+/* The filter is a filled box (a toolbar on the surface tone) above the
+   list. The controls keep their strong border (3:1, WCAG 1.4.11). */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  align-items: flex-end;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: var(--box-pad-sm);
+  margin: 0 0 var(--space-5);
+  /* As wide as its controls, not as the page (R4 pass P3). */
+  width: fit-content;
+  max-width: 100%;
+}
+.filters legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-label);
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+.filters .field {
+  flex: 1 1 9rem;
+  max-width: 14rem;
+}
+.field {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.field select,
+.field input,
+.button {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-raised);
+  color: var(--color-text);
+  /* 16 px, not less: iOS Safari zooms into smaller form fields on focus. */
+  font-size: 1rem;
+  transition:
+    border-color var(--duration-fast) var(--ease),
+    transform var(--duration) var(--ease);
+}
+@media (hover: hover) {
+  .field select:hover,
+  .field input:hover,
+  .button:hover {
+    border-color: var(--color-accent);
+  }
+}
+.button {
+  cursor: pointer;
+  font-weight: var(--weight-label);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .button:active {
+    transform: scale(0.98);
+  }
+}
+.status-line {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  margin-bottom: var(--space-4);
+}
+
+/* ---------- Search ---------- */
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+.search-form .field {
+  flex: 1 1 14rem;
+}
+.search-form input {
+  width: 100%;
+}
+.search-results {
+  margin-top: var(--space-5);
+}
+.search-results mark {
+  background: var(--color-mark);
+  color: inherit;
+  padding: 0 0.1em;
+  border-radius: 2px;
+}
+
+/* ---------- Fact bar (About) ---------- */
+/* Small filled tiles, label above value, as many per row as fit. */
+.facts {
+  display: grid;
+  /* min(100%, …): long values (URLs) must not widen the page. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-7);
+}
+.fact {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--box-pad-sm);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  min-width: 0;
+}
+.facts dt {
+  color: var(--color-accent-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-label);
+}
+.facts dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+/* ---------- Detail list (project pages, contact, imprint) ---------- */
+/* In an outlined box (.box--outlined): term and value side by side,
+   stacked on small screens. */
+.details {
+  display: grid;
+  grid-template-columns: minmax(6rem, max-content) minmax(0, 1fr);
+  gap: var(--space-3) var(--space-5);
+  margin-block: var(--space-5) var(--space-7);
+  font-size: var(--text-sm);
+}
+.details dt {
+  color: var(--color-muted);
+  font-weight: var(--weight-label);
+}
+.details dd {
+  margin: 0;
+}
+.details dd p {
+  margin-top: var(--space-2);
+  color: var(--color-muted);
+}
+@media (max-width: 30rem) {
+  .details {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .details dd {
+    margin-bottom: var(--space-3);
+  }
+}
+.fingerprint {
+  word-spacing: 0.2em;
+}
+
+/* ---------- Table of contents ---------- */
+/* An outlined small box (.box--outlined.box--sm). */
+.toc {
+  margin-block: var(--space-5);
+  font-size: var(--text-sm);
+}
+.toc h2 {
+  font-size: var(--text-base);
+  margin-bottom: var(--space-2);
+}
+.toc ol {
+  padding-left: var(--space-5);
+}
+.toc ol ol {
+  padding-left: var(--space-4);
+}
+/* Each entry is a target of at least 24px (WCAG 2.2, 2.5.8; Lighthouse
+   target-size on mobile). */
+.toc a {
+  display: inline-block;
+  padding-block: 0.25rem;
+}
+
+/* ---------- Prose (Markdown content) ---------- */
+.prose {
+  max-width: var(--measure);
+}
+.prose > * + * {
+  margin-top: var(--space-4);
+}
+.prose h2 {
+  margin-top: var(--space-7);
+  font-size: var(--text-2xl);
+}
+.prose h3 {
+  margin-top: var(--space-6);
+  font-size: var(--text-lg);
+}
+.prose h2 + *,
+.prose h3 + * {
+  margin-top: var(--space-3);
+}
+.prose ul,
+.prose ol {
+  padding-left: var(--space-5);
+}
+.prose li + li {
+  margin-top: var(--space-2);
+}
+.prose li::marker {
+  color: var(--color-accent-2);
+}
+.prose blockquote {
+  border-left: 2px solid var(--color-accent);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-raised);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  color: var(--color-muted);
+}
+.prose table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.prose th,
+.prose td {
+  border: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+}
+.prose th {
+  font-weight: var(--weight-strong);
+}
+.prose :not(pre) > code {
+  background: var(--color-code-bg);
+  border: 1px solid var(--color-border);
+  padding: 0.05em 0.35em;
+  border-radius: var(--radius-xs);
+}
+.prose img {
+  border-radius: var(--radius-md);
+}
+/* Diagrams in posts (R5): plain inline SVG drawn in currentColor, so it
+   follows the text colour in light and dark mode. */
+.prose figure {
+  margin-inline: 0;
+}
+.prose .figure__svg {
+  display: block;
+  width: 100%;
+  max-width: 30rem;
+  height: auto;
+  margin-inline: auto;
+  color: var(--color-text);
+}
+.prose figcaption {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-align: center;
+}
+.heading-anchor {
+  margin-left: 0.35em;
+  color: var(--color-border-strong);
+  text-decoration: none;
+  font-weight: 400;
+  opacity: 0;
+  transition: opacity var(--duration) var(--ease);
+}
+.prose :is(h2, h3, h4):hover .heading-anchor,
+.heading-anchor:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .heading-anchor {
+    opacity: 1;
+  }
+}
+
+/* Footnotes (GFM) */
+.footnotes {
+  margin-top: var(--space-7);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.footnotes h2 {
+  font-size: var(--text-base);
+  margin-top: 0;
+}
+.prose sup a {
+  text-decoration: none;
+  padding-inline: 0.1em;
+}
+
+/* ---------- Code (Prism classes; no inline styles anywhere) ---------- */
+/* Code blocks: an outlined small box on the code surface. */
+.prose pre {
+  background: var(--color-code-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--box-pad-sm) var(--box-pad);
+  overflow-x: auto;
+  line-height: 1.6;
+  font-size: 0.875rem;
+  tab-size: 2;
+}
+.prose pre code {
+  font-size: inherit;
+}
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: var(--code-comment);
+  font-style: italic;
+}
+.token.keyword,
+.token.boolean,
+.token.important,
+.token.atrule,
+.token.selector,
+.token.tag {
+  color: var(--code-keyword);
+}
+.token.string,
+.token.char,
+.token.attr-value,
+.token.regex,
+.token.inserted {
+  color: var(--code-string);
+}
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: var(--code-number);
+}
+.token.function,
+.token.class-name,
+.token.builtin {
+  color: var(--code-function);
+}
+.token.punctuation,
+.token.operator {
+  color: var(--color-muted);
+}
+
+/* ---------- Math (Temml MathML) ---------- */
+math {
+  font-family: var(--font-math);
+  font-style: normal;
+  font-weight: normal;
+  font-size: 1.1em;
+  direction: ltr;
+}
+.math-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: var(--space-2);
+}
+math.tml-display {
+  display: block math;
+  width: 100%;
+}
+
+/* ---------- Reveal on scroll (src/scripts/reveal.ts) ---------- */
+/* The script only marks elements that start below the fold, and only when
+   IntersectionObserver exists and the visitor allows motion. Without JS,
+   without support or with reduced motion nothing is ever hidden: the hidden
+   state below exists only inside the no-preference query. One-time: the
+   attributes are removed once an element is shown. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Entering content decelerates (Material "emphasized decelerate"). */
+  [data-reveal] {
+    transition:
+      opacity var(--duration-slow) var(--ease-enter),
+      transform var(--duration-slow) var(--ease-enter);
+  }
+  [data-reveal="hidden"] {
+    opacity: 0;
+    transform: translateY(var(--reveal-shift));
+  }
+  [data-reveal-step="1"] {
+    transition-delay: var(--reveal-stagger);
+  }
+  [data-reveal-step="2"] {
+    transition-delay: calc(2 * var(--reveal-stagger));
+  }
+  [data-reveal-step="3"] {
+    transition-delay: calc(3 * var(--reveal-stagger));
+  }
+  [data-reveal-step="4"] {
+    transition-delay: calc(4 * var(--reveal-stagger));
+  }
+}
+@media print {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ---------- More contrast, forced colours ---------- */
+/* prefers-contrast: solid text instead of gradients, no tints, stronger
+   borders. */
+@media (prefers-contrast: more) {
+  .gradient-text {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: var(--color-text);
+  }
+  main {
+    background-image: none;
+  }
+  .card,
+  .box,
+  .link-row,
+  .details,
+  .toc,
+  .site-header,
+  .lang-switch,
+  .icon-button,
+  .chip,
+  .badge,
+  .btn--secondary {
+    border-color: var(--color-border-strong);
+  }
+  .card--featured {
+    background: var(--color-raised);
+    border-color: var(--color-text);
+  }
+  /* Filled boxes get a real contour too. */
+  .box--filled,
+  .fact,
+  .filters,
+  .notice {
+    border: 1px solid var(--color-border-strong);
+  }
+  .site-header {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--color-bg);
+  }
+  .site-nav a,
+  .eyebrow,
+  .card p,
+  .meta {
+    color: var(--color-text);
+  }
+  a {
+    text-decoration-color: currentColor;
+  }
+}
+
+/* Windows high contrast and similar: the browser picks all colours. Make
+   sure nothing relies on backgrounds: gradient text gets a real colour,
+   cards and pills keep visible borders, gradient hairlines become solid. */
+@media (forced-colors: active) {
+  .gradient-text {
+    background: none;
+    -webkit-text-fill-color: CanvasText;
+    color: CanvasText;
+  }
+  .card,
+  .card--featured,
+  .box,
+  .fact,
+  .link-row,
+  .filters,
+  .notice,
+  .status,
+  .chip,
+  .btn,
+  .lang-switch [aria-current="true"] {
+    border: 1px solid CanvasText;
+  }
+  .card::before,
+  .notice::before {
+    display: none;
+  }
+  .card__link::after,
+  .link-row__link::after {
+    background: transparent;
+  }
+  .nav-indicator,
+  .site-nav a::after,
+  .eyebrow::before {
+    background: CanvasText;
+  }
+  :focus-visible,
+  .card:has(.card__link:focus-visible),
+  .link-row:has(.link-row__link:focus-visible) {
+    outline: 2px solid Highlight;
+  }
+  .status::before {
+    background: CanvasText;
+  }
+  .brand__mark {
+    border: 1px solid CanvasText;
+  }
+}

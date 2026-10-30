@@ -1,0 +1,46 @@
+---
+import PostList from "../../../../components/PostList.astro";
+import { LANGS, type Lang } from "../../../../i18n/ui";
+import { localePath, slugify, useTranslations } from "../../../../i18n/utils";
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import { allPosts, forListing } from "../../../../lib/content";
+import { tagCounts } from "../../../../lib/taxonomy";
+
+export async function getStaticPaths() {
+  const posts = await allPosts();
+  return LANGS.flatMap((lang) => {
+    const listed = forListing(posts, lang);
+    return tagCounts(listed).map(({ tag, slug }) => ({
+      params: { lang, tag: slug },
+      props: { label: tag, posts: listed.filter((p) => p.entry.data.tags.some((x) => slugify(x) === slug)) },
+    }));
+  });
+}
+
+const { label, posts } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+// Tags are language-specific words, so there is no 1:1 counterpart page.
+---
+
+<BaseLayout
+  lang={lang}
+  title={`#${label}`}
+  description={`${t("blog.postsTagged")} #${label} · Blog · ${t("site.title")}`}
+  section="blog"
+  fallback={localePath(lang === "de" ? "en" : "de", "blog/tags/")}
+>
+  <div class="container page">
+    <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>
+      <ol>
+        <li><a href={localePath(lang, "blog/")}>{t("blog.title")}</a></li>
+        <li><a href={localePath(lang, "blog/tags/")}>{t("blog.tags")}</a></li>
+      </ol>
+    </nav>
+    <header class="page-header">
+      <p class="eyebrow">{t("blog.postsTagged")}</p>
+      <h1>#{label}</h1>
+    </header>
+    <PostList lang={lang} posts={posts} headingLevel={2} />
+  </div>
+</BaseLayout>

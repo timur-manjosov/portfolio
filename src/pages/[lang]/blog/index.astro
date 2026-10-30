@@ -1,0 +1,53 @@
+---
+import PostList from "../../../components/PostList.astro";
+import { LANGS, type Lang } from "../../../i18n/ui";
+import { localePath, useTranslations } from "../../../i18n/utils";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { allPosts, forListing } from "../../../lib/content";
+import { allCategories, categoryUrl } from "../../../lib/taxonomy";
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const posts = forListing(await allPosts(), lang);
+const categories = await allCategories();
+---
+
+<BaseLayout
+  lang={lang}
+  title={t("blog.title")}
+  description={t("blog.description")}
+  section="blog"
+  alternates={{ de: "/de/blog/", en: "/en/blog/" }}
+>
+  <div class="container page">
+    <header class="page-header">
+      <h1>{t("blog.title")}</h1>
+      <p>{t("blog.description")}</p>
+    </header>
+
+    <nav aria-labelledby="blog-categories" class="section-footer">
+      <h2 id="blog-categories" class="visually-hidden">{t("blog.categories")}</h2>
+      <ul class="tag-list">
+        {
+          categories.map((c) => (
+            <li>
+              <a href={categoryUrl(lang, c.id)}>{c.data.label[lang]}</a>
+            </li>
+          ))
+        }
+        <li><a href={localePath(lang, "blog/tags/")}>{t("blog.tags")}</a></li>
+        <li><a href={localePath(lang, "blog/archive/")}>{t("blog.archive")}</a></li>
+        <li><a href={localePath(lang, "feed.xml")}>{t("nav.feed")}</a></li>
+      </ul>
+    </nav>
+
+    <section class="section" aria-labelledby="all-posts">
+      <h2 id="all-posts" class="visually-hidden">{t("home.allPosts")}</h2>
+      <PostList lang={lang} posts={posts} />
+    </section>
+  </div>
+</BaseLayout>

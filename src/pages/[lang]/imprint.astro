@@ -1,0 +1,66 @@
+---
+/**
+ * Imprint. Generated ONLY when the private file has a complete
+ * `legal.imprint` (name, address, email); otherwise this route produces no
+ * page at all and the footer shows no link. No legal text is written here:
+ * the page only lays out the fields from the private file.
+ */
+import { legal } from "../../data/site";
+import { LANGS, type Lang } from "../../i18n/ui";
+import { useTranslations } from "../../i18n/utils";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export function getStaticPaths() {
+  return legal.imprint ? LANGS.map((lang) => ({ params: { lang } })) : [];
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+// getStaticPaths only returns paths when the imprint exists.
+const imprint = legal.imprint as NonNullable<typeof legal.imprint>;
+
+function encode(value: string): string {
+  return [...value].map((c) => `&#${c.codePointAt(0)};`).join("");
+}
+---
+
+<BaseLayout
+  lang={lang}
+  title={t("imprint.title")}
+  description={t("imprint.description")}
+  alternates={{ de: "/de/imprint/", en: "/en/imprint/" }}
+  noindex
+>
+  <article class="container page">
+    <header class="page-header">
+      <h1>{t("imprint.title")}</h1>
+    </header>
+    <div class="prose">
+      <h2>{t("imprint.provider")}</h2>
+      <address>
+        {imprint.name}
+        {imprint.address.map((line) => (
+          <>
+            <br />
+            {line}
+          </>
+        ))}
+      </address>
+      <h2>{t("imprint.contact")}</h2>
+      <dl class="box box--outlined details">
+        <dt>{t("contact.email")}</dt>
+        <dd set:html={`<a href="${encode(`mailto:${imprint.email}`)}">${encode(imprint.email)}</a>`} />
+        {
+          imprint.phone && (
+            <>
+              <dt>{t("imprint.phone")}</dt>
+              <dd>{imprint.phone}</dd>
+            </>
+          )
+        }
+      </dl>
+      <h2>{t("imprint.responsible")}</h2>
+      <p>{imprint.name}</p>
+    </div>
+  </article>
+</BaseLayout>

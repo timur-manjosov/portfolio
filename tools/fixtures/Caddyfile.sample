@@ -1,0 +1,35 @@
+# Test fixture for tools/caddy-site-block.mjs. Shape modelled on the live
+# config as described in docs/AUDIT.md §8; hosts other than
+# timurmanjosov.com and all values outside its block are placeholders.
+{
+	email admin@example.invalid
+}
+
+timurmanjosov.com, www.timurmanjosov.com {
+	root * /srv/fixture-site/current
+	encode gzip zstd
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "DENY"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+	}
+
+	@static path /styles/* /scripts/* /assets/*
+	header @static Cache-Control "public, max-age=3600"
+
+	file_server
+}
+
+neighbour.example.invalid {
+	# braces inside a comment { must not confuse the parser
+	reverse_proxy localhost:8080
+	header {
+		Content-Security-Policy "default-src 'self'"
+	}
+	log {
+		output file /var/log/caddy/neighbour.log
+	}
+}

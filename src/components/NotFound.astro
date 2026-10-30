@@ -1,0 +1,47 @@
+---
+import type { Lang } from "../i18n/ui";
+import { localePath, useTranslations } from "../i18n/utils";
+import Arrow from "./Arrow.astro";
+
+interface Props {
+  lang: Lang;
+  /** Heading level: the bilingual root 404 has one h1 and two h2 blocks. */
+  level: 1 | 2;
+}
+const { lang, level } = Astro.props;
+const t = useTranslations(lang);
+const H = `h${level}` as "h1" | "h2";
+---
+
+<section class="not-found" lang={lang}>
+  {level === 1 && <p class="eyebrow">404</p>}
+  <H>{t("notFound.title")}</H>
+  <p>{t("notFound.text")}</p>
+  <ul class="actions">
+    <li><a class="btn btn--primary" href={localePath(lang)}>{t("nav.home")}</a></li>
+    <li>
+      <a class="btn btn--text" href={localePath(lang, "projects/")}>
+        {t("nav.projects")}
+        <Arrow />
+      </a>
+    </li>
+    <li>
+      <a class="btn btn--text" href={localePath(lang, "blog/")}>
+        {t("nav.blog")}
+        <Arrow />
+      </a>
+    </li>
+    <li>
+      <a class="btn btn--text" href={localePath(lang, "search/")}>
+        {t("notFound.search")}
+        <Arrow />
+      </a>
+    </li>
+    <li>
+      <a class="btn btn--text" href={localePath(lang, "contact/")}>
+        {t("nav.contact")}
+        <Arrow />
+      </a>
+    </li>
+  </ul>
+</section>

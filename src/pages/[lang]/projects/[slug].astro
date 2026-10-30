@@ -1,0 +1,143 @@
+---
+import { render } from "astro:content";
+import type { Lang } from "../../../i18n/ui";
+import { formatDate, isoDate, localePath, slugify, useTranslations } from "../../../i18n/utils";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { allProjects, projectUrl } from "../../../lib/content";
+import { absolute, PERSON_ID } from "../../../lib/seo";
+
+export async function getStaticPaths() {
+  const projects = await allProjects();
+  return projects.map((p) => ({
+    params: { lang: p.lang, slug: p.slug },
+    props: { project: p, other: projects.find((o) => o.lang !== p.lang && o.key === p.key) },
+  }));
+}
+
+const { project, other } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const d = project.entry.data;
+const { Content } = await render(project.entry);
+const url = projectUrl(project);
+
+const alternates: Partial<Record<Lang, string>> = { [lang]: url };
+if (other) alternates[other.lang] = projectUrl(other);
+
+// SoftwareSourceCode when a public repository exists, CreativeWork otherwise.
+const jsonLd = [
+  {
+    "@type": d.links.repo ? "SoftwareSourceCode" : "CreativeWork",
+    "@id": `${absolute(url)}#project`,
+    name: d.title,
+    description: d.summary,
+    url: absolute(url),
+    inLanguage: lang,
+    author: { "@id": PERSON_ID },
+    dateModified: isoDate(d.updated),
+    ...(d.started ? { dateCreated: isoDate(d.started) } : {}),
+    ...(d.links.repo ? { codeRepository: d.links.repo } : {}),
+    ...(d.stack.length && d.links.repo ? { programmingLanguage: d.stack } : {}),
+    keywords: d.tags.join(", "),
+  },
+];
+---
+
+<BaseLayout
+  lang={lang}
+  title={d.title}
+  description={d.summary}
+  section="projects"
+  alternates={alternates}
+  fallback={localePath(lang === "de" ? "en" : "de", "projects/")}
+  jsonLd={jsonLd}
+>
+  <article class="container page">
+    <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>
+      <ol>
+        <li><a href={localePath(lang, "projects/")}>{t("projects.title")}</a></li>
+        <li aria-current="page">{d.title}</li>
+      </ol>
+    </nav>
+    <header class="page-header">
+      <p class="eyebrow">{t("projects.title")}</p>
+      <h1>{d.title}</h1>
+      <p>{d.summary}</p>
+      <div class="meta">
+        <span class="status" data-stage={d.stage}>{t(`stage.${d.stage}`)}</span>
+        {
+          d.stack.length > 0 && (
+            <ul class="chips" aria-label={t("projects.stack")}>
+              {d.stack.map((s) => (
+                <li class="chip">{s}</li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+    </header>
+
+    <dl class="box box--outlined details">
+      {
+        (d.links.repo || d.links.website || d.links.release) && (
+          <>
+            <dt>{t("projects.links")}</dt>
+            <dd>
+              <ul class="tag-list">
+                {d.links.website && (
+                  <li>
+                    <a href={d.links.website}>{t("projects.website")}</a>
+                  </li>
+                )}
+                {d.links.repo && (
+                  <li>
+                    <a href={d.links.repo}>{t("projects.repo")}</a>
+                  </li>
+                )}
+                {d.links.release && (
+                  <li>
+                    <a href={d.links.release}>{t("projects.release")}</a>
+                  </li>
+                )}
+              </ul>
+            </dd>
+          </>
+        )
+      }
+      {
+        d.started && (
+          <>
+            <dt>{t("projects.started")}</dt>
+            <dd>
+              <time datetime={isoDate(d.started)}>{formatDate(d.started, lang)}</time>
+            </dd>
+          </>
+        )
+      }
+      <dt>{t("projects.updated")}</dt>
+      <dd><time datetime={isoDate(d.updated)}>{formatDate(d.updated, lang)}</time></dd>
+      {
+        d.tags.length > 0 && (
+          <>
+            <dt>{t("blog.tags")}</dt>
+            <dd>
+              <ul class="tag-list">
+                {d.tags.map((tag) => (
+                  <li>
+                    <a href={`${localePath(lang, "projects/")}?tag=${slugify(tag)}`}>{tag}</a>
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        )
+      }
+    </dl>
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <p class="section"><a href={localePath(lang, "projects/")}>← {t("projects.back")}</a></p>
+  </article>
+</BaseLayout>

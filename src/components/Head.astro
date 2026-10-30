@@ -1,0 +1,108 @@
+---
+/**
+ * Everything inside <head>. Only external CSS/JS (CSP: no inline scripts or
+ * styles). The single blocking script is /theme-init.js (no flash of the
+ * wrong theme); all other JS is deferred module code bundled by Astro.
+ */
+import interWoff2 from "../assets/fonts/inter-variable-latin.woff2?url";
+import type { Lang } from "../i18n/ui";
+import { LANGS } from "../i18n/ui";
+import { ogLocale } from "../i18n/utils";
+import { absolute, type JsonLdNode, serializeJsonLd } from "../lib/seo";
+import "../styles/global.css";
+
+export interface Feed {
+  title: string;
+  href: string;
+}
+
+interface Props {
+  lang: Lang;
+  fullTitle: string;
+  description: string;
+  alternates?: Partial<Record<Lang, string>> | undefined;
+  xDefault?: string | undefined;
+  ogType?: "website" | "article" | "profile" | undefined;
+  ogImage?: string | undefined;
+  jsonLd: JsonLdNode[];
+  noindex?: boolean | undefined;
+  feeds?: Feed[] | undefined;
+  article?: { published: Date; modified?: Date | undefined; tags?: string[] } | undefined;
+}
+
+const {
+  lang,
+  fullTitle,
+  description,
+  alternates = {},
+  xDefault,
+  ogType = "website",
+  ogImage = "/images/og-default.png",
+  jsonLd,
+  noindex = false,
+  feeds = [],
+  article,
+} = Astro.props;
+
+// noindex pages (404s, draft previews) get no canonical: the 404 pages are
+// served under arbitrary URLs, and a canonical would point at a URL that
+// does not exist.
+const canonical = noindex ? undefined : absolute(Astro.url.pathname);
+const altEntries = LANGS.flatMap((l) => {
+  const href = alternates[l];
+  return href ? [{ lang: l, href: absolute(href) }] : [];
+});
+// hreflang only makes sense when at least two language versions exist.
+const showAlternates = altEntries.length > 1;
+const otherLocales = LANGS.filter((l) => l !== lang && alternates[l]).map((l) => ogLocale[l]);
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script is:inline src="/theme-init.js"></script>
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+{canonical && <link rel="canonical" href={canonical} />}
+{noindex && <meta name="robots" content="noindex" />}
+{
+  showAlternates &&
+    altEntries.map((a) => <link rel="alternate" hreflang={a.lang} href={a.href} />)
+}
+{showAlternates && xDefault && <link rel="alternate" hreflang="x-default" href={absolute(xDefault)} />}
+{feeds.map((f) => <link rel="alternate" type="application/rss+xml" title={f.title} href={f.href} />)}
+<meta name="color-scheme" content="light dark" />
+<meta name="author" content="Timur Manjosov" />
+
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content="Timur Manjosov" />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+{canonical && <meta property="og:url" content={canonical} />}
+<meta property="og:locale" content={ogLocale[lang]} />
+{otherLocales.map((l) => <meta property="og:locale:alternate" content={l} />)}
+<meta property="og:image" content={absolute(ogImage)} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Timur Manjosov" />
+<meta name="twitter:card" content="summary_large_image" />
+{
+  article && (
+    <>
+      <meta property="article:published_time" content={article.published.toISOString()} />
+      {article.modified && (
+        <meta property="article:modified_time" content={article.modified.toISOString()} />
+      )}
+      <meta property="article:author" content="Timur Manjosov" />
+      {(article.tags ?? []).map((t) => <meta property="article:tag" content={t} />)}
+    </>
+  )
+}
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="/images/favicon-32.png" type="image/png" sizes="32x32" />
+<link rel="icon" href="/images/favicon-16.png" type="image/png" sizes="16x16" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="preload" href={interWoff2} as="font" type="font/woff2" crossorigin />
+<link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
+<script type="application/ld+json" set:html={serializeJsonLd(jsonLd)} />

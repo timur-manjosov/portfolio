@@ -1,0 +1,25 @@
+---
+/**
+ * Action indicator (R4-D3): every clickable box and every "more" link ends in
+ * one. A plain arrow for pages of this site, a diagonal one for links that
+ * leave it. Decorative: the link text says where it goes.
+ */
+interface Props {
+  external?: boolean;
+}
+const { external = false } = Astro.props;
+---
+
+<svg
+  class:list={["arrow", { "arrow--external": external }]}
+  viewBox="0 0 16 16"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.5"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+>
+  {external ? <path d="M5 11 11 5M6 5h5v5"></path> : <path d="M3 8h10M9 4l4 4-4 4"></path>}
+</svg>

@@ -1,0 +1,58 @@
+---
+/**
+ * Compact, stable facts for humans, crawlers and LLMs alike: a plain <dl>
+ * (one <div> per term/value pair, valid HTML and a layout hook for the fact
+ * bar). Values come from src/data/site.ts, the same source as JSON-LD and
+ * /links.
+ */
+import { accounts, person } from "../data/site";
+import type { Lang } from "../i18n/ui";
+import { useTranslations } from "../i18n/utils";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<section aria-labelledby="facts-title">
+  <h2 id="facts-title" class="visually-hidden">{t("facts.title")}</h2>
+  <dl class="facts">
+    <div class="fact">
+      <dt>{t("facts.name")}</dt>
+      <dd>{person.name}</dd>
+    </div>
+    <div class="fact">
+      <dt>{t("facts.study")}</dt>
+      <dd>{t("facts.studyValue")}, <a href={person.university.url}>{person.university.name}</a></dd>
+    </div>
+    <div class="fact">
+      <dt>{t("facts.focus")}</dt>
+      <dd>{t("facts.focusValue")}</dd>
+    </div>
+    <div class="fact">
+      <dt>{t("facts.languages")}</dt>
+      <dd>{person.programmingLanguages.join(", ")}</dd>
+    </div>
+    <div class="fact">
+      <dt>{t("facts.spoken")}</dt>
+      <dd>Deutsch, English</dd>
+    </div>
+    <div class="fact">
+      <dt>{t("facts.profiles")}</dt>
+      <dd>
+        {
+          accounts.map((a, i) => (
+            <>
+              {i > 0 && ", "}
+              <a href={a.url} rel={a.me ? "me" : undefined}>
+                {a.label}
+              </a>
+            </>
+          ))
+        }
+      </dd>
+    </div>
+  </dl>
+</section>

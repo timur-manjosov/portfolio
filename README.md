@@ -1,195 +1,209 @@
 # timurmanjosov.com
 
-My personal welcome page — a small, honest "this is me" introduction, not a
-portfolio showcase. Vanilla HTML/CSS/JS, no runtime framework, deployed as
-static files behind Caddy. **See `CLAUDE.md` for the current project
-structure and rules — it supersedes the "Structure" section below, which
-is kept only as a historical/conceptual reference** (this repo now uses
-11ty as an authoring-time build step; see `MIGRATION.md` for what changed
-and why).
+Personal hub of Timur Manjosov: who I am, what I build, what I write and
+where else to find me. Bilingual (German/English), static, no cookies, no
+trackers, no third-party requests.
 
-Design direction: Nord palette (light/dark, manual toggle + system default),
-Space Grotesk/Inter/JetBrains Mono, bilingual DE/EN content. The signature
-visual element isn't a static image: `scripts/system.js` runs a generative
-engine on one full-page canvas that morphs, by scroll position, through
-four mathematical systems — see "The generative system" below.
+Built with [Astro 7](https://astro.build/) as a fully static site and served
+by Caddy on my own server. Why Astro: [`docs/adr/0001-stack.md`](docs/adr/0001-stack.md).
 
-## Preview locally
+## Setup
 
 ```sh
-npm install
-npm start   # eleventy --serve, live reload, http://localhost:8080
+npm ci          # Node ≥ 22
+npm run dev     # http://localhost:4321, drafts visible, live reload
 ```
 
-Or `npm run build` once, then serve the generated `_site/` directory with
-any static file server — the *deployed* artifact is still plain static
-HTML/CSS/JS, 11ty just composes it at build time (see `CLAUDE.md`).
+## Commands
 
-## Deploying
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server (drafts included) |
+| `npm run build` | Production build → `dist/` (drafts excluded) |
+| `npm run build:drafts` | Preview build with drafts → `dist-drafts/` (all `noindex`) |
+| `npm run serve` | Serve `dist/` with the production headers and redirects (port 4321) |
+| `npm run new:post`, `new:project` | Scaffold a post or project as a draft (see below) |
+| `npm run edit -- <page \| post <slug> \| project <slug>>`, `edit:now` | Open the file in `$EDITOR`; sets `updated` on pages/projects, validates the frontmatter |
+| `npm run publish -- --target <ssh-target>` | Content update after the first go-live: build, change overview, confirm, switch, HTTP check (`--dry-run`, `--rollback`; `docs/PUBLISHING.md`) |
+| `npm run check` | **The gate**: lint, types, both builds, CSP, links, HTML, SEO/JSON-LD, HTTP, contrast, dark-palette snapshot, axe, drafts filter, leak check, build modes, fixtures, scheduled posts, languages per post, publish (local target), scaffolder/editor round trip, images, GitHub metadata, posts on every surface, pre-push exit codes, Caddy generator, i18n report, `npm audit` |
+| `npm run check:articles:system` | Reruns every computation of the blog posts (`tests/articles/`; Python 3 + system Chromium) |
+| `npm run check:browser` | Playwright + axe in Chromium: light/dark, 320–1280 px, no-JS, cookies, third parties, CSP violations, toggles, search, feeds, redirects, language door (`npx playwright install chromium` once) |
+| `npm run check:browser:system` | the same with the installed `/usr/bin/chromium` (no browser download) |
+| `npm run report:i18n` | Missing translations + texts still in `draft-review` → `reports/` |
+| `npm run report:weight` | Page weight and request count per page |
+| `npm run format` | Biome: format + safe fixes |
+| `npm run caddy:example` | Regenerate `deploy/Caddyfile.example` from `deploy/site-config.json` |
+| `npm run check:prepush` | GO / NO-GO for every commit a push would upload: private values, server details, tokens, non-noreply e-mails, files that belong in `.gitignore` (`docs/GO-LIVE.md` step 3) |
+| `npm run check:dark-tokens` | Dark palette against its snapshot (part of `check`); `-- --update` only after a deliberate decision |
+| `node tools/screenshots.mjs` | Design review screenshots, light + dark, overflow at 320 px → `.screenshots/` |
+| `node tools/brand-assets.mjs` | Re-render the Open Graph image and the favicons from the tokens |
 
-`./ship.sh` — one command, run from this repo on the ThinkPad. It commits
-and pushes any pending changes, then SSHes into the VPS and runs its
-`deploy.sh`, which builds the site in a disposable Docker container and
-atomically swaps it live. See `CLAUDE.md`'s "Build & deploy" for details.
+## Checks: CI and local
 
-## Structure (conceptual — see `CLAUDE.md` for the authoritative layout)
+CI (`.github/workflows/check.yml`, on pushes to `main`/`redesign` and on
+pull requests) runs `npm run check`, the browser suite with a Chromium it
+installs itself, ShellCheck, the Caddyfile example check, `caddy adapt`
+and an external link check (lychee). Read-only token, no secrets, no
+private file (public build mode), and it never deploys.
+
+Only local: `npm run check:prepush` (needs your history and private
+files), the release rehearsal (`deploy/build-release.sh --test-only`),
+Lighthouse (`npx lighthouse@13 … --chrome-path=/usr/bin/chromium` against
+`npm run serve`), the screenshot review, and everything on the server.
+
+## Content workflow
+
+All content is Markdown in `src/content/`, validated against the schemas in
+`src/lib/content-schemas.ts` (used by `src/content.config.ts` and by the
+editing tools) on every build (a missing date or an unknown category fails
+the build). Writing and publishing without touching code, in German:
+[`docs/PUBLISHING.md`](docs/PUBLISHING.md).
 
 ```
-styles/
-  tokens.css        Fonts, colors, type scale, spacing, radii, motion timings
-  reset.css         Minimal modern CSS reset — no colors/type/layout here
-  main.css          Layout, theming, every section's component styling
-scripts/
-  system.js         The generative engine (see below) — background canvas
-                     + the two project-card live previews
-  main.js           Theme + language toggle, scroll/load motion, the
-                     generative section dividers
-assets/
-  fonts/            Self-hosted variable fonts (woff2, Latin subset)
-  images/           Favicon (svg + png fallbacks) and the OG share image
-robots.txt
+src/content/
+  blog/<de|en>/<slug>.md       posts
+  projects/<de|en>/<slug>.md   projects
+  pages/<de|en>/<slug>.md      about, now, uses, contact, privacy, imprint
+  categories.yaml              blog categories (add one here, no code change)
+src/data/site.ts               public facts (name, GitHub, university); private ones come from private/ (below)
+src/i18n/ui.ts                 all interface strings, DE + EN (type-checked parity)
 ```
 
-Everything is progressive enhancement: the page is fully readable and
-usable with both scripts absent — they only add toggle interactivity,
-motion, and the generative visuals, never anything load-bearing. Without
-JS, `#system-canvas` simply never gets drawn to (transparent, no visual
-gap) and the four `<path class="divider-line">` elements are present but
-empty (`d=""`), so the section dividers just don't render — everything
-else on the page reads normally either way.
+**New post or project** (pre-filled frontmatter, starts as `draft: true`):
 
-## The generative system (`scripts/system.js`)
-
-One `<canvas id="system-canvas">`, fixed behind all content, on which a
-small state manager blends between four independent mathematical systems
-as the page scrolls:
-
-| System | Anchor | What it is |
-|---|---|---|
-| De Jong attractor | `#hero` | A strange attractor (`x' = sin(ay) - cos(bx)`, `y' = sin(cx) - cos(dy)`), pointer/click-reactive |
-| L-system | Epiphyte project card | A Prusinkiewicz fractal-plant ruleset that grows through depth cycles and fades |
-| Cellular automaton | Saeculum project card | Elementary CA, Rule 90, sweeping out fresh "terrain" and reseeding |
-| Fourier epicycles | `<footer>` | A hand-drawn "TM" monogram, DFT-decomposed into ~40 rotating circles that trace it in a slow, repeating loop |
-
-**Crossfade:** each system's own anchor element is watched by an
-`IntersectionObserver` (many thresholds, expanded `rootMargin`); the
-reported intersection ratio becomes that system's target "weight", eased
-continuously every frame. Every frame: one shared fade-to-background-color
-rect is applied once, then every system's cheap `update()` runs
-unconditionally, and only systems with non-negligible weight actually
-`render()` (the expensive part) — scaled by their own weight. Two systems
-both partially weighted, mid-scroll, is what makes the crossfade a genuine
-blend rather than a swap.
-
-**Interaction:** pointer position and "disturbance" pulses (on click) are
-computed once per frame as shared input, then interpreted by whichever
-system currently has weight — so interaction travels with the dominant
-system rather than staying tied to one of them. The Fourier signature is a
-deliberate exception: it never reads the disturbance boost and has no
-click reaction at all, staying calm on purpose (it's the signature, not
-another experiment) — pointer position only nudges its rotation speed
-within a bounded range that always keeps drawing forward.
-
-**Performance priority** (highest first): hero attractor > footer
-signature > L-system/cellular automaton. Under sustained sub-50fps, a
-tiered adaptive-quality step degrades the *lowest*-priority tier first,
-moving to the next tier only once the current one is fully floored — see
-the `degradeTiers` array in `system.js`. This is one-directional (never
-recovers upward) to avoid visible flicker, same as the original scheme.
-
-**Reduced motion:** no animated crossfade and no continuous render loop at
-all — an `IntersectionObserver` still fires on real (user-driven) scroll
-visibility changes, and each transition just jumps straight to that
-system's `renderStatic()`, a single complete frame.
-
-**Card previews:** Epiphyte's and Saeculum's project cards each contain
-their own small, independent `<canvas data-preview="…">`, running a
-smaller-scale version of that project's system (own timing, own state,
-nothing shared with the background engine). Both pause via their own
-`IntersectionObserver` when scrolled out of view, and are deliberately
-throttled to ~15fps — an intentionally lower, structural budget, since
-they're the first thing allowed to give under load, same spirit as the
-degradation priority above. Both carry a visually-hidden text description
-for screen readers (the canvases themselves are `aria-hidden`).
-
-## Adding a project
-
-*(Note: this section predates the three-chapter narrative rebuild — actual
-project markup now lives in `src/index.njk` as one `<section
-class="project-section">` per project, no `#projects-list`/`<li>` wrapper.
-See `CLAUDE.md`'s "Adding a project" for the accurate current template.)*
-
-Projects live in `#projects-list` in `index.html`, one `<li><article
-class="project-card">` per project. Copy an existing one:
-
-```html
-<li>
-  <article class="project-card" aria-labelledby="project-<slug>-heading">
-    <h3 id="project-<slug>-heading">Name</h3>
-    <p data-en="English description." data-de="German description.">
-      English description.
-    </p>
-    <ul class="tech-tags" role="list" aria-label="Technologies used">
-      <li>Some Tag</li>
-    </ul>
-    <a class="project-link" href="https://github.com/timur-manjosov/<repo>">
-      <span data-en="View on GitHub" data-de="Auf GitHub ansehen">View on GitHub</span>
-      <span class="link-arrow" aria-hidden="true">&rarr;</span>
-    </a>
-  </article>
-</li>
+```sh
+npm run new:post -- --title "Primzahltests" --lang de --category math-crypto
+npm run new:project -- --title "Mein Projekt" --lang both
+npm run new                                   # interactive
 ```
 
-The grid (`.project-grid`) and each card's own container query in
-`main.css` already handle any number of cards — no CSS changes needed.
-Only add a project here once it's real and shippable; this file is meant
-to stay honest, not aspirational.
+- **Dates and scheduling:** `date` is today (Europe/Berlin) by default. A
+  post dated in the future is left out of production builds completely
+  and appears with the first build on or after its date
+  (`src/lib/schedule.ts`); dev and test builds show it as "scheduled".
+- **Images:** next to the post (`blog/<lang>/<slug>/figure.png`, written
+  `![alt text](./<slug>/figure.png)`), optimised at build time; missing alt
+  text, external or raw-HTML images fail the build.
+- **Test fixtures:** the example posts live in `tests/fixtures/blog/` and
+  are loaded only by test builds (`build:drafts`, `--fixtures`); production
+  and release builds never contain them (`check:fixtures`).
 
-The little `.project-preview` canvas on the Epiphyte/Saeculum cards is
-*not* part of this template — it's a bespoke, hand-wired live preview per
-project (see `scripts/system.js`'s "CARD PREVIEWS" section), not something
-new projects get automatically. A new project is just the markup above;
-give it a live preview later, deliberately, only if it earns one.
+- **Translations:** a file with the same slug in `de/` and `en/` is a
+  translation (or set the same `translationKey` in both). A missing
+  translation is fine: the switcher says so honestly and links to the other
+  language's overview. `npm run report:i18n` lists them.
+- **Drafts:** `draft: true` → visible in `npm run dev` and `build:drafts`,
+  never in production (`check:drafts-hidden` enforces it).
+- **Maths:** `$…$` inline, `$$…$$` as a block. Rendered to MathML at build
+  time; a TeX error fails the build.
+- **Code:** fenced blocks with a language, highlighted at build time.
+- **Footnotes** (`[^1]`), **table of contents** (automatic from three h2/h3
+  headings, or `toc: true|false`), **series** (`series` + `seriesPart`),
+  **opinion pieces** (category `opinion` gets a visible label and date).
+- **Projects:** `stage` (active, in-development, maintained, paused,
+  archived), `tags`, `stack`, `links.repo|website|release`, `updated`,
+  `featured`, `order`, optional `repo: owner/name` (public GitHub facts at
+  release time fill an empty `stack` and `links.repo`; hand-written values
+  win; off unless `GITHUB_META=1`, which `publish` sets).
+- **Now page:** `src/content/pages/<lang>/now.md` (`npm run edit:now` sets
+  `updated`). The home page shows its `summary`.
 
-## Adding/editing a translation
+Open content questions: [`CONTENT-TODO.md`](CONTENT-TODO.md).
 
-Every visible string carries its own translation as a `data-en`/`data-de`
-attribute pair on the same element, e.g.:
+## Private data
 
-```html
-<p data-en="Hello." data-de="Hallo.">Hello.</p>
+Some values belong on the website but not in this repository: the contact
+e-mail address, the PGP key, further accounts, the controller named in the
+privacy policy, imprint data and optional extra text for the About page.
+They live in `private/site.private.yaml`. `private/` is git-ignored; only
+the field reference [`site.private.example.yaml`](site.private.example.yaml)
+is committed. Schema with error messages per field:
+`src/lib/private-schema.ts`. Every private value reaches the site through
+one place (`src/data/private.ts` → `src/data/site.ts`).
+
+```sh
+cp site.private.example.yaml private/site.private.yaml   # then fill in real values
+npm run build                       # public mode: no private file needed, private sections left out
+npm run build -- --private private/site.private.yaml     # public mode with private data (preview)
+npm run dev:private                 # dev server with private data
+npm run build:release               # release mode (deploy/build-release.sh uses it)
 ```
 
-The element's actual text content is the English version (the fallback
-language for visitors whose browser isn't German). `scripts/main.js`
-swaps `textContent` between the two attributes on language toggle and on
-load (based on saved preference, else `navigator.language`) — so adding a
-new translatable string is just adding both attributes; no JS changes
-needed. The one exception is the theme toggle's button label, which is
-state-dependent (dark vs. light) and lives in a small `THEME_LABELS`
-object directly in `main.js`.
+- **Public mode** (default, CI): without a private file every section that
+  needs a private value is left out, without placeholders. No imprint page,
+  no security.txt, no key file.
+- **Release mode** (`--release`, path via `--private <file>`): needs at
+  least `contact.email` and `legal.controller`, and fails on test values
+  (`example.invalid`) and on any visible `TODO(` in the output. Texts still
+  marked `status: draft-review` only produce a counted warning.
+- **Imprint:** the page and its footer link exist only when `legal.imprint`
+  has name, address and e-mail.
+- **Leak check:** `npm run check:private` (part of `npm run check`) searches
+  every tracked, staged and not-ignored file for the values of every
+  `private/*.yaml` and fails on a hit, without printing the value. The same
+  check as a pre-commit hook: `git config core.hooksPath .githooks`
+  (not enabled by default; `git config --unset core.hooksPath` turns it off).
 
-## Section dividers
+**What `private/` does not do:** it does not make anything secret. Whatever
+the site renders (your e-mail address, the imprint) is public the moment the
+site is live. `private/` only keeps these values out of the git repository
+and its history, so that publishing the source does not publish them a
+second time, in a form that cannot be taken back.
 
-The four dividers (About/Projects/Sport/Contact) are generated, not
-hand-drawn: `main.js`'s `initGenerativeDividers()` hashes each `<section>`
-own `id` into a damped sine curve (frequency/phase/decay/amplitude all
-derived from that hash) and writes it as an SVG `<path>`'s `d` attribute
-at load. Same principle, a related-but-different curve per section,
-deterministic across reloads rather than random. The existing
-`.reveal-init`/`.is-visible` scroll-reveal draw-on animation in `main.css`
-needs no changes to work with whatever curve gets generated — it only
-relies on `pathLength="1"` normalizing stroke-dasharray/dashoffset,
-regardless of the actual path geometry.
+## Deployment
 
-## Design tokens
+Build locally, upload a checksummed archive, switch a symlink on the server:
 
-All color/type/spacing decisions are custom properties in `styles/main.css`
-(`:root`, plus theme overrides under `[data-theme]` and
-`prefers-color-scheme`). Component CSS should always go through these
-tokens rather than hardcoding a Nord hex value or a raw `px`/`rem` size.
-The generative system in `system.js` follows the same rule at one remove:
-it never hardcodes a color either, it resolves `--color-canvas` and
-`--color-signal-ink` live (via a scratch-canvas trick, so `color-mix()`
-resolves the same way it does everywhere else) and re-resolves them on
-every theme change.
+```sh
+./ship.sh <ssh-target> [--private <file>]   # build-release → stage → confirm → dry run → apply (sudo)
+```
+
+First go-live in ten steps (step 3: the clean push): [`docs/GO-LIVE.md`](docs/GO-LIVE.md). Details,
+the Caddy configuration, checks after go-live and rollback:
+[`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+Every later content update, without touching Caddy:
+
+```sh
+npm run publish -- --target <ssh-target> [--dry-run | --rollback]
+```
+
+It reuses `deploy/build-release.sh`, uploads only the content, switches the
+`current` symlink with one `sudo`, checks over HTTP and switches back on
+failure ([`docs/PUBLISHING.md`](docs/PUBLISHING.md), DECISIONS R5-D4).
+
+`/` redirects (302) to `/de/` or `/en/` by the first `Accept-Language`
+entry (default English); every other URL is stable. The rule lives in
+`deploy/site-config.json` → `languageDoor`.
+
+## Principles
+
+- Static HTML; JavaScript only where it helps (theme toggle, project filter,
+  search, reveal on scroll; 2–5 KB per page). Everything works without JS.
+- Runs under a strict CSP (`default-src 'self'`, no `'unsafe-inline'`): no
+  inline scripts or styles, enforced by `tools/check-csp.mjs`.
+- No runtime requests to third parties, no cookies, no analytics.
+- WCAG 2.2 AA, one `h1` per page, semantic landmarks, JSON-LD.
+- Design: light mode after Material 3 (blue primary, petrol second
+  accent), dark mode violet and teal (frozen by a snapshot); one box
+  construction (outlined, filled, elevated), quiet motion on interaction
+  only, no animation loops or canvas; OS preference plus a manual switch;
+  tokens in `src/styles/tokens.css`, every text/background pair (gradients
+  and state layers included) checked for WCAG AA by
+  `tools/check-contrast.mjs`.
+
+## Documentation
+
+- [`docs/AUDIT.md`](docs/AUDIT.md): state before the redesign
+- [`docs/GAP.md`](docs/GAP.md): target vs. state
+- [`docs/adr/0001-stack.md`](docs/adr/0001-stack.md): stack decision
+- [`docs/DECISIONS.md`](docs/DECISIONS.md): all other decisions, redirect table
+- [`docs/VERIFICATION.md`](docs/VERIFICATION.md): measured results
+- [`docs/GO-LIVE.md`](docs/GO-LIVE.md): first go-live, step by step
+- [`docs/PUBLISHING.md`](docs/PUBLISHING.md): writing and publishing without code (German)
+- [`docs/DEPLOY.md`](docs/DEPLOY.md): deployment and rollback
+- [`docs/BLOCKERS.md`](docs/BLOCKERS.md), [`docs/FINAL-REPORT.md`](docs/FINAL-REPORT.md)
+- `docs/history/`: audits and migration notes of the earlier versions
+
+The previous site (Eleventy, generative canvas) is preserved under the git
+tag `pre-redesign`.

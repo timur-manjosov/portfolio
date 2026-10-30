@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Refuses a commit whose staged content contains a value from a private data
+# file (private/*.yaml), e.g. the contact e-mail address or an imprint line.
+# The value itself is never printed, only the field and the file it was
+# found in.
+#
+# Not active by default. Activate once per clone:
+#   git config core.hooksPath .githooks
+# Deactivate:
+#   git config --unset core.hooksPath
+#
+# Bypassing it (git commit --no-verify) is possible, which is why
+# `npm run check` runs the same check over all tracked files as well.
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+exec node tools/check-private.mjs --staged-only

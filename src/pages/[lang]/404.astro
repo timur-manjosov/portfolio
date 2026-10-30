@@ -1,0 +1,26 @@
+---
+/** Language-specific 404, served by Caddy for unknown paths under /de/ or /en/. */
+import NotFound from "../../components/NotFound.astro";
+import { LANGS, type Lang } from "../../i18n/ui";
+import { useTranslations } from "../../i18n/utils";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+---
+
+<BaseLayout
+  lang={lang}
+  title={t("notFound.title")}
+  description={t("notFound.description")}
+  alternates={{ de: "/de/404/", en: "/en/404/" }}
+  noindex
+>
+  <div class="container page">
+    <NotFound lang={lang} level={1} />
+  </div>
+</BaseLayout>

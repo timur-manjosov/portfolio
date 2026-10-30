@@ -1,0 +1,46 @@
+---
+/**
+ * "/" — never a language selection page.
+ *
+ * Production: Caddy redirects "/" (302) to /de/ or /en/ by the first
+ * Accept-Language entry before this file is ever read
+ * (deploy/site-config.json → languageDoor, docs/DECISIONS.md R2-D2).
+ *
+ * Fallback (dev server, preview, server rule missing): the blocking external
+ * script /lang-redirect.js applies the same rule to navigator.languages and
+ * replaces the address. Only without JavaScript does a visitor see this
+ * page, and then only two plain links inside <noscript>.
+ *
+ * This URL stays the hreflang x-default of the home pages.
+ */
+import Head from "../components/Head.astro";
+import { ui } from "../i18n/ui";
+import { globalGraph } from "../lib/seo";
+
+const alternates = { de: "/de/", en: "/en/" };
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <script is:inline src="/lang-redirect.js"></script>
+    <Head
+      lang="en"
+      fullTitle="Timur Manjosov"
+      description={`${ui.en["site.description"]} / ${ui.de["site.description"]}`}
+      alternates={alternates}
+      xDefault="/"
+      jsonLd={globalGraph("en")}
+    />
+  </head>
+  <body>
+    <noscript>
+      <main id="main" class="container door">
+        <h1>Timur Manjosov</h1>
+        <p class="door__links">
+          <a href="/de/" hreflang="de" lang="de">Deutsch</a> · <a href="/en/" hreflang="en">English</a>
+        </p>
+      </main>
+    </noscript>
+  </body>
+</html>

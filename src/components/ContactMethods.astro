@@ -1,0 +1,67 @@
+---
+/**
+ * Contact channels from src/data/site.ts. The e-mail address (once set in
+ * the private file) is written as HTML character references: readable and
+ * clickable without JS, but not plain text for the simplest harvesters.
+ */
+import { accounts, person } from "../data/site";
+import type { Lang } from "../i18n/ui";
+import { localePath, useTranslations } from "../i18n/utils";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+function encode(value: string): string {
+  return [...value].map((c) => `&#${c.codePointAt(0)};`).join("");
+}
+const email = person.email;
+const emailHtml = email ? `<a href="${encode(`mailto:${email}`)}">${encode(email)}</a>` : null;
+const fingerprint = person.pgp?.fingerprint.match(/.{4}/g)?.join(" ");
+---
+
+<dl class="box box--outlined details contact-methods">
+  {
+    emailHtml && (
+      <>
+        <dt>{t("contact.email")}</dt>
+        <dd set:html={emailHtml} />
+      </>
+    )
+  }
+  {
+    person.pgp && (
+      <>
+        <dt>{t("contact.pgp")}</dt>
+        <dd>
+          {person.pgp.keyUrl && (
+            <>
+              <a href={person.pgp.keyUrl} download>
+                {t("contact.pgpDownload")}
+              </a>
+              <br />
+            </>
+          )}
+          {t("contact.fingerprint")}: <code class="fingerprint">{fingerprint}</code>
+          <p>{t("contact.pgpHowto")}</p>
+        </dd>
+      </>
+    )
+  }
+  {
+    accounts.map((a) => (
+      <>
+        <dt>{a.label}</dt>
+        <dd>
+          <a href={a.url} rel={a.me ? "me" : undefined}>
+            {a.handle}
+          </a>
+        </dd>
+      </>
+    ))
+  }
+  <dt>{t("nav.links")}</dt>
+  <dd><a href={localePath(lang, "links/")}>{t("links.description")}</a></dd>
+</dl>

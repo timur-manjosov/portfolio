@@ -2,6 +2,7 @@
 .DS_Store
 Thumbs.db
 desktop.ini
+.directory
 
 # Editors
 .vscode/
@@ -11,15 +12,39 @@ desktop.ini
 # Local tooling / logs
 *.log
 .cache/
+# Scratch space: throw-away clones and one-off generators (R4 pre-push test,
+# Material palette generation)
+.tmp/
 
-# 11ty build (authoring-time only — see CLAUDE.md)
+# Python bytecode of the article computations (tests/articles/*.py)
+__pycache__/
+
+# Node / Astro
 node_modules/
-_site/
-_site.a/
-_site.b/
-_site.bootstrap/
-current
-current.tmp
+dist/
+dist-*/
+.astro/
+reports/
+
+# Private data layer: values that appear on the site but must never be in
+# this public repository (README "Private data"). Only
+# site.private.example.yaml in the project root is committed.
+private/
+
+# Release archives built by deploy/build-release.sh (they contain the
+# private data rendered into the site and the server Caddyfile proposal).
+release/
+
+# Screenshots of the design review (revision 2)
+.screenshots/
+
+# Server snapshots (full Caddyfile with other sites' config, unit files):
+# read-only copies for the generator, never committed.
+deploy/Caddyfile.proposed
+deploy/Caddyfile.current
+*.server-snapshot
+server-snapshot/
 
 # Prompts
 prompts/*
+.directory

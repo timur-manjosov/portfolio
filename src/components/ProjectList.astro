@@ -1,0 +1,17 @@
+---
+import type { Lang } from "../i18n/ui";
+import type { Parsed } from "../lib/content";
+import ProjectCard from "./ProjectCard.astro";
+
+interface Props {
+  lang: Lang;
+  projects: Parsed<"projects">[];
+  headingLevel?: 2 | 3;
+}
+
+const { lang, projects, headingLevel = 3 } = Astro.props;
+---
+
+<ul class="entry-list entry-list--grid" data-project-list>
+  {projects.map((p) => <ProjectCard lang={lang} project={p} headingLevel={headingLevel} featured={p.entry.data.featured} />)}
+</ul>

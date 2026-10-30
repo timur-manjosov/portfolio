@@ -1,0 +1,63 @@
+---
+import ProjectList from "../../../components/ProjectList.astro";
+import { LANGS, type Lang, type UiKey } from "../../../i18n/ui";
+import { slugify, useTranslations } from "../../../i18n/utils";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { allProjects, forListing } from "../../../lib/content";
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const projects = forListing(await allProjects(), lang);
+
+const stages = [...new Set(projects.map((p) => p.entry.data.stage))];
+const tags = [
+  ...new Map(projects.flatMap((p) => p.entry.data.tags.map((tag) => [slugify(tag), tag] as const))).entries(),
+].sort((a, b) => a[1].localeCompare(b[1]));
+---
+
+<BaseLayout
+  lang={lang}
+  title={t("projects.title")}
+  description={t("projects.description")}
+  section="projects"
+  alternates={{ de: "/de/projects/", en: "/en/projects/" }}
+>
+  <div class="container container--wide page">
+    <header class="page-header">
+      <h1>{t("projects.title")}</h1>
+      <p>{t("projects.description")}</p>
+    </header>
+
+    {/* Filter controls: hidden without JS (the full list is shown instead). */}
+    <fieldset class="filters" data-project-filters hidden>
+      <legend>{t("projects.filter")}</legend>
+      <label class="field">
+        {t("projects.filterStatus")}
+        <select name="stage">
+          <option value="">{t("projects.filterAll")}</option>
+          {stages.map((s) => <option value={s}>{t(`stage.${s}` as UiKey)}</option>)}
+        </select>
+      </label>
+      <label class="field">
+        {t("projects.filterTag")}
+        <select name="tag">
+          <option value="">{t("projects.filterAll")}</option>
+          {tags.map(([slug, tag]) => <option value={slug}>{tag}</option>)}
+        </select>
+      </label>
+      <button type="button" class="button" data-filter-reset>{t("projects.filterReset")}</button>
+    </fieldset>
+    <p class="status-line" data-filter-status data-msg-count={t("projects.count")} aria-live="polite" hidden></p>
+    <p data-filter-empty hidden>{t("projects.noMatch")}</p>
+
+    <ProjectList lang={lang} projects={projects} headingLevel={2} />
+  </div>
+</BaseLayout>
+
+<script>
+  import "../../../scripts/project-filter.ts";
+</script>

@@ -1,202 +1,167 @@
 # CLAUDE.md
 
-Guidance for working in this repo — condensed from `README.md` and
-`AUDIT.md`, plus the structural rules that came out of the hub
-restructuring (see `MIGRATION.md` for what specifically changed).
+Guidance for working in this repo. Since the 2026-10 redesign the site is an
+Astro 7 static site (personal hub: about, projects, blog, now, links,
+contact; DE + EN). User-facing docs: `README.md`. Decisions and their
+reasons: `docs/DECISIONS.md`, `docs/adr/0001-stack.md`. The previous
+Eleventy site lives under the tag `pre-redesign` and in `docs/history/`.
 
-## Philosophy (unchanged since the original vanilla site)
+## Philosophy
 
-- **Radical minimalism.** This is Timur Manjosov's personal welcome page —
-  a small, honest "this is me," not a portfolio showcase, not a product.
-- **No runtime framework, no client-side dependencies.** Everything shipped
-  to the browser is hand-written HTML/CSS/ES5-style JS. `scripts/*.js`
-  stay `function`-declaration style, no classes, no arrow functions
-  outside callbacks, no bundler, no transpiling.
-- **Progressive enhancement is a hard rule, not a nice-to-have.** The page
-  must be fully readable and usable with both `<script>` tags absent:
-  content visible, GitHub links live, default English copy, theme
-  following the OS setting. JS only ever adds toggle interactivity,
-  motion, and the generative canvas visuals — never anything load-bearing.
-- **Nord palette**, light/dark (manual toggle + system default), Space
-  Grotesk/Inter/JetBrains Mono, bilingual DE/EN content via `data-en`/
-  `data-de` attribute pairs (see "Adding a translation" below).
-- **Deployment stays static files behind Caddy.** See "Build & deploy"
-  below for what that now actually means with 11ty in the picture.
-
-## 11ty's role: authoring-time only
-
-11ty is a **build-time HTML composer, not a runtime dependency.** It never
-runs in the browser. Its only job is to stamp out `header`/`footer`/`nav`/
-design tokens once instead of hand-copying them into every new page —
-exactly the gap `AUDIT.md` §6 identified as blocking the hub. Node is only
-needed to run the build (locally and/or once at deploy time); the
-*deployed* artifact is still plain static HTML/CSS/JS, unchanged in kind
-from before the migration.
-
-If you're touching `styles/*.css` or `scripts/*.js`: nothing about how you
-write those files changes. They're passthrough-copied verbatim into
-`_site/`, not processed by 11ty at all.
+- **Calm, content-driven.** A personal hub that grows through content
+  (posts, /now, project status), not through effects. No canvas engines,
+  parallax, scroll-linked effects or hover tricks. Since revision 2: two
+  accents (violet, teal), static CSS gradients and tonal surfaces, all as
+  tokens; no animation loops. Since revision 3: light weights (headings
+  ≤ 600), unfilled cards with 1px contours, and subtle motion only on
+  interaction and when content first appears (opacity/transform, 150–300 ms,
+  motion tokens in `tokens.css`; nothing moves under reduced motion).
+  Since revision 4: light mode after Material 3 (blue primary), dark mode
+  frozen by `tools/fixtures/dark-tokens.snapshot.json` (`check:dark-tokens`;
+  update only on Timur's explicit decision). One box construction
+  (outlined `.card`/`.box--outlined`, `.box--filled`, `.box--elevated`,
+  radius and padding tokens), an arrow (`Arrow.astro`) in every clickable
+  box. Motion 200–350 ms, M3 easing, state layers 8/10 %, lift ≤ 6 px;
+  every hover rule inside `@media (hover: hover)`, movement also inside
+  `prefers-reduced-motion: no-preference`.
+- **Static output, no server runtime.** `astro build` → `dist/`, served by
+  the host-installed Caddy. Node is needed at build time only.
+- **Progressive enhancement is a hard rule.** Every page must be fully
+  usable without JS. JS (theme toggle, project filter, search) only adds to
+  it, and its controls stay `hidden` until the script reveals them. (Since
+  revision 3, `/theme-init.js` sets `.js` on `<html>` before first paint and
+  CSS reserves their place, so revealing them causes no layout shift.)
+  Reveal-on-scroll (`src/scripts/reveal.ts`) never hides anything without JS
+  or under `prefers-reduced-motion`.
+- **Strict CSP compatibility.** The live CSP is `default-src 'self'`,
+  `script-src 'self'`, `style-src 'self'`, without `'unsafe-inline'` and
+  without hashes. So: no inline `<script>` (except JSON-LD data blocks), no
+  `<style>`, no `style=""`, no `on…=` handlers, nothing from another origin.
+  Do not use Shiki (inline styles), KaTeX HTML output (inline styles) or
+  Pagefind (`wasm-unsafe-eval`). `tools/check-csp.mjs` enforces this on
+  every build.
+- **No third parties at runtime, no cookies, no analytics.**
+- **Facts only.** Content about Timur comes only from verifiable sources
+  (his brief, the old site, public GitHub). Never publish address, phone,
+  birth date, family, employer, health, finances, political or religious
+  views, server IPs or infrastructure details. Unknowns go to
+  `CONTENT-TODO.md` as `TODO(Timur)`.
 
 ## Structure
 
 ```
-eleventy.config.js     11ty config: passthrough copy + dir mapping
-package.json           @11ty/eleventy is the only devDependency
-src/                   11ty INPUT — templates only, not shipped as-is
-  _includes/
-    layouts/base.njk      <html>/<head>/<body> shell, one per site
-    partials/
-      header.njk           brand + <nav> + lang/theme toggles
-      footer.njk           copyright + Fourier signature description
-  index.njk              home page content (front matter: title, description,
-                          active, lastmod, sitemapPriority, tags: sitemap)
-  lab.njk                 the /lab/ placeholder page, same shape
-  sitemap.xml.njk         generates sitemap.xml from the `sitemap` tag
-styles/                 passthrough-copied as-is
-  tokens.css              page-agnostic: fonts, colors, type scale,
-                          spacing, radii, motion timings (custom
-                          properties only — no layout/component rules)
-  main.css                layout + every component's styling
-  reset.css               unchanged
-scripts/                passthrough-copied as-is
-  system.js               the generative engine (see below)
-  main.js                 theme/language toggle, scroll motion, dividers
-assets/                 passthrough-copied as-is (fonts, favicons, OG image)
-robots.txt              passthrough-copied as-is
-_site/                  BUILD OUTPUT — gitignored, never edit by hand
+astro.config.ts        static output, i18n (de/en, both prefixed), markdown pipeline
+src/content.config.ts  collections; the Zod schemas live in src/lib/content-schemas.ts (shared with the
+                       editing tools; build fails on invalid frontmatter)
+src/content/           Markdown content, <collection>/<lang>/<slug>.md; post images in blog/<lang>/<slug>/
+src/data/site.ts       public facts (name, GitHub, university) merged with the private layer
+src/data/private.ts    the one entry point for private values (private/site.private.yaml, git-ignored;
+                       schema src/lib/private-schema.ts, field reference site.private.example.yaml)
+src/i18n/ui.ts         ALL interface strings, DE + EN (en typed against de → missing keys are type errors)
+src/lib/               content helpers, routes registry (sitemap/llms/search), SEO/JSON-LD, feeds,
+                       rehype/remark plugins (Temml math → MathML, comment stripping, image policy),
+                       schedule.ts (posts dated after the build day), github-meta.ts (repo: facts, GITHUB_META=1 only)
+src/pages/             routes: [lang]/…, sitemap.xml, robots.txt, llms.txt, search-index.json,
+                       .well-known/security.txt (only with contact.email in the private file)
+src/components/, src/layouts/, src/scripts/ (client TS), src/styles/ (tokens.css, global.css)
+public/                copied verbatim (favicons, OG image, theme-init.js)
+tools/                 check scripts (Node built-ins + jsdom/axe/playwright), scaffolder (new:post/new:project),
+                       edit-content (edit, edit:now), publish.mjs, local server, Caddy block generator
+tests/fixtures/blog/   example posts, loaded only by test builds (--fixtures); never in production or release
+tests/articles/        the computations behind every launch post (npm run check:articles:system)
+deploy/                site-config.json (headers, redirects, publish.branches/keep), Caddyfile.example (generated),
+                       build-release.sh, stage.sh, apply-on-server.sh (first go-live, Caddy changes),
+                       publish-on-server.sh (content updates: symlink switch, never touches Caddy)
 ```
 
-## Build & deploy
+## Rules of thumb
+
+- **UI text** goes into `src/i18n/ui.ts`, never hard-coded in templates or
+  client scripts. Client scripts read strings from `data-msg-*` attributes.
+- **Colours** only as tokens in `src/styles/tokens.css`. `global.css` must
+  not contain literal colours (`tools/check-contrast.mjs` fails otherwise).
+  Keep the two dark palettes (media query and `[data-theme="dark"]`)
+  identical. A new colour pair needs an entry in the contrast check.
+- **New page type:** add it to `src/lib/routes.ts` so the sitemap, llms.txt
+  and the search index pick it up. Give it `alternates` for hreflang.
+- **New category:** an entry in `src/content/categories.yaml`, no code.
+- **Posts:** `npm run new:post`; dates are Berlin calendar days, a future
+  date means "scheduled" (absent from production until a build on or after
+  it); never backdate. Every number in a post comes from a script in
+  `tests/articles/` with asserts. Images next to the post with alt text;
+  no external images. Example posts are fixtures in `tests/fixtures/blog/`,
+  never in `src/content/`.
+- **Frontmatter fields:** change `src/lib/content-schemas.ts` only; Astro and
+  the editing tools share it (`check:new-content` round-trips every file).
+- **Headers, redirects, caching:** edit `deploy/site-config.json` or
+  `tools/caddy-site-block.mjs`, then `npm run caddy:example`. Never edit
+  the generated block in the live Caddyfile by hand. Security headers may
+  only get stricter (the generator refuses weaker ones).
+- **Personal data** (e-mail, PGP, further accounts, controller, imprint):
+  only in `private/site.private.yaml`, never in a tracked file
+  (`npm run check:private` fails on a leak). GitHub stays public in
+  `src/data/site.ts`. `/links` and JSON-LD `sameAs` follow automatically.
+- **Language door:** only `/` redirects (302 by the first `Accept-Language`
+  entry, default English); the rule is `languageDoor` in
+  `deploy/site-config.json`. Logo and home links always point to `/de/` or
+  `/en/`.
+
+## Build, check, deploy
 
 ```sh
-npm install       # installs @11ty/eleventy (the only devDependency)
-npm run build     # -> _site/, for local inspection
-npm start         # eleventy --serve, local preview with live reload
+npm ci
+npm run dev           # drafts visible
+npm run check         # the full gate, must be green before any commit/PR
+npm run check:browser:system  # Playwright suite with /usr/bin/chromium (CI: check:browser)
+npm run check:prepush # GO / NO-GO before any push (docs/GO-LIVE.md step 3)
+./ship.sh <ssh-target> # build-release → stage → confirm → dry run → apply (sudo)
+npm run publish -- --target <ssh-target> [--dry-run|--rollback]  # content updates after the first go-live
 ```
 
-Deploying is one command from the ThinkPad: **`./ship.sh`**. It commits +
-pushes whatever's dirty in the local repo (skipped if already clean), then
-SSHes into the VPS (existing `netcup-vps` alias) and runs `deploy.sh`
-there. `deploy.sh` does `git pull`, builds inside a disposable
-`node:22-alpine` container (no Node/npm installed on the VPS host — Docker
-is already there for Epiphyte/Aura, this just reuses it), verifies the
-build actually produced output, and only then atomically flips a `current`
-symlink to the new build — a failed build leaves the previous one live,
-never a half-built or empty directory. Caddy's `root` on the VPS points at
-that `current` symlink, not at the repo root or `_site/` directly — see
-each script's own comments for the exact mechanics, and `MIGRATION.md`
-"Deploy path" for how this replaced the old plain-`git pull` workflow. No
-CI/CD pipeline exists or is planned — this stays a manually triggered,
-single command.
+`ship.sh` is the only path that changes the Caddyfile (first go-live,
+headers, redirects, caching). `publish` reuses `build-release.sh`, switches
+`<web root>/current` between releases and refuses when the Caddy block
+would change (`docs/PUBLISHING.md`, DECISIONS R5-D4). Neither ever pushes.
 
-`npm audit` reports 0 vulnerabilities as of 2026-08-14. Two high-severity
-advisories were previously present, both in transitive dependencies of
-`@11ty/eleventy` and both resolved by `npm audit fix` bumping within the
-existing semver ranges (no major-version jumps, no code changes):
-`brace-expansion` (build-time-only DoS via pathological glob input, fixed
-1.1.16 → 1.1.18) and `js-yaml` (quadratic CPU consumption in `!!omap`
-resolution, CVE-2026-59870 — present twice in the graph, once via
-`gray-matter`'s bundled 3.x line at 3.15.0 → 3.15.1 and once via 11ty's
-own direct 4.x dependency at 4.3.0 → 4.3.1). `gray-matter` is 11ty's
-front-matter parser, so the `js-yaml` finding was a content-parsing attack
-surface rather than the glob-pattern one `brace-expansion` covers — worth
-distinguishing if a future advisory shows up in either dependency again.
-Re-run `npm audit` after any `npm install`/lockfile change to confirm
-this note is still accurate.
+Commits that go to GitHub carry the noreply address
+(`291018608+timur-manjosov@users.noreply.github.com`); the older local
+history on `redesign` does not and must not be pushed as it is.
 
-## Adding a new page to the hub
+First go-live: `docs/GO-LIVE.md`. Deployment details and rollback: `docs/DEPLOY.md`.
+The repository is public: no server paths, host names or account names in
+tracked files (placeholders `<web root>`, `<ssh-target>`). `apply-on-server.sh`
+runs as root on the VPS. Aura (`aura.timurmanjosov.com`) has its own Caddy
+block and containers on the same host: never touch them. The generator
+proves the rest of the Caddyfile stays byte-identical.
 
-1. Create `src/<name>.njk`.
-2. Front matter:
-   ```yaml
-   ---
-   layout: layouts/base.njk
-   title: "Page Title — Timur Manjosov"
-   description: "One sentence, used for <meta description>, OG, and Twitter."
-   active: <name>          # matches the nav entry to highlight, if any
-   lastmod: "YYYY-MM-DD"   # quoted — see note below
-   sitemapPriority: "0.x"  # quoted — see note below
-   tags: sitemap           # include the page in sitemap.xml
-   ---
-   ```
-   `lastmod`/`sitemapPriority` must be quoted strings, not bare YAML
-   scalars — an unquoted date parses as a JS `Date` and renders as a long
-   locale string instead of `YYYY-MM-DD`; an unquoted `1.0` loses its
-   trailing zero.
-3. Write plain HTML body content below the front matter — no wrapper
-   `<html>`/`<head>`/`<body>`, `layouts/base.njk` supplies those along with
-   header/footer/nav.
-4. If the page should be reachable from the header nav, add a `<li>` to
-   `src/_includes/partials/header.njk`'s `.site-nav` list, same shape as
-   the existing entries.
-5. `npm run build` and check `_site/<name>/index.html`.
+`npm audit`: 3 **low** findings (katex via remark-math's syntax parser,
+build-time only, KaTeX not used for rendering), documented as non-blocking
+in `docs/VERIFICATION.md` §9. `npm run audit` fails on moderate or worse.
 
-This is exactly how `/lab/` was built — a two-line proof, not a template
-to copy verbatim for real content.
+## GitHub-Workflow
 
-## Adding a genuinely separate microsite
+- Arbeite bei GitHub-Aufgaben eigenständig über gh-CLI/GitHub-MCP-Tools, wie ein Senior Developer, nicht wie ein Assistent, der nach jedem Schritt nachfragt.
+- Bugfixes laufen über Branch → PR — bewusste Ausnahme von der sonstigen Direkt-auf-main-Praxis dieses Repos, nur für Fixes. ship.sh/direkter Deploy bleibt für alles andere unverändert. Branch-Naming: fix/<issue-nummer>-<kurzer-slug>. PR-Text enthält "Fixes #<nummer>" für automatisches Schließen beim Merge.
+- Der CI-Workflow (`.github/workflows/check.yml`) prüft nur, er deployt nie. Deployment bleibt ein manueller Schritt innerhalb einer Session (siehe "Build, check, deploy").
+- Sicherheitsrelevante Funde mit echtem Exploit-Potenzial NICHT als öffentliches Issue — die Seite ist live und öffentlich erreichbar. Stattdessen gesondert im Bericht melden.
 
-A "microsite" per `AUDIT.md` §6 (Discord bot dashboards, other tools) is a
-**separate, independently deployed project** — its own repo/subdomain, not
-a page under `src/` here. To keep it visually consistent with this hub:
+## Testing
 
-- Copy `styles/tokens.css` (and `styles/reset.css` if useful) into that
-  project as-is. It's deliberately page-agnostic: no component/layout
-  rules, just the Nord custom properties.
-- `scripts/system.js`'s `backgroundEngine()` reads its four anchor
-  elements from `data-anchor-hero`/`-epiphyte`/`-saeculum`/`-footer`
-  attributes on `#system-canvas`, falling back to this page's own ids
-  (`hero`, `epiphyte-card`, `saeculum-card`, `site-footer`) if absent. A
-  microsite can reuse the file completely unmodified by giving its own
-  canvas element `data-anchor-hero="whatever-its-hero-is"` etc. — or by
-  giving its own anchor elements those exact fallback ids. Any anchor
-  that has no matching element on the page simply never activates (its
-  system stays at weight 0 forever) rather than getting stuck visible.
-- Link back to this hub, and add a link here (`header.njk`'s `.site-nav`)
-  once the microsite is real and live — same "don't add it until it's
-  shippable" discipline as `README.md`'s original project-card rule.
+`npm run check` ist die Testsuite (Lint, Typen, beide Builds, CSP, Links, HTML-Validierung, SEO/JSON-LD/Sitemap, HTTP-Verhalten inkl. Redirects und 404, WCAG-Kontrast, axe, Entwurfsfilter, Caddy-Generator, i18n-Report, `npm audit`). `npm run check:browser` ergänzt Playwright im echten Browser. Playwright ist Test-Zeit-Dependency, kein Widerspruch zu "no client-side dependencies".
 
-## Adding a project (unchanged from the original site)
+Maschinell zu verifizieren vor jedem PR:
+- HTTP-Response-Header (Security-Header, Caching)
+- DOM-/ARIA-Zustände (z. B. aria-pressed/aria-expanded synchron zum echten Zustand)
+- WCAG-Kontrastverhältnis betroffener Farbpaare
+- Layout-Overflow bei verschiedenen Viewport-Breiten
+- Kein Speicher- oder CPU-Verbrauch im Hintergrund (die Seite hat keine Animationsschleifen mehr; neue dürfen nur mit Begründung dazukommen)
+- `npm audit` sauber, oder explizit als nicht-blockierend dokumentiert
 
-Projects live as `<section class="project-section">` blocks nested inside
-the `#works` section in `src/index.njk`, each containing one `<article
-class="project-card">`. Copy an existing one (Epiphyte/Saeculum/Aura) as
-the template — description text should stay traceable to that project's
-own README/repo (a trailing HTML comment naming the source section is the
-existing convention, see `MIGRATION.md`'s "Content restructuring" entry).
-The grid sizing and each card's own container query in `main.css` already
-handle any number of cards. Only add a project once it's real and
-shippable.
+NICHT maschinell geprüft, sondern manuell von Timur: die generelle visuelle/künstlerische Wirkung der Seite — eigene, bewusst subjektive Bewertung, keine Bugfix-Abnahme.
 
-The `.project-preview` canvas on the Epiphyte/Saeculum cards is a bespoke,
-hand-wired live preview per project (`scripts/system.js`'s "CARD PREVIEWS"
-section) — not something new projects get automatically.
+# GitHub-Workflow
 
-## Adding/editing a translation
-
-Every visible string carries `data-en`/`data-de` attributes on the same
-element; `scripts/main.js` swaps `textContent` between them on toggle and
-on load. Adding a new translatable string is just adding both attributes
-— no JS changes needed. Exception: the theme toggle's label is
-state-dependent and lives in `THEME_LABELS` directly in `main.js`.
-
-## The generative system (`scripts/system.js`)
-
-One `<canvas id="system-canvas">`, fixed behind all content, blending
-between four systems as the page scrolls — De Jong attractor (hero),
-L-system (Epiphyte card), Rule-90 cellular automaton (Saeculum card),
-Fourier-epicycle "TM" signature (footer). Trigger mechanics are a single
-`IntersectionObserver` (many thresholds, expanded `rootMargin`) whose
-reported ratio becomes each system's eased "weight." Full technical
-detail (crossfade, interaction model, degradation tiers, reduced-motion
-behavior) is unchanged from the original `README.md` write-up except
-where `MIGRATION.md` notes a specific fix. Two things worth knowing if
-you're touching this file:
-
-- **Anchors are configurable, not hardcoded** — see "Adding a genuinely
-  separate microsite" above.
-- **`prefers-reduced-motion` is observed live**, not just read once at
-  load (`matchMedia(...).addEventListener("change", ...)`, mirroring the
-  existing `prefers-color-scheme` pattern) — `enterReducedMotion()` /
-  `enterAnimatedMotion()` switch modes on an actual runtime OS-level
-  toggle, not just at page load.
+- Arbeite bei GitHub-Aufgaben eigenständig über gh-CLI/GitHub-MCP-Tools, wie ein Senior Developer.
+- Branch → Fix → Hacker-Phase auf die neue Änderung → PR mit "Fixes #<nummer>" → Merge nur wenn Hacker-Phase bestanden. Branch-Naming: fix/<issue-nummer>-<kurzer-slug>.
+- Läuft live auf dem VPS mit echten Nutzern (analog zu Epiphyte) — sicherheitsrelevante Funde mit echtem Exploit-Potenzial NICHT als öffentliches Issue, stattdessen gesondert im Bericht melden.
+- Automatisierte Tests sind die einzige Abnahme, keine manuelle Testung.

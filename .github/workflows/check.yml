@@ -1,0 +1,92 @@
+# Quality gate for every push and pull request. Mirrors `npm run check`
+# (which runs locally without a browser) and adds the two checks that need
+# network or a real browser: the Playwright/axe suite and external links.
+#
+# This workflow only checks. It never deploys: deployment stays a manual,
+# reviewed step (docs/DEPLOY.md). No secrets, read-only token, and no
+# private file: everything runs in the public build mode. What runs only
+# locally (pre-push check, release rehearsal, Lighthouse, screenshots):
+# README, "Checks".
+#
+# Actions are pinned to the commit of a release (verified against the
+# release pages on 2026-10-28); the comment names the version.
+name: check
+
+on:
+  push:
+    branches: [main, redesign]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # lint, typecheck, both builds, CSP, internal links, HTML validation,
+      # SEO/JSON-LD/sitemap, contrast, axe (jsdom), drafts filter, i18n
+      # report, npm audit (moderate and above), dark-palette snapshot,
+      # build modes, Caddy generator. The private leak check skips itself
+      # (no private file in CI).
+      - run: npm run check
+
+      - name: Deploy scripts (ShellCheck)
+        run: shellcheck ship.sh deploy/*.sh
+
+      - name: Caddyfile.example is up to date with deploy/site-config.json
+        run: |
+          npm run caddy:example
+          git diff --exit-code deploy/Caddyfile.example
+
+      - name: Caddy config parses (caddy adapt, same major as the server)
+        run: |
+          for f in deploy/Caddyfile.example .cache/Caddyfile.fixture-proposal; do
+            docker run --rm -v "$PWD:/w:ro" -w /w caddy:2 caddy adapt --adapter caddyfile --config "$f" >/dev/null
+            echo "adapt OK: $f"
+          done
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      # axe in light + dark, overflow at 320–1280 px, no-JS rendering,
+      # third-party requests, cookies, theme toggle, language switcher,
+      # filter, search, feeds, redirects.
+      - run: npm run check:browser
+
+      - name: External links (lychee)
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: >-
+            --no-progress
+            --max-retries 2
+            --accept 200,206,429
+            --exclude-path dist/search-index.json
+            --root-dir ${{ github.workspace }}/dist
+            dist
+          fail: true
+
+      - name: Upload translation report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: i18n-report
+          path: reports/
+          if-no-files-found: ignore

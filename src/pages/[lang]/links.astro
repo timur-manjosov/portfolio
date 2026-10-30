@@ -1,0 +1,108 @@
+---
+/**
+ * All profiles in one place, with rel="me". Generated from the same data as
+ * JSON-LD `sameAs`, so the two cannot drift apart. Every entry is a small
+ * outlined box (R4-D3): the main link covers the box, the arrow says whether
+ * it leaves the site.
+ */
+import Arrow from "../../components/Arrow.astro";
+import { accounts, SITE_URL } from "../../data/site";
+import { LANGS, type Lang } from "../../i18n/ui";
+import { useTranslations } from "../../i18n/utils";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { allProjects, forListing, projectUrl } from "../../lib/content";
+import { allCategories, categoryUrl } from "../../lib/taxonomy";
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const projects = forListing(await allProjects(), lang);
+const categories = await allCategories();
+---
+
+<BaseLayout
+  lang={lang}
+  title={t("links.title")}
+  description={t("links.description")}
+  alternates={{ de: "/de/links/", en: "/en/links/" }}
+>
+  <div class="container page">
+    <header class="page-header">
+      <h1>{t("links.title")}</h1>
+      <p>{t("links.description")}</p>
+    </header>
+
+    <section class="section" aria-labelledby="profiles">
+      <h2 id="profiles">{t("links.profiles")}</h2>
+      <ul class="link-rows">
+        {
+          accounts.map((a) => (
+            <li class="box box--outlined box--sm link-row">
+              <a class="link-row__link" href={a.url} rel={a.me ? "me" : undefined}>
+                {a.label}
+              </a>
+              <p>{a.handle}</p>
+              <Arrow external />
+            </li>
+          ))
+        }
+        <li class="box box--outlined box--sm link-row">
+          <a class="link-row__link" href={`${SITE_URL}/`}>timurmanjosov.com</a>
+          <p>{t("links.site")}</p>
+          <Arrow />
+        </li>
+      </ul>
+    </section>
+
+    <section class="section" aria-labelledby="link-projects">
+      <h2 id="link-projects">{t("links.projects")}</h2>
+      <ul class="link-rows link-rows--wide">
+        {
+          projects.map((p) => (
+            <li class="box box--outlined box--sm link-row" lang={p.lang !== lang ? p.lang : undefined}>
+              <a class="link-row__link" href={projectUrl(p)}>
+                {p.entry.data.title}
+              </a>
+              <p>{p.entry.data.summary}</p>
+              {(p.entry.data.links.website || p.entry.data.links.repo) && (
+                <p class="meta" lang={lang}>
+                  {p.entry.data.links.website && (
+                    <a href={p.entry.data.links.website}>{new URL(p.entry.data.links.website).host}</a>
+                  )}
+                  {p.entry.data.links.repo && <a href={p.entry.data.links.repo}>{t("projects.repo")}</a>}
+                </p>
+              )}
+              <Arrow />
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="section" aria-labelledby="link-feeds">
+      <h2 id="link-feeds">{t("links.feeds")}</h2>
+      <p class="section-intro">{t("links.feedsText")}</p>
+      <ul class="link-rows">
+        <li class="box box--outlined box--sm link-row">
+          <a class="link-row__link" href={`/${lang}/feed.xml`}>
+            {t("nav.feed")}: {t("blog.title")}
+          </a>
+          <Arrow />
+        </li>
+        {
+          categories.map((c) => (
+            <li class="box box--outlined box--sm link-row">
+              <a class="link-row__link" href={`${categoryUrl(lang, c.id)}feed.xml`}>
+                {t("nav.feed")}: {c.data.label[lang]}
+              </a>
+              <Arrow />
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</BaseLayout>

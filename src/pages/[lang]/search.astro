@@ -1,0 +1,59 @@
+---
+import { LANGS, type Lang } from "../../i18n/ui";
+import { localePath, useTranslations } from "../../i18n/utils";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+---
+
+<BaseLayout
+  lang={lang}
+  title={t("search.title")}
+  description={t("search.description")}
+  section="search"
+  alternates={{ de: "/de/search/", en: "/en/search/" }}
+>
+  <div class="container page">
+    <header class="page-header">
+      <h1>{t("search.title")}</h1>
+      <p>{t("search.description")}</p>
+    </header>
+
+    <p data-search-nojs>
+      {t("search.noJs")}
+      <a href={localePath(lang, "blog/archive/")}>{t("blog.archive")}</a> ·
+      <a href={localePath(lang, "projects/")}>{t("projects.title")}</a> ·
+      <a href="/sitemap.xml">{t("nav.sitemap")}</a>
+    </p>
+
+    <div
+      role="search"
+      class="search-form"
+      data-search
+      data-lang={lang}
+      data-msg-loading={t("search.loading")}
+      data-msg-none={t("search.noResults")}
+      data-msg-results={t("search.results")}
+      data-msg-hint={t("search.hint")}
+      data-msg-error={t("search.error")}
+      data-msg-other={t("lang.onlyIn")}
+      hidden
+    >
+      <label class="field">
+        {t("search.label")}
+        <input type="search" name="q" autocomplete="off" spellcheck="false" data-search-input />
+      </label>
+    </div>
+    <p class="status-line" aria-live="polite" data-search-status></p>
+    <ol class="entry-list search-results" data-search-results></ol>
+  </div>
+</BaseLayout>
+
+<script>
+  import "../../scripts/search.ts";
+</script>

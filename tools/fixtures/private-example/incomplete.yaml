@@ -1,0 +1,12 @@
+# Fixture for tools/check-build-modes.mjs: valid, but not enough for a
+# release (no contact.email, no legal.controller) and an incomplete imprint
+# (no address), which must not produce an imprint page.
+accounts:
+  - id: fixture
+    label: Fixture
+    handle: "@fixture@example.invalid"
+    url: https://fixture.example.invalid/@fixture
+legal:
+  imprint:
+    name: Fixture Person
+    email: fixture@example.invalid

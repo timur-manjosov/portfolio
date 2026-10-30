@@ -1,0 +1,56 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "**",
+      "!**/*.md",
+      "!dist",
+      "!dist-drafts",
+      "!.astro",
+      "!docs/history",
+      "!src/assets/fonts",
+      "!public/**/*.svg"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 110
+  },
+  "javascript": { "formatter": { "quoteStyle": "double", "trailingCommas": "all" } },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "complexity": {
+        "noImportantStyles": "off"
+      },
+      "style": {
+        "noDescendingSpecificity": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": { "noUnusedVariables": "off", "noUnusedImports": "off" },
+          "style": { "useConst": "off", "useImportType": "off" }
+        }
+      }
+    },
+    {
+      "includes": ["public/theme-init.js"],
+      "linter": {
+        "rules": {
+          "complexity": { "useArrowFunction": "off" },
+          "correctness": { "noInnerDeclarations": "off", "noUnusedVariables": "off" },
+          "style": { "useTemplate": "off" }
+        }
+      }
+    }
+  ]
+}

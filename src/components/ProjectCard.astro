@@ -1,0 +1,61 @@
+---
+/**
+ * One project as an outlined card (R4-D3): status, title (the card's click
+ * target), summary, stack chips, last update and the action arrow. Used by the project overview and the bento grid
+ * on the home page. The filter script reads data-stage / data-tags.
+ */
+import type { Lang } from "../i18n/ui";
+import { formatDate, isoDate, slugify, useTranslations } from "../i18n/utils";
+import { type Parsed, projectUrl } from "../lib/content";
+import Arrow from "./Arrow.astro";
+
+interface Props {
+  lang: Lang;
+  project: Parsed<"projects">;
+  headingLevel?: 2 | 3;
+  featured?: boolean;
+  class?: string | undefined;
+}
+
+const { lang, project: p, headingLevel = 3, featured = false, class: extra = "" } = Astro.props;
+const t = useTranslations(lang);
+const H = `h${headingLevel}` as "h2" | "h3";
+const d = p.entry.data;
+const foreign = p.lang !== lang;
+---
+
+<li
+  class:list={["entry", "card", { "card--featured": featured }, extra]}
+  data-stage={d.stage}
+  data-tags={d.tags.map((tag) => slugify(tag)).join(" ")}
+  lang={foreign ? p.lang : undefined}
+>
+  <div class="card__top" lang={lang}>
+    <span class="status" data-stage={d.stage}>{t(`stage.${d.stage}`)}</span>
+    {foreign && <span class="badge">{t("lang.onlyIn")}</span>}
+    {d.draft && <span class="badge">{t("blog.draft")}</span>}
+  </div>
+  <H>
+    <a class="card__link" href={projectUrl(p)} hreflang={foreign ? p.lang : undefined}>{d.title}</a>
+  </H>
+  <p>{d.summary}</p>
+  <div class="card__foot">
+    {
+      d.stack.length > 0 && (
+        <ul class="chips" aria-label={t("projects.stack")} lang={lang}>
+          {d.stack.map((s) => (
+            <li class="chip">{s}</li>
+          ))}
+        </ul>
+      )
+    }
+    <div class="card__action">
+      <p class="meta" lang={lang}>
+        <span>
+          {t("projects.updated")}: <time datetime={isoDate(d.updated)}>{formatDate(d.updated, lang)}</time>
+        </span>
+      </p>
+      <Arrow />
+    </div>
+  </div>
+</li>

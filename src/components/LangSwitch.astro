@@ -1,0 +1,55 @@
+---
+/**
+ * Language switcher. Plain links, no JS. Jumps to the same page in the other
+ * language; if that translation does not exist, it says so honestly and links
+ * to the closest existing page in the other language instead.
+ */
+import type { Lang } from "../i18n/ui";
+import { LANGS } from "../i18n/ui";
+import { localePath, useTranslations } from "../i18n/utils";
+
+interface Props {
+  lang: Lang;
+  alternates: Partial<Record<Lang, string>>;
+  fallback?: string | undefined;
+}
+
+const { lang, alternates, fallback } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<nav class="lang-switch" aria-label={t("lang.label")}>
+  {
+    LANGS.map((l) => {
+      const label = l.toUpperCase();
+      if (l === lang) {
+        return (
+          <span aria-current="true" lang={l}>
+            {label}
+          </span>
+        );
+      }
+      const href = alternates[l];
+      if (href) {
+        return (
+          <a href={href} hreflang={l} lang={l} title={t("lang.switchTo")}>
+            {label}
+            <span class="visually-hidden">: {t("lang.switchTo")}</span>
+          </a>
+        );
+      }
+      return (
+        <a
+          href={fallback ?? localePath(l)}
+          hreflang={l}
+          class="lang-missing"
+          title={t("lang.missing")}
+          data-translation-missing
+        >
+          {label}
+          <span class="visually-hidden">: {t("lang.missing")}</span>
+        </a>
+      );
+    })
+  }
+</nav>

@@ -1,0 +1,189 @@
+---
+import Arrow from "../../components/Arrow.astro";
+import PostList from "../../components/PostList.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+import { accounts, github, person } from "../../data/site";
+import { LANGS, type Lang } from "../../i18n/ui";
+import { formatDate, isoDate, localePath, useTranslations } from "../../i18n/utils";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { allPages, allPosts, allProjects, forListing } from "../../lib/content";
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+
+const posts = forListing(await allPosts(), lang).slice(0, 4);
+// "Current" = not archived/paused, in the overview's order (featured, order, updated).
+const projects = forListing(await allProjects(), lang)
+  .filter((p) => ["active", "in-development", "maintained"].includes(p.entry.data.stage))
+  .slice(0, 4);
+const now = (await allPages()).find((p) => p.lang === lang && p.slug === "now");
+
+// Bento tiles on wide screens (6 columns): rows always add up to 6.
+const layouts: Record<number, string[]> = {
+  1: ["span-6"],
+  2: ["span-4", "span-2"],
+  3: ["span-2", "span-2", "span-2"],
+  4: ["span-4", "span-2", "span-2", "span-4"],
+};
+const spans = layouts[projects.length] ?? [];
+
+// Facts as on /about (sources listed there). Product names need no translation.
+const spec: [string, string][] = [
+  [t("spec.studies"), `${t("spec.studiesValue")}, ${person.university.name}`],
+  [t("spec.focus"), t("spec.focusValue")],
+  [t("spec.languages"), person.programmingLanguages.join(" · ")],
+  [t("spec.setup"), "Arch Linux · Neovim · Git"],
+];
+const otherProfiles = accounts.filter((a) => a.id !== github.id);
+---
+
+<BaseLayout
+  lang={lang}
+  description={t("site.description")}
+  section="home"
+  alternates={{ de: "/de/", en: "/en/" }}
+  xDefault="/"
+  ogType="profile"
+>
+  <div class="container container--wide">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">{t("hero.eyebrow")}</p>
+        <h1 id="hero-title" class="hero__title gradient-text">Timur Manjosov</h1>
+        <p class="hero__claim">{t("site.tagline")}</p>
+        <p class="hero__lead">{t("hero.lead")}</p>
+        <div class="actions">
+          <a class="btn btn--primary" href={localePath(lang, "about/")}>{t("nav.about")}</a>
+          <a class="btn btn--secondary" href={localePath(lang, "contact/")}>{t("home.contactCta")}</a>
+          <a class="btn btn--secondary" href={github.url} rel="me">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path
+                d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"
+              ></path>
+            </svg>
+            {t("hero.github")}
+          </a>
+        </div>
+      </div>
+      <dl class="box box--elevated spec">
+        {
+          spec.map(([k, v]) => (
+            <>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </>
+          ))
+        }
+      </dl>
+    </section>
+
+    <section class="home-section" aria-labelledby="now-title">
+      <div class="bento">
+        {
+          now && (
+            <article class="card span-4 now-card">
+              <p class="eyebrow">/now</p>
+              <h2 id="now-title">
+                <a class="card__link" href={localePath(lang, "now/")}>
+                  {t("home.now")}
+                </a>
+              </h2>
+              <p class="now-card__text">{now.entry.data.summary ?? now.entry.data.description}</p>
+              <div class="card__foot card__action">
+                <p class="meta">
+                  <span>
+                    {t("now.updated")}{" "}
+                    <time datetime={isoDate(now.entry.data.updated)}>{formatDate(now.entry.data.updated, lang)}</time>
+                  </span>
+                </p>
+                <Arrow />
+              </div>
+            </article>
+          )
+        }
+        <aside class="box box--filled span-2 reach" aria-labelledby="reach-title">
+          <p class="eyebrow">{t("nav.contact")}</p>
+          <h2 id="reach-title" class="visually-hidden">{t("nav.contact")}</h2>
+          <ul class="link-list">
+            <li>
+              <a href={github.url} rel="me">
+                <span>GitHub · {github.handle}</span>
+                <Arrow external />
+              </a>
+            </li>
+            {
+              otherProfiles.map((a) => (
+                <li>
+                  <a href={a.url} rel={a.me ? "me" : undefined}>
+                    <span>{a.label}</span>
+                    <Arrow external />
+                  </a>
+                </li>
+              ))
+            }
+            <li>
+              <a href={localePath(lang, "contact/")}>
+                <span>{t("home.contactCta")}</span>
+                <Arrow />
+              </a>
+            </li>
+            <li>
+              <a href={localePath(lang, "links/")}>
+                <span>{t("nav.links")}</span>
+                <Arrow />
+              </a>
+            </li>
+            <li>
+              <a href={localePath(lang, "feed.xml")}>
+                <span>{t("nav.feed")}</span>
+                <Arrow />
+              </a>
+            </li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="projects-title">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">{t("nav.projects")}</p>
+          <h2 id="projects-title">{t("home.currentProjects")}</h2>
+        </div>
+        <a class="section-head__link" href={localePath(lang, "projects/")}>
+          {t("home.allProjects")}
+          <Arrow />
+        </a>
+      </div>
+      <ul class="bento">
+        {
+          projects.map((p, i) => (
+            <ProjectCard lang={lang} project={p} featured={i === 0 && p.entry.data.featured} class={spans[i]} />
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="home-section" aria-labelledby="posts-title">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">{t("nav.blog")}</p>
+          <h2 id="posts-title">{t("home.latestPosts")}</h2>
+        </div>
+        {
+          posts.length > 0 && (
+            <a class="section-head__link" href={localePath(lang, "blog/")}>
+              {t("home.allPosts")}
+              <Arrow />
+            </a>
+          )
+        }
+      </div>
+      <PostList lang={lang} posts={posts} cards />
+    </section>
+  </div>
+</BaseLayout>

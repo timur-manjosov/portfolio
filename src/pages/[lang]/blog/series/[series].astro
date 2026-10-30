@@ -1,0 +1,50 @@
+---
+import PostList from "../../../../components/PostList.astro";
+import type { Lang } from "../../../../i18n/ui";
+import { localePath, slugify, useTranslations } from "../../../../i18n/utils";
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import { allPosts } from "../../../../lib/content";
+
+export async function getStaticPaths() {
+  const posts = await allPosts();
+  const series = new Map<string, { lang: Lang; name: string; posts: typeof posts }>();
+  for (const p of posts) {
+    const name = p.entry.data.series;
+    if (!name) continue;
+    const id = `${p.lang}/${slugify(name)}`;
+    const current = series.get(id) ?? { lang: p.lang, name, posts: [] };
+    current.posts.push(p);
+    series.set(id, current);
+  }
+  return [...series.values()].map((s) => ({
+    params: { lang: s.lang, series: slugify(s.name) },
+    props: {
+      name: s.name,
+      posts: s.posts.sort((a, b) => (a.entry.data.seriesPart ?? 0) - (b.entry.data.seriesPart ?? 0)),
+    },
+  }));
+}
+
+const { name, posts } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+---
+
+<BaseLayout
+  lang={lang}
+  title={name}
+  description={`${t("blog.postsInSeries")}: ${name} · Blog · ${t("site.title")}`}
+  section="blog"
+  fallback={localePath(lang === "de" ? "en" : "de", "blog/")}
+>
+  <div class="container page">
+    <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>
+      <ol><li><a href={localePath(lang, "blog/")}>{t("blog.title")}</a></li></ol>
+    </nav>
+    <header class="page-header">
+      <p class="eyebrow">{t("blog.postsInSeries")}</p>
+      <h1>{name}</h1>
+    </header>
+    <PostList lang={lang} posts={posts} headingLevel={2} />
+  </div>
+</BaseLayout>

@@ -1,0 +1,239 @@
+{
+  "$comment": "Single source for security headers and redirects. Used by tools/caddy-site-block.mjs (Caddyfile.example / Caddyfile.proposed) and by tools/serve.mjs (the local test server that check-browser.mjs runs against). Change it here, regenerate, never edit the generated Caddy block by hand.",
+  "headers": {
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "X-Frame-Options": "DENY",
+    "Permissions-Policy": "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), browsing-topics=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+  },
+  "publish": {
+    "$comment": "npm run publish (tools/publish.mjs, docs/PUBLISHING.md). branches: the branches a publish may run from (others need --any-branch). keep: how many published releases stay on the server for --rollback (2-50). The SSH target is never stored here (public repository): pass --target <ssh-target> or set PUBLISH_SSH_TARGET.",
+    "branches": ["main"],
+    "keep": 5
+  },
+  "languageDoor": {
+    "$comment": "Only `path` redirects by language (docs/DECISIONS.md R2-D2). The first Accept-Language entry decides: if it matches `acceptLanguage` (case-insensitive; here German: de, de-DE, de-AT, DE, …) → `match`; anything else, `*` or no header → `default`. Browsers send their languages sorted by priority, so the first entry is the preferred one. To make German the default: acceptLanguage `^en(-[a-z0-9]+)*([;, ]|$)`, match `/en/`, default `/de/`. Then run `npm run caddy:example`.",
+    "path": "/",
+    "acceptLanguage": "^de(-[a-z0-9]+)*([;, ]|$)",
+    "match": "/de/",
+    "default": "/en/",
+    "status": 302,
+    "tests": [
+      ["de", "/de/"],
+      ["de-DE,de;q=0.9,en;q=0.8", "/de/"],
+      ["en-US,en;q=0.9,de;q=0.8", "/en/"],
+      ["fr-FR", "/en/"],
+      ["-", "/en/"],
+      ["*", "/en/"],
+      ["de-AT", "/de/"],
+      ["DE", "/de/"],
+      ["de-CH,fr;q=0.5", "/de/"],
+      ["en", "/en/"],
+      ["dsb-DE,de;q=0.8", "/en/"],
+      ["fr-FR,de;q=0.9", "/en/"]
+    ]
+  },
+  "redirects": [
+    {
+      "from": "/index.html",
+      "to": "/",
+      "status": 301,
+      "reason": "old explicit index URL"
+    },
+    {
+      "from": "/lab",
+      "to": "/en/projects/",
+      "status": 301,
+      "reason": "old /lab/ placeholder page"
+    },
+    {
+      "from": "/lab/",
+      "to": "/en/projects/",
+      "status": 301,
+      "reason": "old /lab/ placeholder page"
+    },
+    {
+      "from": "/lab/index.html",
+      "to": "/en/projects/",
+      "status": 301,
+      "reason": "old /lab/ placeholder page"
+    },
+    {
+      "from": "/assets/images/og-image.png",
+      "to": "/images/og-default.png",
+      "status": 301,
+      "reason": "OG image URL cached by social networks for already shared links"
+    },
+    {
+      "from": "/assets/images/favicon.svg",
+      "to": "/favicon.svg",
+      "status": 301,
+      "reason": "old favicon path"
+    },
+    {
+      "from": "/assets/images/favicon-32.png",
+      "to": "/images/favicon-32.png",
+      "status": 301,
+      "reason": "old favicon path"
+    },
+    {
+      "from": "/assets/images/favicon-16.png",
+      "to": "/images/favicon-16.png",
+      "status": 301,
+      "reason": "old favicon path"
+    },
+    {
+      "from": "/assets/images/apple-touch-icon.png",
+      "to": "/apple-touch-icon.png",
+      "status": 301,
+      "reason": "old touch icon path"
+    },
+    {
+      "from": "/about",
+      "to": "/en/about/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/about/",
+      "to": "/en/about/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/projects",
+      "to": "/en/projects/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/projects/",
+      "to": "/en/projects/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/blog",
+      "to": "/en/blog/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/blog/",
+      "to": "/en/blog/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/now",
+      "to": "/en/now/",
+      "status": 302,
+      "reason": "nownownow.com convention"
+    },
+    {
+      "from": "/now/",
+      "to": "/en/now/",
+      "status": 302,
+      "reason": "nownownow.com convention"
+    },
+    {
+      "from": "/uses",
+      "to": "/en/uses/",
+      "status": 302,
+      "reason": "uses.tech convention"
+    },
+    {
+      "from": "/uses/",
+      "to": "/en/uses/",
+      "status": 302,
+      "reason": "uses.tech convention"
+    },
+    {
+      "from": "/links",
+      "to": "/en/links/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/links/",
+      "to": "/en/links/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/contact",
+      "to": "/en/contact/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/contact/",
+      "to": "/en/contact/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/search",
+      "to": "/en/search/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/search/",
+      "to": "/en/search/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/privacy",
+      "to": "/en/privacy/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/privacy/",
+      "to": "/en/privacy/",
+      "status": 302,
+      "reason": "language-less convenience path"
+    },
+    {
+      "from": "/de/projects/octo",
+      "to": "/de/projects/",
+      "status": 301,
+      "reason": "project Octo removed (revision 2)"
+    },
+    {
+      "from": "/de/projects/octo/",
+      "to": "/de/projects/",
+      "status": 301,
+      "reason": "project Octo removed (revision 2)"
+    },
+    {
+      "from": "/en/projects/octo",
+      "to": "/en/projects/",
+      "status": 301,
+      "reason": "project Octo removed (revision 2)"
+    },
+    {
+      "from": "/en/projects/octo/",
+      "to": "/en/projects/",
+      "status": 301,
+      "reason": "project Octo removed (revision 2)"
+    },
+    {
+      "from": "/feed.xml",
+      "to": "/en/feed.xml",
+      "status": 301,
+      "reason": "common feed location"
+    },
+    {
+      "from": "/rss.xml",
+      "to": "/en/feed.xml",
+      "status": 301,
+      "reason": "common feed location"
+    }
+  ]
+}

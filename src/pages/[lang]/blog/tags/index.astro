@@ -1,0 +1,44 @@
+---
+import EmptyPosts from "../../../../components/EmptyPosts.astro";
+import { LANGS, type Lang } from "../../../../i18n/ui";
+import { localePath, useTranslations } from "../../../../i18n/utils";
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import { allPosts, forListing } from "../../../../lib/content";
+import { tagCounts, tagUrl } from "../../../../lib/taxonomy";
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const tags = tagCounts(forListing(await allPosts(), lang));
+---
+
+<BaseLayout
+  lang={lang}
+  title={t("blog.allTags")}
+  description={`${t("blog.allTags")} – ${t("blog.description")}`}
+  section="blog"
+  alternates={{ de: "/de/blog/tags/", en: "/en/blog/tags/" }}
+>
+  <div class="container page">
+    <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>
+      <ol><li><a href={localePath(lang, "blog/")}>{t("blog.title")}</a></li></ol>
+    </nav>
+    <header class="page-header"><h1>{t("blog.allTags")}</h1></header>
+    {
+      tags.length === 0 ? (
+        <EmptyPosts lang={lang} headingLevel={2} />
+      ) : (
+        <ul class="tag-list">
+          {tags.map((tag) => (
+            <li>
+              <a href={tagUrl(lang, tag.tag)}>#{tag.tag}</a> <span class="meta">({tag.count})</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</BaseLayout>

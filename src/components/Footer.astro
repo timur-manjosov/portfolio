@@ -1,0 +1,28 @@
+---
+import { github, legal } from "../data/site";
+import type { Lang } from "../i18n/ui";
+import { localePath, useTranslations } from "../i18n/utils";
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const year = new Date().getUTCFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container container--wide site-footer__inner">
+    <ul class="site-footer__links">
+      <li><a href={github.url} rel="me">GitHub</a></li>
+      <li><a href={localePath(lang, "links/")}>{t("nav.links")}</a></li>
+      <li><a href={localePath(lang, "uses/")}>{t("nav.uses")}</a></li>
+      <li><a href={localePath(lang, "feed.xml")}>{t("nav.feed")}</a></li>
+      <li><a href={localePath(lang, "privacy/")}>{t("nav.privacy")}</a></li>
+      {legal.imprint && <li><a href={localePath(lang, "imprint/")}>{t("nav.imprint")}</a></li>}
+      <li><a href="https://github.com/timur-manjosov/portfolio">{t("footer.source")}</a></li>
+    </ul>
+    <p>© {year} Timur Manjosov · {t("footer.noTracking")}</p>
+  </div>
+</footer>

@@ -1,0 +1,50 @@
+---
+import PostList from "../../../../../components/PostList.astro";
+import { LANGS, type Lang } from "../../../../../i18n/ui";
+import { localePath, useTranslations } from "../../../../../i18n/utils";
+import BaseLayout from "../../../../../layouts/BaseLayout.astro";
+import { allPosts, forListing } from "../../../../../lib/content";
+import { allCategories, categoryUrl } from "../../../../../lib/taxonomy";
+
+export async function getStaticPaths() {
+  const [posts, categories] = await Promise.all([allPosts(), allCategories()]);
+  return LANGS.flatMap((lang) =>
+    categories.map((category) => ({
+      params: { lang, category: category.id },
+      props: {
+        category,
+        posts: forListing(posts, lang).filter((p) => p.entry.data.category.id === category.id),
+      },
+    })),
+  );
+}
+
+const { category, posts } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const label = category.data.label[lang];
+const feed = `${categoryUrl(lang, category.id)}feed.xml`;
+---
+
+<BaseLayout
+  lang={lang}
+  title={label}
+  description={category.data.description[lang]}
+  section="blog"
+  alternates={{ de: categoryUrl("de", category.id), en: categoryUrl("en", category.id) }}
+  feeds={[{ title: `Timur Manjosov – ${label}`, href: feed }]}
+>
+  <div class="container page">
+    <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>
+      <ol><li><a href={localePath(lang, "blog/")}>{t("blog.title")}</a></li></ol>
+    </nav>
+    <header class="page-header">
+      <p class="eyebrow">{t("blog.postsInCategory")}</p>
+      <h1>{label}</h1>
+      <p>{category.data.description[lang]}</p>
+      {category.data.opinion && <p class="notice">{t("blog.opinionNote")}</p>}
+    </header>
+    <p class="section-footer"><a href={feed}>{t("blog.feedFor")}: {label}</a></p>
+    <PostList lang={lang} posts={posts} headingLevel={2} />
+  </div>
+</BaseLayout>

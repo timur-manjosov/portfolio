@@ -1,0 +1,49 @@
+---
+import type { MarkdownHeading } from "astro";
+import type { Lang } from "../i18n/ui";
+import { useTranslations } from "../i18n/utils";
+
+interface Props {
+  lang: Lang;
+  headings: MarkdownHeading[];
+}
+
+const { lang, headings } = Astro.props;
+const t = useTranslations(lang);
+
+// Nest h3 under the preceding h2.
+interface Node {
+  heading: MarkdownHeading;
+  children: MarkdownHeading[];
+}
+const tree: Node[] = [];
+for (const h of headings) {
+  const last = tree.at(-1);
+  if (h.depth === 3 && last) last.children.push(h);
+  else tree.push({ heading: h, children: [] });
+}
+// remark adds the autolink "#" to heading text; strip it for the TOC.
+const label = (h: MarkdownHeading) => h.text.replace(/#$/, "").trim();
+---
+
+<nav class="box box--outlined box--sm toc" aria-labelledby="toc-title">
+  <h2 id="toc-title">{t("blog.toc")}</h2>
+  <ol>
+    {
+      tree.map((n) => (
+        <li>
+          <a href={`#${n.heading.slug}`}>{label(n.heading)}</a>
+          {n.children.length > 0 && (
+            <ol>
+              {n.children.map((c) => (
+                <li>
+                  <a href={`#${c.slug}`}>{label(c)}</a>
+                </li>
+              ))}
+            </ol>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>

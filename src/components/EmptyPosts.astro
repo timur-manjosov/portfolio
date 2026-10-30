@@ -1,0 +1,58 @@
+---
+/**
+ * What a post list shows when it has nothing to list (R4-D6). While the
+ * whole blog is empty (the state at launch, the sample posts are drafts),
+ * an honest panel: the first post is coming, here is the feed, here is what
+ * already exists. Once there are posts, an empty category or tag only gets
+ * the short line.
+ */
+import type { Lang } from "../i18n/ui";
+import { localePath, useTranslations } from "../i18n/utils";
+import { allPosts, forListing } from "../lib/content";
+import Arrow from "./Arrow.astro";
+
+interface Props {
+  lang: Lang;
+  /** Heading level of the panel's title (one below the list's context). */
+  headingLevel?: 2 | 3;
+}
+
+const { lang, headingLevel = 3 } = Astro.props;
+const t = useTranslations(lang);
+const H = `h${headingLevel}` as "h2" | "h3";
+const blogEmpty = forListing(await allPosts(), lang).length === 0;
+---
+
+{
+  blogEmpty ? (
+    <div class="box box--filled empty-state">
+      <svg class="empty-state__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M5 19a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" fill="currentColor" />
+        <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      <H class="empty-state__title">{t("empty.title")}</H>
+      <p>{t("empty.text")}</p>
+      <ul class="actions">
+        <li>
+          <a class="btn btn--tonal" href={localePath(lang, "feed.xml")}>
+            {t("empty.feed")}
+          </a>
+        </li>
+        <li>
+          <a class="btn btn--text" href={localePath(lang, "projects/")}>
+            {t("empty.projects")}
+            <Arrow />
+          </a>
+        </li>
+        <li>
+          <a class="btn btn--text" href={localePath(lang, "about/")}>
+            {t("empty.about")}
+            <Arrow />
+          </a>
+        </li>
+      </ul>
+    </div>
+  ) : (
+    <p>{t("blog.empty")}</p>
+  )
+}

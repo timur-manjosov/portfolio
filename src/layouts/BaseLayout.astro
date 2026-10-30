@@ -1,0 +1,77 @@
+---
+import Footer from "../components/Footer.astro";
+import Head, { type Feed } from "../components/Head.astro";
+import Header, { type Section } from "../components/Header.astro";
+import type { Lang } from "../i18n/ui";
+import { localePath, useTranslations } from "../i18n/utils";
+import { globalGraph, type JsonLdNode } from "../lib/seo";
+
+interface Props {
+  lang: Lang;
+  /** Page title without the site name; omit on the home page. */
+  title?: string | undefined;
+  description: string;
+  section?: Section | undefined;
+  /** URLs of this page in each language that exists (including the current one). */
+  alternates?: Partial<Record<Lang, string>> | undefined;
+  /** Where the switcher sends visitors if the other language is missing. */
+  fallback?: string | undefined;
+  xDefault?: string | undefined;
+  ogType?: "website" | "article" | "profile" | undefined;
+  jsonLd?: JsonLdNode[] | undefined;
+  noindex?: boolean | undefined;
+  feeds?: Feed[] | undefined;
+  article?: { published: Date; modified?: Date | undefined; tags?: string[] } | undefined;
+}
+
+const {
+  lang,
+  title,
+  description,
+  section = "other",
+  alternates = { [lang]: Astro.url.pathname },
+  fallback,
+  xDefault,
+  ogType,
+  jsonLd = [],
+  noindex,
+  feeds,
+  article,
+} = Astro.props;
+
+const t = useTranslations(lang);
+const fullTitle = title ? `${title} – Timur Manjosov` : t("site.homeTitle");
+const allFeeds: Feed[] = [
+  { title: `Timur Manjosov – Blog (${lang.toUpperCase()})`, href: localePath(lang, "feed.xml") },
+  ...(feeds ?? []),
+];
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <Head
+      lang={lang}
+      fullTitle={fullTitle}
+      description={description}
+      alternates={alternates}
+      xDefault={xDefault ?? alternates.en}
+      ogType={ogType}
+      jsonLd={[...globalGraph(lang), ...jsonLd]}
+      noindex={noindex}
+      feeds={allFeeds}
+      article={article}
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t("skip.content")}</a>
+    <Header lang={lang} section={section} alternates={alternates} fallback={fallback} />
+    <main id="main" tabindex="-1" class:list={[{ "main--home": section === "home" }]}>
+      <slot />
+    </main>
+    <Footer lang={lang} />
+    <script>
+      import "../scripts/reveal.ts";
+    </script>
+  </body>
+</html>

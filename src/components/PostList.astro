@@ -1,0 +1,74 @@
+---
+import type { Lang } from "../i18n/ui";
+import { formatDate, isoDate, useTranslations } from "../i18n/utils";
+import { type Parsed, postUrl, readingTime } from "../lib/content";
+import { categoryMap, categoryUrl } from "../lib/taxonomy";
+import Arrow from "./Arrow.astro";
+import EmptyPosts from "./EmptyPosts.astro";
+
+interface Props {
+  lang: Lang;
+  posts: Parsed<"blog">[];
+  /** Heading level for post titles inside the list. */
+  headingLevel?: 2 | 3;
+  /** Card grid (home page) instead of the plain list (blog pages). */
+  cards?: boolean;
+}
+
+const { lang, posts, headingLevel = 3, cards = false } = Astro.props;
+const t = useTranslations(lang);
+const cats = await categoryMap();
+const H = `h${headingLevel}` as "h2" | "h3";
+---
+
+{
+  posts.length === 0 ? (
+    <EmptyPosts lang={lang} headingLevel={headingLevel} />
+  ) : (
+    <ul class:list={["entry-list", { "entry-list--grid": cards }]}>
+      {posts.map((p) => {
+        const d = p.entry.data;
+        const cat = cats.get(d.category.id);
+        const foreign = p.lang !== lang;
+        const meta = (
+          <>
+            <time datetime={isoDate(d.date)}>{formatDate(d.date, lang)}</time>
+            {!cards && cat && <a href={categoryUrl(lang, cat.id)}>{cat.data.label[lang]}</a>}
+            <span>
+              {readingTime(p.entry.body)} {t("blog.readingTime")}
+            </span>
+            {foreign && <span class="badge">{t("lang.onlyIn")}</span>}
+            {cat?.data.opinion && <span class="badge badge--accent">{t("blog.opinion")}</span>}
+            {d.draft && <span class="badge">{t("blog.draft")}</span>}
+            {p.scheduled && <span class="badge">{t("blog.scheduled")}</span>}
+          </>
+        );
+        return (
+          <li class:list={["entry", { card: cards }]} lang={foreign ? p.lang : undefined}>
+            {cards && cat && (
+              <p class="eyebrow" lang={lang}>
+                {cat.data.label[lang]}
+              </p>
+            )}
+            <H>
+              <a class:list={{ card__link: cards }} href={postUrl(p)} hreflang={foreign ? p.lang : undefined}>
+                {d.title}
+              </a>
+            </H>
+            <p>{d.description}</p>
+            {cards ? (
+              <div class="card__foot card__action" lang={lang}>
+                <p class="meta">{meta}</p>
+                <Arrow />
+              </div>
+            ) : (
+              <div class="meta" lang={lang}>
+                {meta}
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  )
+}

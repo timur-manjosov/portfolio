@@ -1,0 +1,8 @@
+# Fixture for tools/check-build-modes.mjs: a typo in a field name and a
+# malformed e-mail address must fail with the field path in the message.
+contact:
+  emial: someone@example.invalid
+legal:
+  controller:
+    name: Fixture Person
+    email: not-an-address

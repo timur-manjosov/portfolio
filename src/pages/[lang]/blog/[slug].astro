@@ -1,0 +1,172 @@
+---
+import { render } from "astro:content";
+import Toc from "../../../components/Toc.astro";
+import type { Lang } from "../../../i18n/ui";
+import { formatDate, isoDate, localePath, useTranslations } from "../../../i18n/utils";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { allPosts, isHidden, postUrl, readingTime } from "../../../lib/content";
+import { absolute, PERSON_ID, WEBSITE_ID } from "../../../lib/seo";
+import { categoryMap, categoryUrl, seriesUrl, tagUrl } from "../../../lib/taxonomy";
+
+export async function getStaticPaths() {
+  const posts = await allPosts();
+  return posts.map((p) => ({
+    params: { lang: p.lang, slug: p.slug },
+    props: {
+      post: p,
+      other: posts.find((o) => o.lang !== p.lang && o.key === p.key),
+      seriesPosts: p.entry.data.series
+        ? posts
+            .filter((s) => s.lang === p.lang && s.entry.data.series === p.entry.data.series)
+            .sort((a, b) => (a.entry.data.seriesPart ?? 0) - (b.entry.data.seriesPart ?? 0))
+        : [],
+    },
+  }));
+}
+
+const { post, other, seriesPosts } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const d = post.entry.data;
+const { Content, headings } = await render(post.entry);
+const cat = (await categoryMap()).get(d.category.id);
+if (!cat) throw new Error(`Unknown category "${d.category.id}" in blog/${post.entry.id}`);
+const url = postUrl(post);
+const minutes = readingTime(post.entry.body);
+
+const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const showToc = d.toc ?? tocHeadings.length >= 3;
+
+const alternates: Partial<Record<Lang, string>> = { [lang]: url };
+if (other) alternates[other.lang] = postUrl(other);
+
+const jsonLd = [
+  {
+    "@type": "BlogPosting",
+    "@id": `${absolute(url)}#post`,
+    headline: d.title,
+    description: d.description,
+    url: absolute(url),
+    mainEntityOfPage: absolute(url),
+    inLanguage: lang,
+    datePublished: isoDate(d.date),
+    dateModified: isoDate(d.updated ?? d.date),
+    author: { "@id": PERSON_ID },
+    publisher: { "@id": PERSON_ID },
+    isPartOf: { "@id": WEBSITE_ID },
+    articleSection: cat.data.label[lang],
+    keywords: d.tags.join(", "),
+    wordCount: (post.entry.body ?? "").split(/\s+/).filter(Boolean).length,
+    ...(other ? { workTranslation: { "@id": `${absolute(postUrl(other))}#post` } } : {}),
+  },
+];
+---
+
+<BaseLayout
+  lang={lang}
+  title={d.title}
+  description={d.description}
+  section="blog"
+  alternates={alternates}
+  fallback={localePath(lang === "de" ? "en" : "de", "blog/")}
+  ogType="article"
+  jsonLd={jsonLd}
+  noindex={isHidden(post)}
+  article={{ published: d.date, modified: d.updated, tags: d.tags }}
+  feeds={[{ title: `Timur Manjosov – ${cat.data.label[lang]}`, href: `${categoryUrl(lang, cat.id)}feed.xml` }]}
+>
+  <article class="container page">
+    <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>
+      <ol>
+        <li><a href={localePath(lang, "blog/")}>{t("blog.title")}</a></li>
+        <li><a href={categoryUrl(lang, cat.id)}>{cat.data.label[lang]}</a></li>
+      </ol>
+    </nav>
+    <header class="page-header">
+      <h1>{d.title}</h1>
+      <p>{d.description}</p>
+      <div class="meta">
+        <span>
+          {t("blog.published")} <time datetime={isoDate(d.date)}>{formatDate(d.date, lang)}</time>
+        </span>
+        {
+          d.updated && (
+            <span>
+              {t("blog.updated")} <time datetime={isoDate(d.updated)}>{formatDate(d.updated, lang)}</time>
+            </span>
+          )
+        }
+        <span>{minutes} {t("blog.readingTime")}</span>
+        {cat.data.opinion && <span class="badge badge--accent">{t("blog.opinion")}</span>}
+        {d.draft && <span class="badge">{t("blog.draft")}</span>}
+        {post.scheduled && <span class="badge">{t("blog.scheduled")}</span>}
+      </div>
+    </header>
+
+    {
+      cat.data.opinion && (
+        <p class="notice">
+          <strong>{t("blog.opinion")}:</strong> {t("blog.opinionNote")} (<time
+            datetime={isoDate(d.updated ?? d.date)}>{formatDate(d.updated ?? d.date, lang)}</time
+          >)
+        </p>
+      )
+    }
+
+    {
+      d.series && seriesPosts.length > 0 && (
+        <nav class="notice" aria-labelledby="series-nav">
+          <p id="series-nav">
+            {t("blog.series")}: <a href={seriesUrl(lang, d.series ?? "")}>{d.series}</a>, {t("blog.seriesPart")}{" "}
+            {d.seriesPart} {t("blog.seriesOf")} {seriesPosts.length}
+          </p>
+          <ol>
+            {seriesPosts.map((s) => (
+              <li>
+                {s.slug === post.slug ? (
+                  <span aria-current="page">{s.entry.data.title}</span>
+                ) : (
+                  <a href={postUrl(s)}>{s.entry.data.title}</a>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+
+    {showToc && <Toc lang={lang} headings={tocHeadings} />}
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <footer class="section">
+      {
+        d.tags.length > 0 && (
+          <>
+            <h2 class="visually-hidden">{t("blog.tags")}</h2>
+            <ul class="tag-list">
+              {d.tags.map((tag) => (
+                <li>
+                  <a href={tagUrl(lang, tag)}>#{tag}</a>
+                </li>
+              ))}
+            </ul>
+          </>
+        )
+      }
+      {
+        other && (
+          <p class="meta section-footer">
+            {t("blog.translation")}:{" "}
+            <a href={postUrl(other)} hreflang={other.lang} lang={other.lang}>
+              {other.entry.data.title}
+            </a>
+          </p>
+        )
+      }
+      <p class="section-footer"><a href={localePath(lang, "blog/")}>← {t("blog.backToBlog")}</a></p>
+    </footer>
+  </article>
+</BaseLayout>

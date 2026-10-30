@@ -1,0 +1,101 @@
+---
+/**
+ * Standalone Markdown pages from src/content/pages/<lang>/<slug>.md
+ * (about, now, uses, contact, privacy). A new file there becomes
+ * a new page automatically.
+ */
+import { render } from "astro:content";
+import ContactMethods from "../../components/ContactMethods.astro";
+import FactsBlock from "../../components/FactsBlock.astro";
+import type { Section } from "../../components/Header.astro";
+import PrivacyController from "../../components/PrivacyController.astro";
+import { aboutExtra } from "../../data/site";
+import type { Lang } from "../../i18n/ui";
+import { formatDate, isoDate, localePath, useTranslations } from "../../i18n/utils";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { allPages, pageUrl } from "../../lib/content";
+import { renderPrivateMarkdown } from "../../lib/private-markdown";
+import { absolute, PERSON_ID } from "../../lib/seo";
+
+export async function getStaticPaths() {
+  const pages = await allPages();
+  return pages.map((p) => {
+    const other = pages.find((o) => o.lang !== p.lang && o.key === p.key);
+    return { params: { lang: p.lang, page: p.slug }, props: { page: p, other } };
+  });
+}
+
+const { page, other } = Astro.props;
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const d = page.entry.data;
+const { Content } = await render(page.entry);
+
+const alternates: Partial<Record<Lang, string>> = { [lang]: pageUrl(page) };
+if (other) alternates[other.lang] = pageUrl(other);
+
+// Optional private text appended to About (private file, about_extra).
+const extraMarkdown = page.slug === "about" ? aboutExtra[lang] : null;
+const extraHtml = extraMarkdown ? await renderPrivateMarkdown(extraMarkdown) : null;
+
+const sections: Record<string, Section> = { about: "about", now: "now", contact: "contact" };
+const section = sections[page.slug] ?? "other";
+
+const jsonLd =
+  page.slug === "about"
+    ? [
+        {
+          "@type": "ProfilePage",
+          "@id": `${absolute(pageUrl(page))}#page`,
+          url: absolute(pageUrl(page)),
+          name: d.title,
+          inLanguage: lang,
+          dateModified: isoDate(d.updated),
+          mainEntity: { "@id": PERSON_ID },
+        },
+      ]
+    : [];
+---
+
+<BaseLayout
+  lang={lang}
+  title={d.title}
+  description={d.description}
+  section={section}
+  alternates={alternates}
+  fallback={localePath(lang === "de" ? "en" : "de")}
+  noindex={d.noindex}
+  ogType={page.slug === "about" ? "profile" : "website"}
+  jsonLd={jsonLd}
+>
+  <article class="container page">
+    <header class="page-header">
+      <h1>{d.title}</h1>
+      {
+        page.slug === "now" ? (
+          <p>
+            {t("now.updated")} <time datetime={isoDate(d.updated)}>{formatDate(d.updated, lang)}</time>
+          </p>
+        ) : (
+          page.slug !== "privacy" && <p>{d.description}</p>
+        )
+      }
+    </header>
+    {page.slug === "about" && <FactsBlock lang={lang} />}
+    {page.slug === "contact" && <ContactMethods lang={lang} />}
+    {page.slug === "privacy" && <PrivacyController lang={lang} />}
+    <div class="prose">
+      <Content />
+    </div>
+    {extraHtml && <div class="prose about-extra" set:html={extraHtml} />}
+    {
+      page.slug !== "now" && (
+        <p class="meta section">
+          <span>
+            {t("blog.updated")}: <time datetime={isoDate(d.updated)}>{formatDate(d.updated, lang)}</time>
+          </span>
+        </p>
+      )
+    }
+  </article>
+</BaseLayout>

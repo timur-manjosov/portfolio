@@ -1,0 +1,32 @@
+---
+/**
+ * "Controller" section of the privacy policy, filled from the private file
+ * (`legal.controller`). Without it (public build), the section is left out;
+ * a release build refuses to run without it (tools/build.mjs).
+ */
+import { legal } from "../data/site";
+import type { Lang } from "../i18n/ui";
+import { useTranslations } from "../i18n/utils";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const c = legal.controller;
+const encode = (v: string) => [...v].map((ch) => `&#${ch.codePointAt(0)};`).join("");
+---
+
+{
+  c && (
+    <section class="prose privacy-controller" aria-labelledby="controller">
+      <h2 id="controller">{t("privacy.controller")}</h2>
+      <p>{t("privacy.controllerText")}</p>
+      <p>
+        {c.name}
+        <br />
+        {t("contact.email")}: <span set:html={`<a href="${encode(`mailto:${c.email}`)}">${encode(c.email)}</a>`} />
+      </p>
+    </section>
+  )
+}

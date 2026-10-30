@@ -1,0 +1,56 @@
+---
+import EmptyPosts from "../../../components/EmptyPosts.astro";
+import { LANGS, type Lang } from "../../../i18n/ui";
+import { formatDate, isoDate, localePath, useTranslations } from "../../../i18n/utils";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { allPosts, forListing, postUrl } from "../../../lib/content";
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const t = useTranslations(lang);
+const posts = forListing(await allPosts(), lang);
+const years = new Map<number, typeof posts>();
+for (const p of posts) {
+  const y = p.entry.data.date.getUTCFullYear();
+  years.set(y, [...(years.get(y) ?? []), p]);
+}
+---
+
+<BaseLayout
+  lang={lang}
+  title={t("blog.archive")}
+  description={t("blog.archiveDescription")}
+  section="blog"
+  alternates={{ de: "/de/blog/archive/", en: "/en/blog/archive/" }}
+>
+  <div class="container page">
+    <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>
+      <ol><li><a href={localePath(lang, "blog/")}>{t("blog.title")}</a></li></ol>
+    </nav>
+    <header class="page-header">
+      <h1>{t("blog.archive")}</h1>
+      <p>{t("blog.archiveDescription")}</p>
+    </header>
+    {posts.length === 0 && <EmptyPosts lang={lang} headingLevel={2} />}
+    {
+      [...years.entries()].map(([year, list]) => (
+        <section class="archive-year" aria-labelledby={`y${year}`}>
+          <h2 id={`y${year}`}>{year}</h2>
+          <ul class="entry-list">
+            {list.map((p) => (
+              <li class="entry" lang={p.lang !== lang ? p.lang : undefined}>
+                <time class="meta" datetime={isoDate(p.entry.data.date)}>
+                  {formatDate(p.entry.data.date, lang)}
+                </time>{" "}
+                <a href={postUrl(p)}>{p.entry.data.title}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>

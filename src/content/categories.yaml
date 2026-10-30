@@ -1,0 +1,40 @@
+# Blog categories. Add a new entry here to create a new category: its page,
+# feeds and navigation entry are generated automatically. `id` is used in
+# URLs (/de/blog/category/<id>/) and in a post's `category:` field.
+- id: tech
+  label: { de: Technik, en: Technology }
+  description:
+    de: Software, Werkzeuge, Infrastruktur und was ich beim Bauen lerne.
+    en: Software, tools, infrastructure and what I learn while building.
+  order: 10
+- id: math-crypto
+  label: { de: Mathe & Kryptografie, en: Maths & Cryptography }
+  description:
+    de: Mathematik aus dem Studium und darüber hinaus, mit Schwerpunkt Kryptografie.
+    en: Mathematics from my studies and beyond, with a focus on cryptography.
+  order: 20
+- id: blockchain
+  label: { de: Blockchain-Technik, en: Blockchain internals }
+  description:
+    de: Kryptowährungen technisch und mathematisch betrachtet. Konsens, Wahrscheinlichkeiten, Datenstrukturen, keine Anlageberatung.
+    en: Cryptocurrencies from the technical and mathematical side. Consensus, probabilities, data structures, no investment advice.
+  order: 22
+- id: theory
+  label: { de: Theorie & Systeme, en: Theory & systems }
+  description:
+    de: Theoretische Informatik, Spieltheorie und komplexe Systeme. Was sich beweisen lässt und wo die Intuition täuscht.
+    en: Theoretical computer science, game theory and complex systems. What can be proven and where intuition misleads.
+  order: 25
+- id: opinion
+  label: { de: Standpunkte, en: Opinions }
+  description:
+    de: Persönliche Meinungen, klar als Meinung gekennzeichnet und datiert.
+    en: Personal opinions, clearly labelled as such and dated.
+  opinion: true
+  order: 30
+- id: notes
+  label: { de: Notizen, en: Notes }
+  description:
+    de: Kurze, informelle Notizen.
+    en: Short, informal notes.
+  order: 40

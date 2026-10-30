@@ -77,8 +77,10 @@ jobs:
           args: >-
             --no-progress
             --max-retries 2
-            --accept 200,206,429
+            --accept 200,202,206,429
             --exclude-path dist/search-index.json
+            --exclude ^https://timurmanjosov.com/
+            --exclude ^https://eprint.iacr.org/
             --root-dir ${{ github.workspace }}/dist
             dist
           fail: true

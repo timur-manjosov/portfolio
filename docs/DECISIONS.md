@@ -1220,3 +1220,44 @@ there.
 
 Not a finding: CLS is 0 everywhere, every page except the 404 scores 100 in
 all four Lighthouse categories, and body text already reaches 16:1.
+
+## R6-D1. Maintenance (brief §2.8)
+
+- **a) `apply-on-server.sh` PATH:** fixed `PATH` as the first command
+  (commit `39da05b`, `check:apply-path`, `docs/DEPLOY.md`).
+- **b) Dependencies.** `npm audit` on `origin/main` failed (moderate):
+  `astro` ≤ 7.4.6 (GHSA-mh32-jxcr-mh9f), plus low ones for
+  `fast-xml-parser` (GHSA-474x-hrwr-fgx4, via `@astrojs/rss`) and `katex`.
+  The KaTeX advisory checked at the source (github.com/advisories, read
+  2026-11-14): **GHSA-238p-pmpm-9mq7**, CVE-2026-103923, low (CVSS 4: 2.1),
+  affects 0.11.0 to < 0.18.2, **patched in 0.18.2**: an application that is
+  already prototype-polluted can enable `trust` and so XSS in KaTeX output.
+  We never run KaTeX: `remark-math` only uses the Markdown syntax extension
+  of `micromark-extension-math`, whose HTML part (the only one importing
+  KaTeX) is not loaded; formulas are rendered by Temml (D6).
+  - **Decision:** `astro` ^7.4.12, `@astrojs/markdown-remark` ^7.3.9,
+    `fast-xml-parser` 5.12.1 (within `@astrojs/rss`'s range), and an npm
+    **`overrides` entry `katex: ^0.19.1`** (the current release, 2026-10-23).
+  - **Alternatives:** `npm audit fix --force` (forbidden by the brief; it
+    would downgrade `remark-math` to 3.0.1, an incompatible major);
+    waiting for `micromark-extension-math` to widen its `^0.16` range
+    (open-ended).
+  - **Why the override is safe:** `micromark-extension-math` declares
+    `katex: ^0.16.0` but only its unused HTML module calls it. The rendered
+    HTML of every page is byte-identical before and after the update
+    (`node tools/compare-dist.mjs .tmp/html-before-deps dist`: 102 files,
+    0 differ, asset hashes masked). `npm audit`: 0 vulnerabilities.
+  - **Revision:** remove the override once `micromark-extension-math`
+    depends on katex ≥ 0.18.2 itself.
+- **c) `Buffer.slice` and Biome.** There is **no** `Buffer#slice` in
+  `tools/edit-content.mjs` (or any other tool): its two `.slice` calls work
+  on strings (`readFileSync(…, "utf8")`, directory names), which are not
+  deprecated; nothing to replace. The Biome info in
+  `tests/articles/csp_experiments.mjs` (a lone block without declarations,
+  `noUselessLoneBlockStatements`) is fixed by dropping the braces.
+- **d) `check:prepush` with several commits:** it already checks the author
+  and committer address of **every** commit in `origin/main..HEAD` (no
+  count). `check:prepush-exit` now proves it: six noreply commits since an
+  `origin/main` ref → GO, exit 0; a private committer address in the middle
+  of eight commits → NO-GO, exit 1, and the finding names that commit. On
+  `r6-update` (3 commits at the time): GO.

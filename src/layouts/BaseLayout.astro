@@ -22,6 +22,10 @@ interface Props {
   noindex?: boolean | undefined;
   feeds?: Feed[] | undefined;
   article?: { published: Date; modified?: Date | undefined; tags?: string[] } | undefined;
+  /** The page has running text in STIX Two Text: preload that font. */
+  serif?: boolean | undefined;
+  /** Open Graph image of this page (absolute path), default: the site image. */
+  ogImage?: string | undefined;
 }
 
 const {
@@ -37,6 +41,8 @@ const {
   noindex,
   feeds,
   article,
+  serif = false,
+  ogImage,
 } = Astro.props;
 
 const t = useTranslations(lang);
@@ -61,10 +67,14 @@ const allFeeds: Feed[] = [
       noindex={noindex}
       feeds={allFeeds}
       article={article}
+      serif={serif}
+      ogImage={ogImage}
     />
   </head>
   <body>
     <a class="skip-link" href="#main">{t("skip.content")}</a>
+    {/* First part of the name of every heading anchor (astro.config.ts). */}
+    <span id="heading-anchor-label" hidden>{t("a11y.headingLink")}</span>
     <Header lang={lang} section={section} alternates={alternates} fallback={fallback} />
     <main id="main" tabindex="-1" class:list={[{ "main--home": section === "home" }]}>
       <slot />

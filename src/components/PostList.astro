@@ -1,6 +1,13 @@
 ---
+/**
+ * Posts as a scannable list (R6-D6, finding B9): the date in its own column
+ * (tabular figures) from a container width of 34rem on, then title,
+ * description and a meta line (category, reading time, badges). With
+ * `byYear` the list is grouped under year headings and the date column shows
+ * day and month only. `cards` keeps the card grid for other uses.
+ */
 import type { Lang } from "../i18n/ui";
-import { formatDate, isoDate, useTranslations } from "../i18n/utils";
+import { formatDate, formatDayMonth, isoDate, useTranslations } from "../i18n/utils";
 import { type Parsed, postUrl, readingTime } from "../lib/content";
 import { categoryMap, categoryUrl } from "../lib/taxonomy";
 import Arrow from "./Arrow.astro";
@@ -11,64 +18,104 @@ interface Props {
   posts: Parsed<"blog">[];
   /** Heading level for post titles inside the list. */
   headingLevel?: 2 | 3;
-  /** Card grid (home page) instead of the plain list (blog pages). */
+  /** Card grid instead of the list. */
   cards?: boolean;
+  /** Group under year headings (h2; titles become h3). */
+  byYear?: boolean;
+  /** Show the category in the meta line (off on a category page). */
+  showCategory?: boolean;
 }
 
-const { lang, posts, headingLevel = 3, cards = false } = Astro.props;
+const { lang, posts, headingLevel = 3, cards = false, byYear = false, showCategory = true } = Astro.props;
 const t = useTranslations(lang);
 const cats = await categoryMap();
-const H = `h${headingLevel}` as "h2" | "h3";
+const H = (byYear ? "h3" : `h${headingLevel}`) as "h2" | "h3";
+
+const groups: { year: number | null; posts: Parsed<"blog">[] }[] = [];
+for (const p of posts) {
+  const year = byYear ? p.entry.data.date.getUTCFullYear() : null;
+  const last = groups.at(-1);
+  if (last && last.year === year) last.posts.push(p);
+  else groups.push({ year, posts: [p] });
+}
 ---
 
 {
   posts.length === 0 ? (
     <EmptyPosts lang={lang} headingLevel={headingLevel} />
-  ) : (
-    <ul class:list={["entry-list", { "entry-list--grid": cards }]}>
+  ) : cards ? (
+    <ul class="entry-list entry-list--grid">
       {posts.map((p) => {
         const d = p.entry.data;
         const cat = cats.get(d.category.id);
         const foreign = p.lang !== lang;
-        const meta = (
-          <>
-            <time datetime={isoDate(d.date)}>{formatDate(d.date, lang)}</time>
-            {!cards && cat && <a href={categoryUrl(lang, cat.id)}>{cat.data.label[lang]}</a>}
-            <span>
-              {readingTime(p.entry.body)} {t("blog.readingTime")}
-            </span>
-            {foreign && <span class="badge">{t("lang.onlyIn")}</span>}
-            {cat?.data.opinion && <span class="badge badge--accent">{t("blog.opinion")}</span>}
-            {d.draft && <span class="badge">{t("blog.draft")}</span>}
-            {p.scheduled && <span class="badge">{t("blog.scheduled")}</span>}
-          </>
-        );
         return (
-          <li class:list={["entry", { card: cards }]} lang={foreign ? p.lang : undefined}>
-            {cards && cat && (
+          <li class="entry card" lang={foreign ? p.lang : undefined}>
+            {cat && (
               <p class="eyebrow" lang={lang}>
                 {cat.data.label[lang]}
               </p>
             )}
             <H>
-              <a class:list={{ card__link: cards }} href={postUrl(p)} hreflang={foreign ? p.lang : undefined}>
+              <a class="card__link" href={postUrl(p)} hreflang={foreign ? p.lang : undefined}>
                 {d.title}
               </a>
             </H>
             <p>{d.description}</p>
-            {cards ? (
-              <div class="card__foot card__action" lang={lang}>
-                <p class="meta">{meta}</p>
-                <Arrow />
-              </div>
-            ) : (
-              <div class="meta" lang={lang}>
-                {meta}
-              </div>
-            )}
+            <div class="card__foot card__action" lang={lang}>
+              <p class="meta">
+                <time datetime={isoDate(d.date)}>{formatDate(d.date, lang)}</time>
+                <span>
+                  {readingTime(p.entry.body)} {t("blog.readingTime")}
+                </span>
+              </p>
+              <Arrow />
+            </div>
           </li>
         );
       })}
     </ul>
+  ) : (
+    groups.map((g) => (
+      <div class="post-group">
+        {g.year && (
+          <h2 class="post-group__year" id={`year-${g.year}`}>
+            {g.year}
+          </h2>
+        )}
+        <ul class="entry-list post-list">
+          {g.posts.map((p) => {
+            const d = p.entry.data;
+            const cat = cats.get(d.category.id);
+            const foreign = p.lang !== lang;
+            return (
+              <li class="entry post-item" lang={foreign ? p.lang : undefined}>
+                <p class="post-item__date" lang={lang}>
+                  <time datetime={isoDate(d.date)}>{byYear ? formatDayMonth(d.date, lang) : formatDate(d.date, lang)}</time>
+                </p>
+                <div class="post-item__body">
+                  <H class="post-item__title">
+                    <a href={postUrl(p)} hreflang={foreign ? p.lang : undefined}>
+                      {d.title}
+                    </a>
+                  </H>
+                  <p class="post-item__desc">{d.description}</p>
+                  <p class="meta" lang={lang}>
+                    {showCategory && cat && <a href={categoryUrl(lang, cat.id)}>{cat.data.label[lang]}</a>}
+                    <span>
+                      {readingTime(p.entry.body)} {t("blog.readingTime")}
+                    </span>
+                    {foreign && <span class="badge">{t("lang.onlyIn")}</span>}
+                    {cat?.data.opinion && <span class="badge badge--accent">{t("blog.opinion")}</span>}
+                    {d.draft && <span class="badge">{t("blog.draft")}</span>}
+                    {p.scheduled && <span class="badge">{t("blog.scheduled")}</span>}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    ))
   )
 }

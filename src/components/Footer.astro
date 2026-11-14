@@ -1,4 +1,9 @@
 ---
+/**
+ * Footer (R6-D9, finding B16): the site's sections in four short groups
+ * (pages, more, feeds and machine-readable files, legal), then one line
+ * with the copyright and the no-tracking note.
+ */
 import { github, legal } from "../data/site";
 import type { Lang } from "../i18n/ui";
 import { localePath, useTranslations } from "../i18n/utils";
@@ -10,19 +15,71 @@ interface Props {
 const { lang } = Astro.props;
 const t = useTranslations(lang);
 const year = new Date().getUTCFullYear();
+
+const groups: { id: string; title: string; links: { href: string; label: string; rel?: string }[] }[] = [
+  {
+    id: "pages",
+    title: t("footer.pages"),
+    links: [
+      { href: localePath(lang, "about/"), label: t("nav.about") },
+      { href: localePath(lang, "projects/"), label: t("nav.projects") },
+      { href: localePath(lang, "blog/"), label: t("nav.blog") },
+      { href: localePath(lang, "now/"), label: t("nav.now") },
+      { href: localePath(lang, "contact/"), label: t("nav.contact") },
+    ],
+  },
+  {
+    id: "more",
+    title: t("footer.more"),
+    links: [
+      { href: github.url, label: "GitHub", rel: "me" },
+      { href: localePath(lang, "links/"), label: t("nav.links") },
+      { href: localePath(lang, "uses/"), label: t("nav.uses") },
+      { href: localePath(lang, "search/"), label: t("nav.search") },
+      { href: localePath(lang, "blog/archive/"), label: t("blog.archive") },
+    ],
+  },
+  {
+    id: "feeds",
+    title: t("footer.feeds"),
+    links: [
+      { href: localePath(lang, "feed.xml"), label: t("nav.feed") },
+      { href: "/llms.txt", label: "llms.txt" },
+      { href: "/sitemap.xml", label: t("nav.sitemap") },
+    ],
+  },
+  {
+    id: "legal",
+    title: t("footer.legal"),
+    links: [
+      { href: localePath(lang, "privacy/"), label: t("nav.privacy") },
+      ...(legal.imprint ? [{ href: localePath(lang, "imprint/"), label: t("nav.imprint") }] : []),
+      { href: "https://github.com/timur-manjosov/portfolio", label: t("footer.source") },
+    ],
+  },
+];
 ---
 
 <footer class="site-footer">
-  <div class="container container--wide site-footer__inner">
-    <ul class="site-footer__links">
-      <li><a href={github.url} rel="me">GitHub</a></li>
-      <li><a href={localePath(lang, "links/")}>{t("nav.links")}</a></li>
-      <li><a href={localePath(lang, "uses/")}>{t("nav.uses")}</a></li>
-      <li><a href={localePath(lang, "feed.xml")}>{t("nav.feed")}</a></li>
-      <li><a href={localePath(lang, "privacy/")}>{t("nav.privacy")}</a></li>
-      {legal.imprint && <li><a href={localePath(lang, "imprint/")}>{t("nav.imprint")}</a></li>}
-      <li><a href="https://github.com/timur-manjosov/portfolio">{t("footer.source")}</a></li>
-    </ul>
-    <p>© {year} Timur Manjosov · {t("footer.noTracking")}</p>
+  <div class="container container--wide">
+    <nav class="site-footer__grid" aria-label={t("footer.label")}>
+      {
+        groups.map((g) => (
+          <div class="site-footer__group">
+            <h2 id={`footer-${g.id}`}>{g.title}</h2>
+            <ul aria-labelledby={`footer-${g.id}`}>
+              {g.links.map((l) => (
+                <li>
+                  <a href={l.href} rel={l.rel}>
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </nav>
+    <p class="site-footer__note">© {year} Timur Manjosov · {t("footer.noTracking")}</p>
   </div>
 </footer>

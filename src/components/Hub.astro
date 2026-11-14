@@ -1,0 +1,75 @@
+---
+/**
+ * "Knotenpunkt" (R6-D7): the site as a small network. The centre is the
+ * person, the six nodes around it are the places to go, each with a live
+ * fact from the content (number of posts, active projects, date of /now).
+ * Nodes are ordinary links in a list, laid out on a 3×3 grid; the edges are
+ * an inline SVG behind them (aria-hidden, stroke only, no JS, no motion).
+ * Hovering or focusing a node lights up its edge (CSS :has). Below 40rem the
+ * edges are dropped and the nodes form a two-column list.
+ */
+import { github } from "../data/site";
+import type { Lang } from "../i18n/ui";
+import { formatDayMonth, localePath, useTranslations } from "../i18n/utils";
+
+interface Props {
+  lang: Lang;
+  posts: number;
+  projects: number;
+  nowUpdated: Date | undefined;
+}
+
+const { lang, posts, projects, nowUpdated } = Astro.props;
+const t = useTranslations(lang);
+
+const nodes = [
+  { id: "about", label: t("nav.about"), meta: t("hub.about"), href: localePath(lang, "about/") },
+  {
+    id: "projects",
+    label: t("nav.projects"),
+    meta: `${projects} ${t("hub.active")}`,
+    href: localePath(lang, "projects/"),
+  },
+  {
+    id: "blog",
+    label: t("nav.blog"),
+    meta: `${posts} ${t("blog.postsCount")}`,
+    href: localePath(lang, "blog/"),
+  },
+  {
+    id: "now",
+    label: t("nav.now"),
+    meta: nowUpdated ? `${t("now.updated")} ${formatDayMonth(nowUpdated, lang)}` : t("hub.now"),
+    href: localePath(lang, "now/"),
+  },
+  { id: "contact", label: t("nav.contact"), meta: t("hub.contact"), href: localePath(lang, "contact/") },
+  { id: "github", label: "GitHub", meta: github.handle, href: github.url, external: true },
+] as const;
+---
+
+<nav class="hub" aria-labelledby="hub-title">
+  <h2 id="hub-title" class="visually-hidden">{t("hub.title")}</h2>
+  <svg class="hub__edges" viewBox="0 0 300 300" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    {/* A ring between neighbouring nodes, then the spokes to the centre. */}
+    <path class="hub__ring" d="M50 50 L50 150 L50 250 M250 50 L250 150 L250 250 M50 50 L250 50 M50 250 L250 250"></path>
+    <path class="hub__edge hub__edge--about" d="M150 150 L50 50"></path>
+    <path class="hub__edge hub__edge--now" d="M150 150 L50 150"></path>
+    <path class="hub__edge hub__edge--contact" d="M150 150 L50 250"></path>
+    <path class="hub__edge hub__edge--projects" d="M150 150 L250 50"></path>
+    <path class="hub__edge hub__edge--blog" d="M150 150 L250 150"></path>
+    <path class="hub__edge hub__edge--github" d="M150 150 L250 250"></path>
+  </svg>
+  <p class="hub__centre" aria-hidden="true"><span>TM</span></p>
+  <ul class="hub__nodes">
+    {
+      nodes.map((n) => (
+        <li class={`hub__node hub__node--${n.id}`}>
+          <a href={n.href} rel={n.id === "github" ? "me" : undefined}>
+            <span class="hub__label">{n.label}</span>
+            <span class="hub__meta">{n.meta}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>

@@ -2,6 +2,7 @@ import { rehypeHeadingIds, unified } from "@astrojs/markdown-remark";
 import { defineConfig } from "astro/config";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import remarkMath from "remark-math";
+import rehypeArticle from "./src/lib/rehype-article";
 import rehypeFootnoteLang from "./src/lib/rehype-footnote-lang";
 import rehypeStripComments from "./src/lib/rehype-strip-comments";
 import rehypeTemml from "./src/lib/rehype-temml";
@@ -46,14 +47,24 @@ export default defineConfig({
         // Astro adds heading ids after user plugins; the autolinker needs
         // them earlier.
         rehypeHeadingIds,
+        // A real, focusable link after each heading, grouped with it in
+        // div.heading. Its name is "<Link to this section> <heading>": the
+        // first part is a hidden element on every page that renders
+        // Markdown (#heading-anchor-label, translated), so the plugin needs
+        // no language (R6 finding B14).
         [
           rehypeAutolinkHeadings,
           {
-            behavior: "append",
-            properties: { className: ["heading-anchor"], ariaHidden: "true", tabIndex: -1 },
+            behavior: "after",
+            group: { type: "element", tagName: "div", properties: { className: ["heading"] }, children: [] },
+            properties: (heading: { properties: { id?: unknown } }) => ({
+              className: ["heading-anchor"],
+              ariaLabelledby: `heading-anchor-label ${String(heading.properties.id)}`,
+            }),
             content: { type: "text", value: "#" },
           },
         ],
+        rehypeArticle,
       ],
     }),
   },

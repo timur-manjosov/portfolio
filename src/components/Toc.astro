@@ -1,4 +1,12 @@
 ---
+/**
+ * Table of contents of a post (R6-D5), built at build time from the
+ * rendered headings (h2, h3 nested under the preceding h2). Two renderings
+ * of the same list: `details` (a closed disclosure above the text, narrow
+ * screens) and `side` (a sticky column beside the text from 64rem on). CSS
+ * shows exactly one of them, so neither needs JS. The footnote heading that
+ * GFM generates is never an entry.
+ */
 import type { MarkdownHeading } from "astro";
 import type { Lang } from "../i18n/ui";
 import { useTranslations } from "../i18n/utils";
@@ -6,44 +14,78 @@ import { useTranslations } from "../i18n/utils";
 interface Props {
   lang: Lang;
   headings: MarkdownHeading[];
+  variant: "details" | "side";
 }
 
-const { lang, headings } = Astro.props;
+const { lang, headings, variant } = Astro.props;
 const t = useTranslations(lang);
 
-// Nest h3 under the preceding h2.
 interface Node {
   heading: MarkdownHeading;
   children: MarkdownHeading[];
 }
 const tree: Node[] = [];
 for (const h of headings) {
+  if (h.slug === "footnote-label") continue;
   const last = tree.at(-1);
   if (h.depth === 3 && last) last.children.push(h);
-  else tree.push({ heading: h, children: [] });
+  else if (h.depth === 2) tree.push({ heading: h, children: [] });
 }
-// remark adds the autolink "#" to heading text; strip it for the TOC.
+// The autolinker's "#" is not part of the heading text any more (it sits
+// after the heading), but older renders may still end in it.
 const label = (h: MarkdownHeading) => h.text.replace(/#$/, "").trim();
+const id = `toc-${variant}`;
 ---
 
-<nav class="box box--outlined box--sm toc" aria-labelledby="toc-title">
-  <h2 id="toc-title">{t("blog.toc")}</h2>
-  <ol>
-    {
-      tree.map((n) => (
-        <li>
-          <a href={`#${n.heading.slug}`}>{label(n.heading)}</a>
-          {n.children.length > 0 && (
-            <ol>
-              {n.children.map((c) => (
-                <li>
-                  <a href={`#${c.slug}`}>{label(c)}</a>
-                </li>
-              ))}
-            </ol>
-          )}
-        </li>
-      ))
-    }
-  </ol>
-</nav>
+{
+  variant === "details" ? (
+    <details class="toc toc--details">
+      <summary>
+        {t("blog.toc")}{" "}
+        <span>
+          · {tree.length} {t("blog.tocSections")}
+        </span>
+      </summary>
+      <nav aria-label={t("blog.toc")}>
+        <ol>
+          {tree.map((n) => (
+            <li>
+              <a href={`#${n.heading.slug}`}>{label(n.heading)}</a>
+              {n.children.length > 0 && (
+                <ol>
+                  {n.children.map((c) => (
+                    <li>
+                      <a href={`#${c.slug}`}>{label(c)}</a>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </details>
+  ) : (
+    <nav class="toc toc--side" aria-labelledby={id}>
+      <p class="toc__title" id={id}>
+        {t("blog.toc")}
+      </p>
+      <ol>
+        {tree.map((n) => (
+          <li>
+            <a href={`#${n.heading.slug}`}>{label(n.heading)}</a>
+            {n.children.length > 0 && (
+              <ol>
+                {n.children.map((c) => (
+                  <li>
+                    <a href={`#${c.slug}`}>{label(c)}</a>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}

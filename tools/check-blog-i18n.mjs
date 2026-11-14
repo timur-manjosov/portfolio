@@ -108,7 +108,7 @@ function checkSingle(url) {
   // Discoverable from the other language, marked as foreign.
   const listing = html(`/${other}/blog/`);
   const item = listing.match(
-    new RegExp(`<li class="entry" lang="${lang}">(?:(?!</li>).)*href="${url}"(?:(?!</li>).)*</li>`, "s"),
+    new RegExp(`<li class="entry[^"]*" lang="${lang}">(?:(?!</li>).)*href="${url}"(?:(?!</li>).)*</li>`, "s"),
   )?.[0];
   expect(Boolean(item), where, `not listed (with lang="${lang}") in /${other}/blog/`);
   expect(Boolean(item?.includes('class="badge"')), where, `no "only in" badge in /${other}/blog/`);

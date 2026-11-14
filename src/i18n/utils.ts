@@ -27,6 +27,16 @@ export function formatDate(date: Date, lang: Lang): string {
   return dateFormats[lang].format(date);
 }
 
+const shortFormats: Record<Lang, Intl.DateTimeFormat> = {
+  de: new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "short", timeZone: "UTC" }),
+  en: new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }),
+};
+
+/** Day and month only ("30. Okt.", "30 Oct"), for lists grouped by year. */
+export function formatDayMonth(date: Date, lang: Lang): string {
+  return shortFormats[lang].format(date);
+}
+
 /** YYYY-MM-DD for <time datetime> and machine output. */
 export function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);

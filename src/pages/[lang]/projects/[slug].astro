@@ -51,91 +51,91 @@ const jsonLd = [
   alternates={alternates}
   fallback={localePath(lang === "de" ? "en" : "de", "projects/")}
   jsonLd={jsonLd}
+  serif
 >
-  <article class="container page">
+  <article class="container container--wide page project">
     <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>
       <ol>
         <li><a href={localePath(lang, "projects/")}>{t("projects.title")}</a></li>
         <li aria-current="page">{d.title}</li>
       </ol>
     </nav>
-    <header class="page-header">
-      <p class="eyebrow">{t("projects.title")}</p>
+    <header class="post-header">
+      <p class="card__top"><span class="status" data-stage={d.stage}>{t(`stage.${d.stage}`)}</span></p>
       <h1>{d.title}</h1>
-      <p>{d.summary}</p>
-      <div class="meta">
-        <span class="status" data-stage={d.stage}>{t(`stage.${d.stage}`)}</span>
-        {
-          d.stack.length > 0 && (
-            <ul class="chips" aria-label={t("projects.stack")}>
-              {d.stack.map((s) => (
-                <li class="chip">{s}</li>
-              ))}
-            </ul>
-          )
-        }
-      </div>
+      <p class="post-header__lead">{d.summary}</p>
     </header>
 
-    <dl class="box box--outlined details">
-      {
-        (d.links.repo || d.links.website || d.links.release) && (
-          <>
-            <dt>{t("projects.links")}</dt>
-            <dd>
-              <ul class="tag-list">
-                {d.links.website && (
-                  <li>
-                    <a href={d.links.website}>{t("projects.website")}</a>
-                  </li>
-                )}
-                {d.links.repo && (
-                  <li>
-                    <a href={d.links.repo}>{t("projects.repo")}</a>
-                  </li>
-                )}
-                {d.links.release && (
-                  <li>
-                    <a href={d.links.release}>{t("projects.release")}</a>
-                  </li>
-                )}
-              </ul>
-            </dd>
-          </>
-        )
-      }
-      {
-        d.started && (
-          <>
-            <dt>{t("projects.started")}</dt>
-            <dd>
-              <time datetime={isoDate(d.started)}>{formatDate(d.started, lang)}</time>
-            </dd>
-          </>
-        )
-      }
-      <dt>{t("projects.updated")}</dt>
-      <dd><time datetime={isoDate(d.updated)}>{formatDate(d.updated, lang)}</time></dd>
-      {
-        d.tags.length > 0 && (
-          <>
-            <dt>{t("blog.tags")}</dt>
-            <dd>
-              <ul class="tag-list">
-                {d.tags.map((tag) => (
-                  <li>
-                    <a href={`${localePath(lang, "projects/")}?tag=${slugify(tag)}`}>{tag}</a>
-                  </li>
-                ))}
-              </ul>
-            </dd>
-          </>
-        )
-      }
-    </dl>
-
-    <div class="prose">
-      <Content />
+    <div class="project-layout">
+      <aside class="project-facts" aria-label={t("projects.facts")}>
+        <dl class="box box--outlined details">
+          {
+            (d.links.repo || d.links.website || d.links.release) && (
+              <>
+                <dt>{t("projects.links")}</dt>
+                <dd>
+                  <ul class="tag-list">
+                    {d.links.website && (
+                      <li>
+                        <a href={d.links.website}>{t("projects.website")}</a>
+                      </li>
+                    )}
+                    {d.links.repo && (
+                      <li>
+                        <a href={d.links.repo}>{t("projects.repo")}</a>
+                      </li>
+                    )}
+                    {d.links.release && (
+                      <li>
+                        <a href={d.links.release}>{t("projects.release")}</a>
+                      </li>
+                    )}
+                  </ul>
+                </dd>
+              </>
+            )
+          }
+          {
+            d.stack.length > 0 && (
+              <>
+                <dt>{t("projects.stack")}</dt>
+                <dd class="project-card__stack">{d.stack.join(" · ")}</dd>
+              </>
+            )
+          }
+          {
+            d.started && (
+              <>
+                <dt>{t("projects.started")}</dt>
+                <dd>
+                  <time datetime={isoDate(d.started)}>{formatDate(d.started, lang)}</time>
+                </dd>
+              </>
+            )
+          }
+          <dt>{t("projects.updated")}</dt>
+          <dd><time datetime={isoDate(d.updated)}>{formatDate(d.updated, lang)}</time></dd>
+          {
+            d.tags.length > 0 && (
+              <>
+                <dt>{t("blog.tags")}</dt>
+                <dd>
+                  <ul class="tag-list">
+                    {d.tags.map((tag) => (
+                      <li>
+                        <a href={`${localePath(lang, "projects/")}?tag=${slugify(tag)}`}>{tag}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )
+          }
+        </dl>
+      </aside>
+      <div class="prose">
+        <Content />
+      </div>
     </div>
 
     <p class="section"><a href={localePath(lang, "projects/")}>← {t("projects.back")}</a></p>

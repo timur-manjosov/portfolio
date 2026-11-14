@@ -1,8 +1,12 @@
 ---
 /**
- * One project as an outlined card (R4-D3): status, title (the card's click
- * target), summary, stack chips, last update and the action arrow. Used by the project overview and the bento grid
- * on the home page. The filter script reads data-stage / data-tags.
+ * One project as an outlined card (R4-D3, R6-D8): status, title (the card's
+ * click target), the one-sentence summary, the stack as a quiet line, then
+ * the last update, the repository link (its own target, above the card
+ * link) and the action arrow. No "featured" contour any more: when every
+ * current project is featured, the mark meant nothing (finding B7). Used by
+ * the overview and the home page; the filter script reads data-stage /
+ * data-tags.
  */
 import type { Lang } from "../i18n/ui";
 import { formatDate, isoDate, slugify, useTranslations } from "../i18n/utils";
@@ -13,11 +17,10 @@ interface Props {
   lang: Lang;
   project: Parsed<"projects">;
   headingLevel?: 2 | 3;
-  featured?: boolean;
   class?: string | undefined;
 }
 
-const { lang, project: p, headingLevel = 3, featured = false, class: extra = "" } = Astro.props;
+const { lang, project: p, headingLevel = 3, class: extra = "" } = Astro.props;
 const t = useTranslations(lang);
 const H = `h${headingLevel}` as "h2" | "h3";
 const d = p.entry.data;
@@ -25,7 +28,7 @@ const foreign = p.lang !== lang;
 ---
 
 <li
-  class:list={["entry", "card", { "card--featured": featured }, extra]}
+  class:list={["entry", "card", "project-card", extra]}
   data-stage={d.stage}
   data-tags={d.tags.map((tag) => slugify(tag)).join(" ")}
   lang={foreign ? p.lang : undefined}
@@ -39,23 +42,21 @@ const foreign = p.lang !== lang;
     <a class="card__link" href={projectUrl(p)} hreflang={foreign ? p.lang : undefined}>{d.title}</a>
   </H>
   <p>{d.summary}</p>
-  <div class="card__foot">
-    {
-      d.stack.length > 0 && (
-        <ul class="chips" aria-label={t("projects.stack")} lang={lang}>
-          {d.stack.map((s) => (
-            <li class="chip">{s}</li>
-          ))}
-        </ul>
-      )
-    }
-    <div class="card__action">
-      <p class="meta" lang={lang}>
-        <span>
-          {t("projects.updated")}: <time datetime={isoDate(d.updated)}>{formatDate(d.updated, lang)}</time>
-        </span>
+  {
+    d.stack.length > 0 && (
+      <p class="project-card__stack" lang={lang}>
+        <span class="visually-hidden">{t("projects.stack")}: </span>
+        {d.stack.join(" · ")}
       </p>
-      <Arrow />
-    </div>
+    )
+  }
+  <div class="card__foot card__action" lang={lang}>
+    <p class="meta">
+      <span>
+        <time datetime={isoDate(d.updated)}>{formatDate(d.updated, lang)}</time>
+      </span>
+      {d.links.repo && <a href={d.links.repo}>{t("projects.repo")}</a>}
+    </p>
+    <Arrow />
   </div>
 </li>

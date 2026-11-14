@@ -204,7 +204,8 @@ try {
         `build (${label})`,
         "no source link",
       );
-      const hasChips = /<li class="chip">Rust<\/li><li class="chip">Python<\/li>/.test(html);
+      // The stack line of the project page (R6: plain text, no chips).
+      const hasChips = /class="project-card__stack">Rust · Python</.test(html);
       expect(hasChips === chips, `build (${label})`, chips ? "languages not shown" : "chips without data");
       rmSync(out, { recursive: true, force: true });
       rmSync(`.cache/check-github-meta-${out.split("/").pop()}.json`, { force: true });

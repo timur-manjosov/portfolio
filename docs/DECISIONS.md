@@ -1249,10 +1249,15 @@ all four Lighthouse categories, and body text already reaches 16:1.
     0 differ, asset hashes masked). `npm audit`: 0 vulnerabilities.
   - **Revision:** remove the override once `micromark-extension-math`
     depends on katex ≥ 0.18.2 itself.
-- **c) `Buffer.slice` and Biome.** There is **no** `Buffer#slice` in
-  `tools/edit-content.mjs` (or any other tool): its two `.slice` calls work
-  on strings (`readFileSync(…, "utf8")`, directory names), which are not
-  deprecated; nothing to replace. The Biome info in
+- **c) `Buffer.slice` and Biome.** The deprecation is a **type-level**
+  hint of `astro check` (ts 6387) at `tools/edit-content.mjs:91`
+  (`after.slice(…)`): the variable `file` was declared without a type, so
+  TypeScript resolved `readFileSync(file, "utf8")` to its `Buffer`
+  overload and treated `after` as a `Buffer`. At run time `after` is a
+  string and `String#slice` is not deprecated, so `subarray` (which strings
+  do not have) would have been wrong. The fix types `file` as a string
+  (JSDoc), which picks the string overload; the hint is gone (`astro check`:
+  0 errors, 0 warnings, 0 hints). The Biome info in
   `tests/articles/csp_experiments.mjs` (a lone block without declarations,
   `noUselessLoneBlockStatements`) is fixed by dropping the braces.
 - **d) `check:prepush` with several commits:** it already checks the author
@@ -1261,3 +1266,157 @@ all four Lighthouse categories, and body text already reaches 16:1.
   `origin/main` ref → GO, exit 0; a private committer address in the middle
   of eight commits → NO-GO, exit 1, and the finding names that commit. On
   `r6-update` (3 commits at the time): GO.
+
+## R6-D2. Design direction
+
+- **Decision:** keep the site recognisable (Inter for the interface, the
+  Material 3 colour roles and box construction of R4, the dark palette, the
+  "Knotenpunkt" idea) and raise the craft where the findings B1–B19 point:
+  reading typography, rhythm, the home page's message, scannable lists, the
+  post page's furniture, details. Principles come from
+  `docs/DESIGN-REFERENCES.md`; the most influential are named there.
+- **Alternatives:** a new visual identity (new colours, new display face):
+  rejected, the brief wants the existing site "one level up", not a
+  different one; a minimal text-only restyle: rejected, it would leave B5,
+  B6, B9, B10 and B16 open.
+
+## R6-D3. Typography: STIX Two Text for running text, Inter for everything else
+
+- **Decision:** long running text (posts, About, project pages, every
+  `.prose`) is set in **STIX Two Text** (variable, weights 400–700, roman +
+  italic, Google's Latin subset from `@fontsource-variable/stix-two-text`
+  5.3.0: 27.9 + 30.3 KB). Inter stays for navigation, headings, cards,
+  lists, tables, captions and labels. One fluid type scale (utopia.fyi
+  method, 360 → 1240 px) with Material 3 role names. Running text 19 →
+  21 px (STIX's x-height is 47 % of the size, Inter's 55 %: 21 px STIX reads
+  like 18 px Inter), leading 1.6, measure **31em** (63–70 characters per
+  line, measured in R6 §2.4), headings `text-wrap: pretty` instead of
+  `balance` (B3, B12), tabular figures in tables and dates.
+- **Why STIX Two Text:** it is the text companion of STIX Two Math, the
+  formula font the site already ships (B2): same design, same x-height, so
+  `p = 1 − q` sits in the line instead of looking smaller and foreign.
+  Serif running text with sans headings is the pattern of the long-read
+  references (overreacted.io, gwern.net, Tufte CSS, practicaltypography).
+- **Alternatives:** Source Serif 4 (OFL, but with the Reserved Font Name
+  "Source": a subset is a Modified Version and may not carry the name; and
+  51 + 52 KB); Literata (OFL, no RFN, 52 + 54 KB, no math companion); Inter
+  for everything with a corrected measure (smallest, but leaves B2).
+- **Licence (checked at the source, 2026-11-14):** STIX fonts,
+  github.com/stipub/stixfonts `OFL.txt`: SIL OFL 1.1, "Copyright 2001-2021
+  The STIX Fonts Project Authors …, with Reserved Font Name "TM Math"." Our
+  files keep their names "STIX Two Text" / "STIX Two Math", so the RFN does
+  not apply. Licence files: `src/assets/fonts/STIX-Two-Text-OFL.txt`,
+  `STIX-Two-Math-OFL.txt` (whose copyright line now matches the original,
+  including the RFN clause).
+- **Subsetting (B17):** STIX Two Math 403 KB → **104 KB** with
+  `tools/subset-fonts.mjs` (HarfBuzz via the dev dependency `subset-font`,
+  see below): Latin, Greek, operators, arrows, delimiters, the TeX styles of
+  the mathematical alphanumerics, MATH-table closure kept, hinting dropped.
+  STIX Two Text is used as published (no modification).
+- **No layout shift:** fallback faces "Inter Fallback" (Arial/Liberation
+  Sans, `size-adjust` 106.45 %) and "STIX Two Text Fallback" (Times/
+  Liberation Serif, 104.74 %), ratios measured in Chromium on a German and
+  English sample; ascent/descent/line gap from the fonts' hhea tables.
+  Inter is preloaded everywhere, STIX Two Text only on pages with running
+  text (`serif` prop of BaseLayout).
+- **New dev dependency `subset-font` 2.9.0** (BSD-3-Clause, maintained,
+  last release 2026-09; 9 packages incl. `harfbuzzjs` (MIT) and `fontverter`
+  (MIT)). Build-time tool only, never shipped; it makes the subsets
+  reproducible from the npm font packages instead of committing a binary
+  nobody can regenerate. Alternative `pyftsubset` (fonttools) needs a
+  Python package install outside the repo.
+
+## R6-D4. Prose details
+
+- Heading anchors (B14): a real link after each heading, grouped with it
+  in `div.heading`, keyboard-reachable, named "Link zu diesem Abschnitt
+  <Überschrift>" through `aria-labelledby` (a hidden label on every page +
+  the heading id), visible on hover/focus, faint on touch screens, hanging
+  in the left margin from 48rem.
+- Tables (B13): `src/lib/rehype-article.ts` turns a paragraph "Tabelle: …"
+  / "Table: …" right before a table into its `<caption>`, wraps every table
+  in a focusable scroll box with edge shadows (CSS-only scroll shadows:
+  "local" cover layers over "scroll" shadow layers), and adds a written
+  hint below tables wider than a phone screen (estimated at build time,
+  shown below 40rem). Inter, `tabular-nums`, header row with a stronger
+  rule. The wrapper has no landmark role: one region per table would crowd
+  the landmark list (and html-validate requires unique landmark names).
+- Sources (B15): the last h2 section whose heading names sources is
+  wrapped in `section.sources` (rule above, smaller text, hanging indents).
+  Footnotes stay at the end in the text face, smaller.
+- Hyphenation only below 40rem (`hyphens: auto` with a 8/4/4 limit), where
+  long German compounds otherwise leave holes.
+
+## R6-D5. Post page
+
+- Header: category breadcrumb, title, the description as a lead, a byline
+  (author, published, updated, reading time; dates in the text colour, no
+  separator dots that could start a wrapped line).
+- Table of contents (B10, B11): built at build time from h2/h3, from
+  ~1,500 words and three sections on (`toc` in the frontmatter overrides),
+  footnotes never listed. Narrow screens: a closed `<details>` above the
+  text ("Inhalt · 7 Abschnitte"); from 64rem: a sticky column right of the
+  text, a quiet list with a rule on its left. Two renderings, one shown by
+  CSS, no JS. The post container is only as wide as text + TOC (62rem), so
+  no empty margin at 1280 px.
+- After the text: tags, translation link, a "How to cite this post" box
+  (author, title, site, date, URL), "Read next" (up to three posts of the
+  same language ranked by shared tags and category), back link.
+- Not done: highlighting the current section in the TOC (needs JS or
+  scroll-driven animations with a per-heading rule; not worth the weight).
+
+## R6-D6. Blog index and lists
+
+- Posts are a **list** (B9): date column (tabular figures, from a
+  container width of 34rem; container query), title, description, meta
+  (category, reading time, badges); on the blog index grouped by year
+  with day + month in the date column.
+- Filter: the categories with posts as Material filter chips with counts
+  ("Alle 4", "Technik 1", …), each a link to the category page, the
+  current one in the tonal container (`aria-current`). Works without JS;
+  the full-text search stays on /search.
+
+## R6-D7. Home page and the "Knotenpunkt"
+
+- **Decision:** hero = eyebrow, name, one claim, one lead sentence, **one**
+  primary action (About) and a text link to the blog (B5). Right of it the
+  **Knotenpunkt**: the site as a small network, the person in the centre,
+  six nodes around it (About, Projects with the number of active projects,
+  Blog with the number of posts, Now with its date, Contact, GitHub). The
+  nodes are ordinary links in a list on a 3×3 grid; the edges are an inline
+  SVG stretched over the same grid (`preserveAspectRatio="none"`,
+  `vector-effect: non-scaling-stroke`), drawn in token colours, aria-hidden;
+  the edge of a hovered/focused node turns to the accent (`:has`). No JS,
+  no motion (so nothing to switch off under reduced motion). Below 40rem
+  the edges disappear and the nodes form a two-column list.
+- **Function, not decoration:** it answers "where can I go and what is
+  there" with live numbers from the content, and it is the brief's idea
+  of the site as a hub made visible.
+- Below: the three newest posts as a list (no lonely card in a second row,
+  B6), the current projects as cards, /now as one quiet strip. The spec
+  sheet and the contact box are gone from the home page (contact is a hub
+  node and in the footer).
+- **Alternatives:** a decorative random mesh (rejected: "keine Deko ohne
+  Funktion"); an animated graph (rejected: motion rule, JS).
+
+## R6-D8. Projects
+
+- Cards: status, title, the one-sentence summary, the stack as a quiet
+  mono line instead of chips (B7: chips were louder than the title), the
+  last update and the repository link as its own target, the arrow. No
+  "featured" gradient contour any more (B7). Grid: as many 17rem columns as
+  fit, four in a row when there are four.
+- Filter (B8): a toolbar row with a rule below instead of a filled panel.
+- Project page: the facts (links, stack, started, updated, tags) in a box
+  beside the text from 64rem (sticky), above it on small screens; the
+  text in the reading face like posts.
+
+## R6-D9. Details
+
+- Footer (B16): four groups (pages, more, feeds and machine-readable files,
+  legal) and one line with copyright and "no cookies, no tracking".
+- `theme-color` for light and dark (B18); dark mode's teal tint smaller
+  and starting above the page (B19), done in the gradient geometry, not in
+  the colour tokens (the dark palette and its snapshot are unchanged).
+- `prefers-contrast: more` and `forced-colors` cover the new elements
+  (hub, chips, now strip, TOC, tables).

@@ -1179,3 +1179,44 @@ visitors never cause a request (`connect-src 'self'` unchanged).
 - No project has `repo:` yet (the existing ones keep their hand-written
   stack and links); `new:project` writes the field as a comment.
   `check:github-meta`: 31 cases with mocked answers and two real builds.
+
+---
+
+# Revision 6 (brief `prompts/portfolio-umbau-6.md`, 2026-11-14)
+
+Design on a new level, visibility for search engines and AI systems,
+Timur's Bitcoin text as a checked article, Aporia, maintenance. Branch
+`r6-update` from `origin/main`; no push, no deployment in this run (the
+start script ships after the run).
+
+## Revision 6 / Befunde (baseline, before any change)
+
+From the screenshots in `.tmp/baseline/` (nine pages × 390/768/1280 ×
+light/dark) and the measurements in `docs/VERIFICATION.md` R6 §1. Each
+finding is the starting point of a change in R6-D*; the number is cited
+there.
+
+| # | Where | Finding |
+|---|---|---|
+| B1 | every text page | The measure is `68ch`, but `ch` is the width of "0", which in Inter is wider than an average letter: a line of the long post holds 84–90 characters at 1280 px. Comfortable reading is 60–75. |
+| B2 | posts with maths | Running text in Inter (a grotesque) next to STIX Two Math (a Times-like serif): formulas look smaller and foreign in the line; long German text in a grotesque at 17 px tires. |
+| B3 | cards (home, projects) | `text-wrap: balance` on titles in narrow cards produces three-line stairs ("Die Doppelausgabe- / Rechnung im Bitcoin- / Whitepaper"); `pretty` on short card texts leaves very short lines. |
+| B4 | home, prose | Rhythm: up to 7.5 rem between home sections plus the hero padding reads as empty at 1280; in prose the space before an h2 (3 rem) is four times the space after it (0.75 rem), which is right in direction but heavy. |
+| B5 | home hero | The only element on the right is a terminal-style spec sheet, generic and unrelated to the "Knotenpunkt" idea; three equal-weight buttons (About, Write to me, GitHub) blur where to click; the /now card and the contact box sit between the hero and the projects and break the flow. |
+| B6 | home | Four posts in a three-column grid leave one card alone in the second row; two current projects in a 4/2 split make the section look half empty. |
+| B7 | project cards | Aura and Epiphyte both carry the gradient contour of "featured", so it no longer marks anything; no repository link on the card; the stack as mono chips is louder than the title. |
+| B8 | projects | The filter box (status, tag, reset) is a large filled panel for three projects. |
+| B9 | blog index | Categories are a loose row of underlined links without counts; entries have no year grouping; the date sits below the description, so the list cannot be scanned by date; no filter. |
+| B10 | post | The table of contents is a large box before the text and pushes the first paragraph below the fold (390 and 1280); at 1280 about 270 px stay empty on each side; footnotes and sources appear in the TOC like chapters. |
+| B11 | post, 390 | TOC entries that wrap put their number next to the last line (inline-block links), which looks ragged. |
+| B12 | post header | The title (tight tracking, balance) breaks at hyphens ("Doppelausgabe- / Rechnung"); date, updated date, reading time and category share one small grey line without hierarchy. |
+| B13 | tables | `display: block; overflow-x: auto` without a visible hint that a table scrolls; proportional figures; captions unstyled. |
+| B14 | headings | The "#" anchors are visible on hover only and not reachable by keyboard (`tabindex=-1`, `aria-hidden`). |
+| B15 | post end | No styled sources section, no "read next", no print stylesheet (header, footer and tinted backgrounds would print). |
+| B16 | footer | One flat row of links; no structure, the main sections are missing. |
+| B17 | maths pages | 394 KB of STIX Two Math, unsubsetted, on every page with a formula. |
+| B18 | head | No `theme-color`; one Open Graph image for every page; the favicon set has no 180 px PNG reference besides the touch icon and no manifest. |
+| B19 | dark mode | The palette itself works (unchanged since R3); the strong teal glow top right is the loudest surface of the page at 1280. |
+
+Not a finding: CLS is 0 everywhere, every page except the 404 scores 100 in
+all four Lighthouse categories, and body text already reaches 16:1.

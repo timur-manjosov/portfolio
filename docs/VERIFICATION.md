@@ -1,5 +1,68 @@
 # Verification
 
+# Revision 6 (2026-11-14)
+
+Design, visibility for search engines and AI systems, the Bitcoin article,
+Aporia, maintenance (brief `prompts/portfolio-umbau-6.md`). Measured on
+2026-11-14, branch `r6-update`, Node v26.13.1, system Chromium
+157.0.8103.38 (`/usr/bin/chromium`), Lighthouse 13.6.0 via `npx`.
+
+## R6 §1. Before (state of `origin/main`, 88655f4)
+
+**Gate:** `npm run check` ran through every step and failed only at the
+last one, `npm audit --audit-level=moderate`: a new **moderate** advisory
+for `astro` ≤ 7.4.6 (GHSA-mh32-jxcr-mh9f, XSS via attribute injection in
+dynamic tag names; the second advisory GHSA-r3h5-4585-7x3w concerns the
+image endpoint of `@astrojs/node`, which this static site does not use),
+plus low ones for `fast-xml-parser` (via `@astrojs/rss`) and `katex` (via
+`remark-math`). Fixed in R6 §2.8 b.
+
+**Transfer size and layout shift** (`node tools/measure.mjs dist`, a real
+browser at 390 px against the local server with the production headers,
+including one scroll-through; text resources gzip, fonts and images as
+served):
+
+| Page | Requests | HTML | CSS | JS | Fonts | Images | Total (KB, gzip) | CLS |
+|---|---|---|---|---|---|---|---|---|
+| Start DE `/de/` | 7 | 4.1 | 7.7 | 1.2 | 47.1 | 0.3 | 60.5 | 0.000 |
+| Start EN `/en/` | 7 | 4.1 | 7.7 | 1.2 | 47.1 | 0.3 | 60.4 | 0.000 |
+| Blog index `/de/blog/` | 7 | 2.9 | 7.7 | 1.2 | 47.1 | 0.3 | 59.2 | 0.000 |
+| Long post (maths, code) `/de/blog/doppelausgabe-whitepaper-nachgerechnet/` | 8 | 12.1 | 7.7 | 1.2 | 441.0 | 0.3 | 462.4 | 0.000 |
+| Projects `/en/projects/` | 8 | 2.8 | 7.7 | 1.8 | 47.1 | 0.3 | 59.7 | 0.000 |
+| Project page `/de/projects/aura/` | 7 | 3.4 | 7.7 | 1.2 | 47.1 | 0.3 | 59.7 | 0.000 |
+| About `/de/about/` | 7 | 4.3 | 7.7 | 1.2 | 47.1 | 0.3 | 60.7 | 0.000 |
+| Now `/de/now/` | 7 | 2.6 | 7.7 | 1.2 | 47.1 | 0.3 | 58.9 | 0.000 |
+| Not found `/de/does-not-exist/` | 7 | 2.2 | 7.7 | 1.2 | 47.1 | 0.3 | 58.6 | 0.000 |
+
+The long post's 441 KB of fonts are Inter (47 KB) plus the unsubsetted
+STIX Two Math (394 KB), fetched on every page with a formula.
+
+**Lighthouse** (mobile, default config, `node tools/lighthouse.mjs dist`,
+local server with gzip like Caddy's `encode`):
+
+| Page | Perf. | A11y | Best Pr. | SEO | FCP | LCP | TBT | CLS |
+|---|---|---|---|---|---|---|---|---|
+| Start DE `/de/` | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Start EN `/en/` | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Blog index `/de/blog/` | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Long post `/de/blog/doppelausgabe-whitepaper-nachgerechnet/` | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 50 ms | 0 |
+| Projects `/en/projects/` | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Project page `/de/projects/aura/` | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| About `/de/about/` | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Now `/de/now/` | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Not found `/de/404/` | 100 | 100 | 100 | 63 | 0.9 s | 0.9 s | 0 ms | 0 |
+
+Lighthouse does not audit a document with status 404, so the not-found page
+is measured at its own URL `/de/404/`; its SEO score is low by design
+(`noindex`, no canonical).
+
+**Contrast:** 116 colour pairs, all AA (`npm run check:contrast`); body
+text `color-text` on `color-bg`: 16.26:1 light, 16.62:1 dark.
+
+**Screenshots:** `.tmp/baseline/` (git-ignored), nine pages × 390/768/1280
+× light/dark, with viewport tiles. Findings: `docs/DECISIONS.md`,
+"Revision 6 / Befunde".
+
 # Revision 5 (2026-10-30)
 
 Launch posts, scheduled posts, `publish`, editing without code, GitHub

@@ -3,6 +3,12 @@
 Resume point for interrupted runs, updated after every finished step.
 Current state first; the revisions below are the history.
 
+## Revision 6 in progress (2026-11-14)
+
+Branch `r6-update`. Resume at the first open item of "Revision 6" below.
+The section "Stand und nächste Schritte (2026-10-30)" is the state before
+this revision (the site went live on 2026-10-30).
+
 ## Stand und nächste Schritte (2026-10-30)
 
 **Done:** first run plus revisions 2–5. Everything is committed on
@@ -30,6 +36,23 @@ deliberate `node tools/check-dark-tokens.mjs --update`.
 ---
 
 # History
+
+## Revision 6 (brief `prompts/portfolio-umbau-6.md`, 2026-11-14)
+
+Design, visibility (search + AI), Bitcoin article, Aporia, maintenance.
+Branch `r6-update` (from `origin/main`); the start script pushes and ships
+after the run. Order (brief §0): 2.1, 2.2, 2.8, 2.3 with 2.4, 2.5, 2.6,
+2.7, 2.9, 2.10 last.
+
+- [x] R6.1 Baseline: `npm run check` (fails only at `npm audit`: new moderate astro advisory), `tools/measure.mjs` (size by type + CLS), `tools/lighthouse.mjs` (9 pages, all 100 except the 404's SEO), screenshots `.tmp/baseline/`, findings B1–B19 (DECISIONS R6)
+- [ ] R6.2 Design research → `docs/DESIGN-REFERENCES.md`
+- [ ] R6.8 Maintenance: apply-on-server PATH, KaTeX/astro audit, Buffer.subarray, Biome hint, check:prepush multi-commit
+- [ ] R6.3/4 Design work + screenshot rounds
+- [ ] R6.5 SEO + AI visibility
+- [ ] R6.6 Bitcoin article (DE + EN), fact check, number script
+- [ ] R6.7 Aporia; due posts
+- [ ] R6.9 verify:live
+- [ ] R6.10 Close: gate, prepush GO, docs, `.cache/pr.md`
 
 ## Revision 5 (brief `prompts/portfolio-umbau-5.md`, 2026-10-29/30)
 

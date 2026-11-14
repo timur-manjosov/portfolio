@@ -30,6 +30,10 @@
 # Rollback later, by hand: see docs/DEPLOY.md.
 set -euo pipefail
 umask 022
+# A fixed PATH: an SSH session of a normal user often lacks the sbin
+# directories (the dry run then failed with "missing tool: runuser"), and a
+# root run must not depend on the caller's PATH either.
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # --- arguments (first, before any other step) --------------------------------
 DRY_RUN=0

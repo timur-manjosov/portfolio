@@ -340,14 +340,8 @@ async function submits(policy) {
   await context.close();
   return submitted;
 }
-{
-  check("control: without a policy the form submits to another origin", (await submits(null)) === true, {});
-  check(
-    "form-action 'self' blocks submitting to another origin",
-    (await submits("form-action 'self'")) === false,
-    {},
-  );
-}
+check("control: without a policy the form submits to another origin", (await submits(null)) === true, {});
+check("form-action 'self' blocks submitting to another origin", (await submits("form-action 'self'")) === false, {});
 
 // 14. A <meta> policy only applies from its position in the document on.
 {

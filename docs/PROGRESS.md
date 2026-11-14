@@ -45,7 +45,7 @@ after the run. Order (brief §0): 2.1, 2.2, 2.8, 2.3 with 2.4, 2.5, 2.6,
 2.7, 2.9, 2.10 last.
 
 - [x] R6.1 Baseline: `npm run check` (fails only at `npm audit`: new moderate astro advisory), `tools/measure.mjs` (size by type + CLS), `tools/lighthouse.mjs` (9 pages, all 100 except the 404's SEO), screenshots `.tmp/baseline/`, findings B1–B19 (DECISIONS R6)
-- [ ] R6.2 Design research → `docs/DESIGN-REFERENCES.md`
+- [x] R6.2 Design research → `docs/DESIGN-REFERENCES.md` (15 references, screenshots + measured type in `.tmp/refs/`)
 - [ ] R6.8 Maintenance: apply-on-server PATH, KaTeX/astro audit, Buffer.subarray, Biome hint, check:prepush multi-commit
 - [ ] R6.3/4 Design work + screenshot rounds
 - [ ] R6.5 SEO + AI visibility

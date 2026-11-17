@@ -134,6 +134,18 @@ function tables(parent: HastNode, lang: Lang): void {
   }
 }
 
+/** Code blocks scroll sideways on narrow screens; like the table boxes they
+ *  take keyboard focus so the scroll is reachable without a mouse (WCAG
+ *  2.1.1, axe scrollable-region-focusable). Every block, because whether it
+ *  scrolls depends on the screen width. */
+function codeBlocks(n: HastNode): void {
+  if (isElement(n, "pre")) {
+    n.properties = { ...(n.properties ?? {}), tabIndex: 0 };
+    return;
+  }
+  for (const c of n.children ?? []) codeBlocks(c);
+}
+
 /** Heading of a top-level child: h2 itself or inside the anchor group div. */
 function h2Of(node: HastNode): HastNode | undefined {
   if (isElement(node, "h2")) return node;
@@ -261,6 +273,7 @@ export default function rehypeArticle() {
     const lang = langOf(file.path ?? file.history?.at(-1));
     tableCounter = 0;
     tables(tree, lang);
+    codeBlocks(tree);
     const citations = sources(tree);
     // Exposed to the page as remarkPluginFrontmatter.tocLabels (Toc.astro)
     // and .citations (JSON-LD citation of the post).

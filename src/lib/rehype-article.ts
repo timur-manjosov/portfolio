@@ -10,6 +10,7 @@
  * 2. Sources. The last h2 section whose heading names sources ("Quellen",
  *    "Literatur", "Further reading", "Sources", "References") is wrapped in
  *    `section.sources` so it can be set apart (smaller, hanging indents).
+ *    Its list items become the post's JSON-LD `citation` (text + first link).
  *
  * The language of a file comes from its path (src/content/<c>/<lang>/…).
  */
@@ -142,7 +143,35 @@ function h2Of(node: HastNode): HastNode | undefined {
   return undefined;
 }
 
-function sources(root: HastNode): void {
+export interface Citation {
+  name: string;
+  url?: string;
+}
+
+/** The entries of the sources section: every list item, its text and first web link. */
+function citationsOf(section: HastNode): Citation[] {
+  const out: Citation[] = [];
+  const visit = (n: HastNode) => {
+    if (isElement(n, "li")) {
+      const name = headingText(n).replace(/\s+/g, " ").trim();
+      let url: string | undefined;
+      const find = (m: HastNode) => {
+        if (url) return;
+        const href = m.properties?.href;
+        if (isElement(m, "a") && typeof href === "string" && /^https?:\/\//.test(href)) url = href;
+        else for (const c of m.children ?? []) find(c);
+      };
+      find(n);
+      if (name) out.push(url ? { name, url } : { name });
+      return;
+    }
+    for (const c of n.children ?? []) visit(c);
+  };
+  visit(section);
+  return out;
+}
+
+function sources(root: HastNode): Citation[] {
   const children = root.children ?? [];
   let start = -1;
   for (let i = children.length - 1; i >= 0; i--) {
@@ -154,7 +183,7 @@ function sources(root: HastNode): void {
       break;
     }
   }
-  if (start < 0) return;
+  if (start < 0) return [];
   // The section ends before the footnotes block, if there is one.
   let end = children.length;
   for (let i = start + 1; i < children.length; i++) {
@@ -175,6 +204,7 @@ function sources(root: HastNode): void {
     children: children.slice(start, end),
   };
   children.splice(start, end - start, section);
+  return citationsOf(section);
 }
 
 const digitMap = (to: string): Record<string, string> =>
@@ -187,8 +217,8 @@ const SUP = digitMap("⁰¹²³⁴⁵⁶⁷⁸⁹");
 export function mathText(html: string): string {
   return html
     .replace(/<annotation[\s\S]*?<\/annotation>/g, "")
-    .replace(/<mn>(\d+)<\/mn><\/msub>/g, (_, d: string) => [...d].map((c) => SUB[c] ?? c).join(""))
-    .replace(/<mn>(\d+)<\/mn><\/msup>/g, (_, d: string) => [...d].map((c) => SUP[c] ?? c).join(""))
+    .replace(/<mn[^>]*>(\d+)<\/mn><\/msub>/g, (_, d: string) => [...d].map((c) => SUB[c] ?? c).join(""))
+    .replace(/<mn[^>]*>(\d+)<\/mn><\/msup>/g, (_, d: string) => [...d].map((c) => SUP[c] ?? c).join(""))
     .replace(/<[^>]+>/g, "")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
@@ -231,9 +261,13 @@ export default function rehypeArticle() {
     const lang = langOf(file.path ?? file.history?.at(-1));
     tableCounter = 0;
     tables(tree, lang);
-    sources(tree);
-    // Exposed to the page as remarkPluginFrontmatter.tocLabels (Toc.astro).
+    const citations = sources(tree);
+    // Exposed to the page as remarkPluginFrontmatter.tocLabels (Toc.astro)
+    // and .citations (JSON-LD citation of the post).
     const fm = file.data.astro?.frontmatter;
-    if (fm) fm.tocLabels = headingLabels(tree);
+    if (fm) {
+      fm.tocLabels = headingLabels(tree);
+      fm.citations = citations;
+    }
   };
 }

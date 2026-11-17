@@ -5,9 +5,17 @@
 //   - JSON-LD parses, carries Person + WebSite, BlogPosting on posts,
 //     SoftwareSourceCode on projects; Person.sameAs == rel="me" links on /links
 //   - sitemap.xml lists exactly the indexable pages; robots.txt points to it
-//   - every feed linked via autodiscovery exists
+//   - every feed linked via autodiscovery exists and carries full text
+//   - R6 (brief §2.5 A): unique <title> and meta description per indexable
+//     page (within its language), description ≤ 160 characters, Open Graph/Twitter tags with
+//     absolute URLs and an image that exists, og:type article on posts and
+//     website elsewhere, article:* times and tags on posts, meta author,
+//     noindex only where intended (404 pages; drafts and scheduled posts in
+//     test builds)
+//   Structured data in depth: tools/check-jsonld.mjs (same npm script).
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { ui } from "../src/i18n/ui.ts";
 import { htmlFiles, read, rel, reporter } from "./lib.mjs";
 
 const dist = process.argv[2] ?? "dist";
@@ -42,7 +50,16 @@ for (const file of htmlFiles(dist)) {
 }
 
 const types = (graph) => new Set(graph.map((n) => n["@type"]));
+const metaOf = (html, key) =>
+  html.match(new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`))?.[1];
+const metasOf = (html, key) =>
+  [...html.matchAll(new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`, "g"))].map((m) => m[1]);
+const POST = /^\/(de|en)\/blog\/(?!archive\/|tags\/|category\/|series\/)[^/]+\/$/;
+const HIDDEN_BADGES = ["de", "en"].flatMap((l) => [ui[l]["blog.draft"], ui[l]["blog.scheduled"]]);
+const seenTitle = new Map();
+const seenDesc = new Map();
 
+const checkedFeeds = new Set();
 for (const [url, p] of pages) {
   const h1s = (p.html.match(/<h1\b/g) ?? []).length;
   if (h1s !== 1) r.fail(url, `${h1s} <h1> elements (expected 1)`);
@@ -69,6 +86,53 @@ for (const [url, p] of pages) {
     if (p.canonical !== `${SITE}${url}`)
       r.fail(url, `canonical ${p.canonical} does not point at the page itself`);
   }
+
+  // Meta tags (R6). The language door "/" always redirects; skip it here.
+  if (url !== "/" && !url.endsWith(".html")) {
+    const title = p.html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
+    if (desc.length > 160) r.fail(url, `meta description has ${desc.length} characters (max 160)`);
+    if (!p.noindex) {
+      // Unique within a language: a DE/EN pair linked by hreflang may share a
+      // proper name ("Aura", "Blog") as its title.
+      const tk = `${p.lang} ${title}`;
+      const dk = `${p.lang} ${desc}`;
+      if (seenTitle.has(tk)) r.fail(url, `<title> also used by ${seenTitle.get(tk)}`);
+      if (seenDesc.has(dk)) r.fail(url, `meta description also used by ${seenDesc.get(dk)}`);
+      seenTitle.set(tk, url);
+      seenDesc.set(dk, url);
+      if (metaOf(p.html, "og:url") !== p.canonical) r.fail(url, "og:url ≠ canonical");
+    }
+    for (const key of [
+      "og:title",
+      "og:description",
+      "og:image",
+      "og:image:alt",
+      "og:locale",
+      "twitter:card",
+      "author",
+    ]) {
+      if (!metaOf(p.html, key)) r.fail(url, `missing <meta> ${key}`);
+    }
+    const image = metaOf(p.html, "og:image") ?? "";
+    if (!image.startsWith(`${SITE}/`)) r.fail(url, `og:image is not an absolute URL of this site: ${image}`);
+    else if (!existsSync(join(dist, image.slice(SITE.length))))
+      r.fail(url, `og:image ${image} is not in the build`);
+    if (metaOf(p.html, "twitter:image") !== image) r.fail(url, "twitter:image ≠ og:image");
+    const ogType = metaOf(p.html, "og:type");
+    if (POST.test(url)) {
+      if (ogType !== "article") r.fail(url, `og:type ${ogType} on a post (expected article)`);
+      for (const key of ["article:published_time", "article:modified_time", "article:section"])
+        if (!metaOf(p.html, key)) r.fail(url, `post without ${key}`);
+      if (!metasOf(p.html, "article:tag").length) r.fail(url, "post without article:tag");
+    } else if (ogType !== "website") r.fail(url, `og:type ${ogType} (expected website)`);
+  }
+  // noindex only where intended: 404 pages, drafts and scheduled posts.
+  if (
+    p.noindex &&
+    !/\b404\b/.test(url) &&
+    !HIDDEN_BADGES.some((b) => p.html.includes(`<span class="badge">${b}</span>`))
+  )
+    r.fail(url, "noindex on a page that is neither a 404 nor a draft or scheduled post");
 
   const langs = Object.keys(p.alternates).filter((l) => l !== "x-default");
   if (langs.length) {
@@ -103,6 +167,13 @@ for (const [url, p] of pages) {
 
   for (const feed of p.feeds) {
     if (!existsSync(join(dist, feed))) r.fail(url, `autodiscovered feed missing: ${feed}`);
+    else if (!checkedFeeds.has(feed)) {
+      checkedFeeds.add(feed);
+      const xml = read(join(dist, feed));
+      const items = (xml.match(/<item>/g) ?? []).length;
+      const full = (xml.match(/<content:encoded>/g) ?? []).length;
+      if (full !== items) r.fail(feed, `${items} items but ${full} with full text (content:encoded)`);
+    }
   }
 }
 

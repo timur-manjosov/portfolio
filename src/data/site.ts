@@ -65,6 +65,28 @@ export const person = {
   ],
 };
 
+/**
+ * The identity statements, in one place (brief R6 §2.5 A "eine Quelle der
+ * Wahrheit"): who Timur is, in one role line and one summary sentence per
+ * language, plus the two facts behind them. Used by the home page's meta
+ * description, the JSON-LD `Person`, llms.txt, the facts block on About and
+ * the Open Graph images; `check:seo` proves they agree. Sources: brief §1
+ * (studies, focus) and the public repositories (what he builds).
+ */
+export const profile = {
+  name: person.name,
+  role: {
+    de: "Mathematikstudent mit Schwerpunkt Kryptografie",
+    en: "Mathematics student focusing on cryptography",
+  },
+  summary: {
+    de: "Timur Manjosov studiert Mathematik an der FernUniversität in Hagen, Schwerpunkt Kryptografie, und baut Discord-Bots, Simulationen und kleine Werkzeuge.",
+    en: "Timur Manjosov studies mathematics at FernUniversität in Hagen, focusing on cryptography, and builds Discord bots, simulations and small tools.",
+  },
+  study: { de: "Mathematik im Fernstudium", en: "Mathematics, distance learning" },
+  focus: { de: "Kryptografie, Nebenfach Informatik", en: "Cryptography, minor in computer science" },
+} as const;
+
 export interface Account {
   id: string;
   label: string;

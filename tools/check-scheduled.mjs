@@ -93,7 +93,7 @@ function build(name, buildDate) {
   expect(res.status === 0, name, `build failed:\n${res.stdout}\n${res.stderr}`.slice(-800));
   return out;
 }
-const outputs = (dir) => walk(dir).filter((f) => /\.(html|xml|json|txt)$/.test(f));
+const outputs = (dir) => walk(dir).filter((f) => /\.(html|xml|json|txt|md)$/.test(f));
 const page = (dir, url) => join(dir, url, "index.html");
 const has = (dir, file, needle) => existsSync(join(dir, file)) && read(join(dir, file)).includes(needle);
 
@@ -101,6 +101,12 @@ function expectAbsent(name, dir) {
   for (const p of PAIR) {
     expect(!existsSync(page(dir, p.url)), name, `page ${p.url} exists`);
     expect(!existsSync(page(dir, p.tag)), name, `tag page ${p.tag} exists`);
+    expect(!existsSync(join(dir, p.url, "index.md")), name, `Markdown twin of ${p.url} exists`);
+    expect(
+      !existsSync(join(dir, `og${p.url.replace(/\/$/, "")}.png`)),
+      name,
+      `Open Graph image of ${p.url} exists`,
+    );
     for (const f of outputs(dir)) {
       const text = read(f);
       if (text.includes(p.url)) r.fail(name, `${f} references ${p.url}`);
@@ -117,6 +123,13 @@ function expectPresent(name, dir) {
     expect(has(dir, "sitemap.xml", p.url), name, `sitemap lacks ${p.url}`);
     expect(has(dir, "search-index.json", p.url), name, `search index lacks ${p.url}`);
     expect(has(dir, "llms.txt", p.url), name, `llms.txt lacks ${p.url}`);
+    expect(has(dir, "llms-full.txt", p.url), name, `llms-full.txt lacks ${p.url}`);
+    expect(existsSync(join(dir, p.url, "index.md")), name, `Markdown twin of ${p.url} missing`);
+    expect(
+      existsSync(join(dir, `og${p.url.replace(/\/$/, "")}.png`)),
+      name,
+      `Open Graph image of ${p.url} missing`,
+    );
     expect(!/content="noindex"/.test(read(page(dir, p.url))), name, `${p.url} is noindex`);
     expect(
       !/class="badge">(Geplant|Scheduled)</.test(read(page(dir, p.url))),

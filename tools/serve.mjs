@@ -26,6 +26,10 @@ const TYPES = {
   ".png": "image/png",
   ".woff2": "font/woff2",
   ".asc": "text/plain; charset=utf-8",
+  // Markdown twins. What Caddy sends for .md depends on the server's MIME
+  // table and is only visible live (verify:live warns if it is not text/*).
+  ".md": "text/markdown; charset=utf-8",
+  ".webmanifest": "application/manifest+json",
 };
 
 // Compressible types, like Caddy's `encode zstd gzip` (tools/caddy-site-block.mjs).

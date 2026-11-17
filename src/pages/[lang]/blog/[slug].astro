@@ -6,7 +6,8 @@ import type { Lang } from "../../../i18n/ui";
 import { formatDate, isoDate, localePath, useTranslations } from "../../../i18n/utils";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { allPosts, isHidden, postUrl, readingTime, relatedPosts, wordCount } from "../../../lib/content";
-import { absolute, PERSON_ID, WEBSITE_ID } from "../../../lib/seo";
+import { ogImageFor } from "../../../lib/og";
+import { absolute, blogId, blogNode, PERSON_ID, pageId, ref } from "../../../lib/seo";
 import { categoryMap, categoryUrl, seriesUrl, tagUrl } from "../../../lib/taxonomy";
 
 export async function getStaticPaths() {
@@ -32,6 +33,8 @@ const t = useTranslations(lang);
 const d = post.entry.data;
 const { Content, headings, remarkPluginFrontmatter } = await render(post.entry);
 const tocLabels = (remarkPluginFrontmatter?.tocLabels ?? {}) as Record<string, string>;
+// The entries of the sources section (rehype-article.ts), for JSON-LD citation.
+const citations = (remarkPluginFrontmatter?.citations ?? []) as { name: string; url?: string }[];
 const cats = await categoryMap();
 const cat = cats.get(d.category.id);
 if (!cat) throw new Error(`Unknown category "${d.category.id}" in blog/${post.entry.id}`);
@@ -54,24 +57,47 @@ const citation =
     ? `Timur Manjosov: „${d.title}“. timurmanjosov.com, ${published}. ${absolute(url)}`
     : `Timur Manjosov, “${d.title}”, timurmanjosov.com, ${published}. ${absolute(url)}`;
 
+const hidden = isHidden(post);
+const postId = `${absolute(url)}#post`;
 const jsonLd = [
+  blogNode(lang),
   {
     "@type": "BlogPosting",
-    "@id": `${absolute(url)}#post`,
+    "@id": postId,
     headline: d.title,
     description: d.description,
     url: absolute(url),
-    mainEntityOfPage: absolute(url),
+    ...(hidden ? {} : { mainEntityOfPage: ref(pageId(url)) }),
     inLanguage: lang,
     datePublished: isoDate(d.date),
     dateModified: isoDate(d.updated ?? d.date),
-    author: { "@id": PERSON_ID },
-    publisher: { "@id": PERSON_ID },
-    isPartOf: { "@id": WEBSITE_ID },
+    author: ref(PERSON_ID),
+    publisher: ref(PERSON_ID),
+    isPartOf: ref(blogId(lang)),
     articleSection: cat.data.label[lang],
-    keywords: d.tags.join(", "),
+    keywords: d.tags,
     wordCount: words,
-    ...(other ? { workTranslation: { "@id": `${absolute(postUrl(other))}#post` } } : {}),
+    image: absolute(ogImageFor(url, hidden)),
+    ...(citations.length
+      ? {
+          citation: citations.map((c) => ({
+            "@type": "CreativeWork",
+            name: c.name,
+            ...(c.url ? { url: c.url } : {}),
+          })),
+        }
+      : {}),
+    ...(other
+      ? {
+          workTranslation: {
+            "@type": "BlogPosting",
+            "@id": `${absolute(postUrl(other))}#post`,
+            url: absolute(postUrl(other)),
+            headline: other.entry.data.title,
+            inLanguage: other.lang,
+          },
+        }
+      : {}),
   },
 ];
 ---
@@ -85,8 +111,15 @@ const jsonLd = [
   fallback={localePath(lang === "de" ? "en" : "de", "blog/")}
   ogType="article"
   jsonLd={jsonLd}
-  noindex={isHidden(post)}
-  article={{ published: d.date, modified: d.updated, tags: d.tags }}
+  noindex={hidden}
+  article={{ published: d.date, modified: d.updated, tags: d.tags, section: cat.data.label[lang] }}
+  crumbs={[
+    { name: t("blog.title"), path: localePath(lang, "blog/") },
+    { name: cat.data.label[lang], path: categoryUrl(lang, cat.id) },
+  ]}
+  mainEntity={postId}
+  markdownTwin
+  dateModified={isoDate(d.updated ?? d.date)}
   feeds={[{ title: `Timur Manjosov – ${cat.data.label[lang]}`, href: `${categoryUrl(lang, cat.id)}feed.xml` }]}
   serif
 >

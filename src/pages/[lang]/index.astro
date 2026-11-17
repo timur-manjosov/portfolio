@@ -9,6 +9,7 @@ import Arrow from "../../components/Arrow.astro";
 import Hub from "../../components/Hub.astro";
 import PostList from "../../components/PostList.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
+import { profile } from "../../data/site";
 import { LANGS, type Lang } from "../../i18n/ui";
 import { formatDate, isoDate, localePath, useTranslations } from "../../i18n/utils";
 import BaseLayout from "../../layouts/BaseLayout.astro";
@@ -33,11 +34,10 @@ const now = (await allPages()).find((p) => p.lang === lang && p.slug === "now");
 
 <BaseLayout
   lang={lang}
-  description={t("site.description")}
+  description={profile.summary[lang]}
   section="home"
   alternates={{ de: "/de/", en: "/en/" }}
   xDefault="/"
-  ogType="profile"
 >
   <div class="container container--wide">
     <section class="hero" aria-labelledby="hero-title">

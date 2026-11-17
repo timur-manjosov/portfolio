@@ -74,7 +74,7 @@ function checkPair(from, to) {
   const sm = sitemapEntry(from);
   expect(sm.includes(`hreflang="${tl}" href="${SITE}${to}"`), where, "sitemap entry without the alternate");
   expect(
-    h.includes(`"workTranslation":{"@id":"${SITE}${to}#post"}`),
+    h.includes(`"workTranslation":{"@type":"BlogPosting","@id":"${SITE}${to}#post",`),
     where,
     "JSON-LD without workTranslation",
   );

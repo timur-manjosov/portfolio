@@ -13,8 +13,6 @@ const de = {
   "site.title": "Timur Manjosov",
   "site.homeTitle": "Timur Manjosov: Mathematik, Kryptografie, Code",
   "site.tagline": "Ich studiere Mathematik und verstehe Dinge am besten, wenn ich sie selbst baue.",
-  "site.description":
-    "Timur Manjosov studiert Mathematik an der FernUniversität in Hagen, Schwerpunkt Kryptografie, und baut Discord-Bots, Simulationen und kleine Werkzeuge.",
   "hero.eyebrow": "Mathematik · Kryptografie · Code",
   "hero.lead":
     "Mathematikstudium an der FernUniversität in Hagen, Schwerpunkt Kryptografie. Hier stehen meine Texte, meine Projekte und woran ich gerade sitze.",
@@ -185,9 +183,7 @@ const de = {
   "facts.title": "Kurzprofil",
   "facts.name": "Name",
   "facts.study": "Studium",
-  "facts.studyValue": "Mathematik im Fernstudium",
   "facts.focus": "Schwerpunkt",
-  "facts.focusValue": "Kryptografie, Nebenfach Informatik",
   "facts.languages": "Programmiersprachen",
   "facts.spoken": "Sprachen dieser Seite",
   "facts.profiles": "Profile",
@@ -199,8 +195,6 @@ const en: Record<UiKey, string> = {
   "site.title": "Timur Manjosov",
   "site.homeTitle": "Timur Manjosov: mathematics, cryptography, code",
   "site.tagline": "I study mathematics, and I understand things best once I've built them myself.",
-  "site.description":
-    "Timur Manjosov studies mathematics at FernUniversität in Hagen, focusing on cryptography, and builds Discord bots, simulations and small tools.",
   "hero.eyebrow": "Mathematics · Cryptography · Code",
   "hero.lead":
     "Maths student at FernUniversität in Hagen, focusing on cryptography. This is where my writing and my projects live, and what I'm working on right now.",
@@ -369,9 +363,7 @@ const en: Record<UiKey, string> = {
   "facts.title": "Profile at a glance",
   "facts.name": "Name",
   "facts.study": "Studies",
-  "facts.studyValue": "Mathematics, distance learning",
   "facts.focus": "Focus",
-  "facts.focusValue": "Cryptography, minor in computer science",
   "facts.languages": "Programming languages",
   "facts.spoken": "Languages of this site",
   "facts.profiles": "Profiles",

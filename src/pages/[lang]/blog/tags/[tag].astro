@@ -3,8 +3,9 @@ import PostList from "../../../../components/PostList.astro";
 import { LANGS, type Lang } from "../../../../i18n/ui";
 import { localePath, slugify, useTranslations } from "../../../../i18n/utils";
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
-import { allPosts, forListing } from "../../../../lib/content";
-import { tagCounts } from "../../../../lib/taxonomy";
+import { allPosts, forListing, postUrl } from "../../../../lib/content";
+import { itemList } from "../../../../lib/seo";
+import { tagCounts, tagUrl } from "../../../../lib/taxonomy";
 
 export async function getStaticPaths() {
   const posts = await allPosts();
@@ -21,6 +22,10 @@ const { label, posts } = Astro.props;
 const lang = Astro.params.lang as Lang;
 const t = useTranslations(lang);
 // Tags are language-specific words, so there is no 1:1 counterpart page.
+const list = itemList(
+  tagUrl(lang, label),
+  posts.map((p) => ({ name: p.entry.data.title, url: postUrl(p) })),
+);
 ---
 
 <BaseLayout
@@ -29,6 +34,13 @@ const t = useTranslations(lang);
   description={`${t("blog.postsTagged")} #${label} · Blog · ${t("site.title")}`}
   section="blog"
   fallback={localePath(lang === "de" ? "en" : "de", "blog/tags/")}
+  pageType="CollectionPage"
+  crumbs={[
+    { name: t("blog.title"), path: localePath(lang, "blog/") },
+    { name: t("blog.tags"), path: localePath(lang, "blog/tags/") },
+  ]}
+  mainEntity={list["@id"] as string}
+  jsonLd={[list]}
 >
   <div class="container page">
     <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>

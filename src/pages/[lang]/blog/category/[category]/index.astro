@@ -4,7 +4,8 @@ import PostList from "../../../../../components/PostList.astro";
 import { LANGS, type Lang } from "../../../../../i18n/ui";
 import { localePath, useTranslations } from "../../../../../i18n/utils";
 import BaseLayout from "../../../../../layouts/BaseLayout.astro";
-import { allPosts, forListing } from "../../../../../lib/content";
+import { allPosts, forListing, postUrl } from "../../../../../lib/content";
+import { itemList } from "../../../../../lib/seo";
 import { allCategories, categoryUrl } from "../../../../../lib/taxonomy";
 
 export async function getStaticPaths() {
@@ -26,6 +27,10 @@ const lang = Astro.params.lang as Lang;
 const t = useTranslations(lang);
 const label = category.data.label[lang];
 const feed = `${categoryUrl(lang, category.id)}feed.xml`;
+const list = itemList(
+  categoryUrl(lang, category.id),
+  posts.map((p) => ({ name: p.entry.data.title, url: postUrl(p) })),
+);
 ---
 
 <BaseLayout
@@ -35,6 +40,10 @@ const feed = `${categoryUrl(lang, category.id)}feed.xml`;
   section="blog"
   alternates={{ de: categoryUrl("de", category.id), en: categoryUrl("en", category.id) }}
   feeds={[{ title: `Timur Manjosov – ${label}`, href: feed }]}
+  pageType="CollectionPage"
+  crumbs={[{ name: t("blog.title"), path: localePath(lang, "blog/") }]}
+  mainEntity={list["@id"] as string}
+  jsonLd={[list]}
 >
   <div class="container page">
     <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>

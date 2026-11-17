@@ -1,6 +1,7 @@
 # Quality gate for every push and pull request. Mirrors `npm run check`
-# (which runs locally without a browser) and adds the two checks that need
-# network or a real browser: the Playwright/axe suite and external links.
+# (its builds render the Open Graph images with Chromium, so Chromium is
+# installed first) and adds the two checks that need network or a real
+# browser page: the Playwright/axe suite and external links.
 #
 # This workflow only checks. It never deploys: deployment stays a manual,
 # reviewed step (docs/DEPLOY.md). No secrets, read-only token, and no
@@ -41,6 +42,11 @@ jobs:
 
       - run: npm ci
 
+      # Before the gate: every build renders the Open Graph images with
+      # Chromium (tools/og-images.mjs); the browser suite below needs it too.
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
       # lint, typecheck, both builds, CSP, internal links, HTML validation,
       # SEO/JSON-LD/sitemap, contrast, axe (jsdom), drafts filter, i18n
       # report, npm audit (moderate and above), dark-palette snapshot,
@@ -62,9 +68,6 @@ jobs:
             docker run --rm -v "$PWD:/w:ro" -w /w caddy:2 caddy adapt --adapter caddyfile --config "$f" >/dev/null
             echo "adapt OK: $f"
           done
-
-      - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
 
       # axe in light + dark, overflow at 320–1280 px, no-JS rendering,
       # third-party requests, cookies, theme toggle, language switcher,

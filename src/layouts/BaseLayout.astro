@@ -4,7 +4,9 @@ import Head, { type Feed } from "../components/Head.astro";
 import Header, { type Section } from "../components/Header.astro";
 import type { Lang } from "../i18n/ui";
 import { localePath, useTranslations } from "../i18n/utils";
-import { globalGraph, type JsonLdNode } from "../lib/seo";
+import { twinPath } from "../lib/markdown-twin";
+import { ogImageFor } from "../lib/og";
+import { type Crumb, globalGraph, type JsonLdNode, type PageType, pageGraph } from "../lib/seo";
 
 interface Props {
   lang: Lang;
@@ -17,15 +19,23 @@ interface Props {
   /** Where the switcher sends visitors if the other language is missing. */
   fallback?: string | undefined;
   xDefault?: string | undefined;
-  ogType?: "website" | "article" | "profile" | undefined;
+  ogType?: "website" | "article" | undefined;
   jsonLd?: JsonLdNode[] | undefined;
   noindex?: boolean | undefined;
   feeds?: Feed[] | undefined;
-  article?: { published: Date; modified?: Date | undefined; tags?: string[] } | undefined;
+  article?: { published: Date; modified?: Date | undefined; tags?: string[]; section?: string } | undefined;
+  /** JSON-LD page node (seo.ts pageGraph): its type, the breadcrumb trail
+   *  between home and this page, the main entity and the change date. */
+  pageType?: PageType | undefined;
+  crumbs?: Crumb[] | undefined;
+  mainEntity?: string | undefined;
+  dateModified?: string | undefined;
   /** The page has running text in STIX Two Text: preload that font. */
   serif?: boolean | undefined;
   /** Open Graph image of this page (absolute path), default: the site image. */
   ogImage?: string | undefined;
+  /** The page has a Markdown twin at <path>index.md (src/lib/markdown-twin.ts). */
+  markdownTwin?: boolean | undefined;
 }
 
 const {
@@ -43,10 +53,36 @@ const {
   article,
   serif = false,
   ogImage,
+  pageType,
+  crumbs,
+  mainEntity,
+  dateModified,
+  markdownTwin = false,
 } = Astro.props;
 
 const t = useTranslations(lang);
 const fullTitle = title ? `${title} – Timur Manjosov` : t("site.homeTitle");
+const path = Astro.url.pathname;
+const image = ogImage ?? ogImageFor(path, noindex);
+// Every indexable page gets its page node and breadcrumbs (404s and draft
+// previews only the global nodes).
+const graph = [
+  ...globalGraph(lang),
+  ...(noindex
+    ? []
+    : pageGraph({
+        lang,
+        path,
+        name: title ?? t("site.homeTitle"),
+        description,
+        type: pageType,
+        crumbs,
+        mainEntity,
+        dateModified,
+        image,
+      })),
+  ...jsonLd,
+];
 const allFeeds: Feed[] = [
   { title: `Timur Manjosov – Blog (${lang.toUpperCase()})`, href: localePath(lang, "feed.xml") },
   ...(feeds ?? []),
@@ -63,12 +99,14 @@ const allFeeds: Feed[] = [
       alternates={alternates}
       xDefault={xDefault ?? alternates.en}
       ogType={ogType}
-      jsonLd={[...globalGraph(lang), ...jsonLd]}
+      jsonLd={graph}
       noindex={noindex}
       feeds={allFeeds}
       article={article}
       serif={serif}
-      ogImage={ogImage}
+      ogImage={image}
+      markdownTwin={markdownTwin && !noindex ? twinPath(path) : undefined}
+      ogImageAlt={image.startsWith("/og/") ? (title ?? t("site.homeTitle")) : undefined}
     />
   </head>
   <body>

@@ -23,12 +23,16 @@ interface Props {
   description: string;
   alternates?: Partial<Record<Lang, string>> | undefined;
   xDefault?: string | undefined;
-  ogType?: "website" | "article" | "profile" | undefined;
+  ogType?: "website" | "article" | undefined;
   ogImage?: string | undefined;
   jsonLd: JsonLdNode[];
   noindex?: boolean | undefined;
   feeds?: Feed[] | undefined;
-  article?: { published: Date; modified?: Date | undefined; tags?: string[] } | undefined;
+  article?: { published: Date; modified?: Date | undefined; tags?: string[]; section?: string } | undefined;
+  /** Path of the page's Markdown twin, if it has one. */
+  markdownTwin?: string | undefined;
+  /** Text of the page-specific Open Graph image (its title); default: the site name. */
+  ogImageAlt?: string | undefined;
   serif?: boolean | undefined;
 }
 
@@ -45,6 +49,8 @@ const {
   feeds = [],
   article,
   serif = false,
+  ogImageAlt = "Timur Manjosov",
+  markdownTwin,
 } = Astro.props;
 
 // noindex pages (404s, draft previews) get no canonical: the 404 pages are
@@ -73,6 +79,9 @@ const otherLocales = LANGS.filter((l) => l !== lang && alternates[l]).map((l) =>
 }
 {showAlternates && xDefault && <link rel="alternate" hreflang="x-default" href={absolute(xDefault)} />}
 {feeds.map((f) => <link rel="alternate" type="application/rss+xml" title={f.title} href={f.href} />)}
+{/* Markdown version of this page and the llms.txt that covers it (llmstxt.org). */}
+{markdownTwin && <link rel="alternate" type="text/markdown" title="Markdown" href={markdownTwin} />}
+{!noindex && <link rel="describedby" href="/llms.txt" />}
 <meta name="color-scheme" content="light dark" />
 {/* Browser chrome in the page colour of each scheme (tokens.css --color-bg). */}
 <meta name="theme-color" content="#f9f9ff" media="(prefers-color-scheme: light)" />
@@ -89,16 +98,18 @@ const otherLocales = LANGS.filter((l) => l !== lang && alternates[l]).map((l) =>
 <meta property="og:image" content={absolute(ogImage)} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:image:alt" content="Timur Manjosov" />
+<meta property="og:image:alt" content={ogImageAlt} />
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={absolute(ogImage)} />
 {
   article && (
     <>
       <meta property="article:published_time" content={article.published.toISOString()} />
-      {article.modified && (
-        <meta property="article:modified_time" content={article.modified.toISOString()} />
-      )}
+      <meta property="article:modified_time" content={(article.modified ?? article.published).toISOString()} />
       <meta property="article:author" content="Timur Manjosov" />
+      {article.section && <meta property="article:section" content={article.section} />}
       {(article.tags ?? []).map((t) => <meta property="article:tag" content={t} />)}
     </>
   )

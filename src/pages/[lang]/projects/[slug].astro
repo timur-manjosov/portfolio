@@ -4,7 +4,8 @@ import type { Lang } from "../../../i18n/ui";
 import { formatDate, isoDate, localePath, slugify, useTranslations } from "../../../i18n/utils";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { allProjects, projectUrl } from "../../../lib/content";
-import { absolute, PERSON_ID } from "../../../lib/seo";
+import { ogImageFor } from "../../../lib/og";
+import { absolute, PERSON_ID, pageId, ref } from "../../../lib/seo";
 
 export async function getStaticPaths() {
   const projects = await allProjects();
@@ -25,20 +26,23 @@ const alternates: Partial<Record<Lang, string>> = { [lang]: url };
 if (other) alternates[other.lang] = projectUrl(other);
 
 // SoftwareSourceCode when a public repository exists, CreativeWork otherwise.
+const projectId = `${absolute(url)}#project`;
 const jsonLd = [
   {
     "@type": d.links.repo ? "SoftwareSourceCode" : "CreativeWork",
-    "@id": `${absolute(url)}#project`,
+    "@id": projectId,
     name: d.title,
     description: d.summary,
     url: absolute(url),
+    mainEntityOfPage: ref(pageId(url)),
     inLanguage: lang,
-    author: { "@id": PERSON_ID },
+    author: ref(PERSON_ID),
+    image: absolute(ogImageFor(url)),
     dateModified: isoDate(d.updated),
     ...(d.started ? { dateCreated: isoDate(d.started) } : {}),
     ...(d.links.repo ? { codeRepository: d.links.repo } : {}),
     ...(d.stack.length && d.links.repo ? { programmingLanguage: d.stack } : {}),
-    keywords: d.tags.join(", "),
+    keywords: d.tags,
   },
 ];
 ---
@@ -51,6 +55,10 @@ const jsonLd = [
   alternates={alternates}
   fallback={localePath(lang === "de" ? "en" : "de", "projects/")}
   jsonLd={jsonLd}
+  crumbs={[{ name: t("projects.title"), path: localePath(lang, "projects/") }]}
+  mainEntity={projectId}
+  markdownTwin
+  dateModified={isoDate(d.updated)}
   serif
 >
   <article class="container container--wide page project">

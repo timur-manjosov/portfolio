@@ -66,6 +66,22 @@ function estimateRem(table: HastNode): number {
   return widths.reduce((a, b) => a + b, 0);
 }
 
+/** Cells of at most this many characters get `cell-short` (no wrapping). */
+const SHORT_CELL = 12;
+
+function markShortCells(n: HastNode): void {
+  if (isElement(n, "td") || isElement(n, "th")) {
+    if (text(n).trim().length <= SHORT_CELL) {
+      if (!n.properties) n.properties = {};
+      const props = n.properties;
+      const cls = Array.isArray(props.className) ? (props.className as string[]) : [];
+      props.className = [...cls, "cell-short"];
+    }
+    return;
+  }
+  for (const c of n.children ?? []) markShortCells(c);
+}
+
 let tableCounter = 0;
 
 function tables(parent: HastNode, lang: Lang): void {
@@ -100,6 +116,7 @@ function tables(parent: HastNode, lang: Lang): void {
       properties: { className: ["table-scroll"], tabIndex: 0 },
       children: [node],
     };
+    markShortCells(node);
     const wide = estimateRem(node) > NARROW_REM;
     const hint: HastNode[] = wide
       ? [
@@ -160,11 +177,63 @@ function sources(root: HastNode): void {
   children.splice(start, end - start, section);
 }
 
+const digitMap = (to: string): Record<string, string> =>
+  Object.fromEntries([...to].map((c, i) => [String(i), c]));
+const SUB = digitMap("₀₁₂₃₄₅₆₇₈₉");
+const SUP = digitMap("⁰¹²³⁴⁵⁶⁷⁸⁹");
+
+/** Plain text of rendered MathML (Temml raw HTML): digits in sub- and
+ *  superscripts become Unicode sub/superscripts, the TeX annotation goes. */
+export function mathText(html: string): string {
+  return html
+    .replace(/<annotation[\s\S]*?<\/annotation>/g, "")
+    .replace(/<mn>(\d+)<\/mn><\/msub>/g, (_, d: string) => [...d].map((c) => SUB[c] ?? c).join(""))
+    .replace(/<mn>(\d+)<\/mn><\/msup>/g, (_, d: string) => [...d].map((c) => SUP[c] ?? c).join(""))
+    .replace(/<[^>]+>/g, "")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Heading text including formulas (Astro's own heading list skips the raw
+ *  MathML, so "Ein Beispiel über 𝔽₁₇" would lose its formula). */
+function headingText(node: HastNode): string {
+  if (node.type === "text") return node.value ?? "";
+  if (node.type === "raw") return mathText(node.value ?? "");
+  if (isElement(node) && (node.properties?.className as string[] | undefined)?.includes("heading-anchor"))
+    return "";
+  return (node.children ?? []).map(headingText).join("");
+}
+
+function headingLabels(tree: HastNode): Record<string, string> {
+  const labels: Record<string, string> = {};
+  const visit = (n: HastNode) => {
+    if ((isElement(n, "h2") || isElement(n, "h3")) && n.properties?.id) {
+      labels[String(n.properties.id)] = headingText(n).replace(/\s+/g, " ").trim();
+      return;
+    }
+    for (const c of n.children ?? []) visit(c);
+  };
+  visit(tree);
+  return labels;
+}
+
+interface VFile {
+  path?: string;
+  history?: string[];
+  data: { astro?: { frontmatter?: Record<string, unknown> } };
+}
+
 export default function rehypeArticle() {
-  return (tree: HastNode, file: { path?: string; history?: string[] }) => {
+  return (tree: HastNode, file: VFile) => {
     const lang = langOf(file.path ?? file.history?.at(-1));
     tableCounter = 0;
     tables(tree, lang);
     sources(tree);
+    // Exposed to the page as remarkPluginFrontmatter.tocLabels (Toc.astro).
+    const fm = file.data.astro?.frontmatter;
+    if (fm) fm.tocLabels = headingLabels(tree);
   };
 }

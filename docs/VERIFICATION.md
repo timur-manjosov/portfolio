@@ -63,6 +63,39 @@ text `color-text` on `color-bg`: 16.26:1 light, 16.62:1 dark.
 × light/dark, with viewport tiles. Findings: `docs/DECISIONS.md`,
 "Revision 6 / Befunde".
 
+## R6 §2. Screenshot rounds (brief §2.4)
+
+`node tools/screenshots.mjs dist --out .tmp/shots/<round>/ …` against the
+local server with the production headers (CSP active), system Chromium.
+Every round: CSP violations, console errors and horizontal overflow at
+320 px are counted by the tool (all rounds: 0 problems).
+
+**Working passes (w1)** while building the system: post DE 390/1280,
+blog index, home 390/768/1280 light + dark, projects, project, About, 404,
+/now. Fixed on the way: byline dots starting a wrapped line (390), stack
+text too large in cards (selector specificity), date column too narrow
+for "13. November 2026", hub left-aligned at 768, hub node order on
+phones, the first h2 of a project page with a full section gap, `#` after
+the TOC labels.
+
+**Round 1 (r1):** 20 pages (home DE/EN, About, projects, project, blog
+DE/EN, category, tags, links, contact, now, uses, search, privacy, 404,
+four posts) × 360/390/768/1024/1280/1920 × light/dark, plus 200 % zoom at
+1280, reduced motion at 390 and the print PDF of the double-spend post.
+
+| Page | Width | Mode | Finding | Correction |
+|---|---|---|---|---|
+| all | 360 | both | Header in three rows (brand / tools / navigation) | ≤ 24rem: tighter gaps, 32 px icon buttons; two rows |
+| ECC post | 360 | both | Table x/y: every cell "6, 11" broken onto two lines | Cells ≤ 12 characters `nowrap` (marked at build time); the table scrolls, edge shadow + hint visible |
+| ECC post | 1024 | light | TOC entry "Ein Beispiel über" lost its formula 𝔽₁₇ (Astro skips raw MathML in heading text) | Labels from `rehype-article.ts` (`remarkPluginFrontmatter.tocLabels`): "Ein Beispiel über 𝔽₁₇" |
+| home EN | 1920 | dark | Fine: hero, hub and list centred in the 72rem container, no stretched lines | – |
+| ds post | print | – | Fine: no header/footer/TOC, text black on white, formulas intact, headings kept with their text | – |
+| all | 1280 @ 200 % | light | Fine: one-column layouts, TOC as details, no overflow | – |
+
+**Round 2 (r2):** home DE, ECC post, projects × 360/1280 × light/dark
+after the fixes: header two rows at 360, header icons from the new icon
+set, no new findings.
+
 # Revision 5 (2026-10-30)
 
 Launch posts, scheduled posts, `publish`, editing without code, GitHub

@@ -15,9 +15,11 @@ interface Props {
   lang: Lang;
   headings: MarkdownHeading[];
   variant: "details" | "side";
+  /** Heading text by id including formulas (rehype-article.ts). */
+  labels?: Record<string, string> | undefined;
 }
 
-const { lang, headings, variant } = Astro.props;
+const { lang, headings, variant, labels = {} } = Astro.props;
 const t = useTranslations(lang);
 
 interface Node {
@@ -33,7 +35,7 @@ for (const h of headings) {
 }
 // The autolinker's "#" is not part of the heading text any more (it sits
 // after the heading), but older renders may still end in it.
-const label = (h: MarkdownHeading) => h.text.replace(/#$/, "").trim();
+const label = (h: MarkdownHeading) => labels[h.slug] || h.text.replace(/#$/, "").trim();
 const id = `toc-${variant}`;
 ---
 

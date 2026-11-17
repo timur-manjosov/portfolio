@@ -396,6 +396,28 @@ hr {
     transform: scaleX(1);
   }
 }
+/* Phones up to 24rem (360–384 px): brand and tools share one row, so the
+   header has two rows (brand + tools, navigation) instead of three. The
+   controls stay ≥ 32 px (WCAG 2.2 target size ≥ 24 px). */
+@media (max-width: 24rem) {
+  .site-header__inner {
+    column-gap: var(--space-2);
+  }
+  .brand {
+    gap: 0.45rem;
+  }
+  .header-tools {
+    gap: var(--space-1);
+  }
+  .icon-button {
+    width: 2rem;
+    height: 2rem;
+  }
+  .lang-switch a,
+  .lang-switch span {
+    padding-inline: 0.4rem;
+  }
+}
 @media (max-width: 30rem) {
   .site-nav ul {
     gap: 0;
@@ -2330,6 +2352,12 @@ a.chip {
 .prose tbody th {
   font-weight: var(--weight-label);
 }
+/* Short cells ("6, 11", "~33 Mio. $") stay on one line: a narrow screen
+   scrolls the table instead of breaking every number pair (marked at build
+   time by rehype-article.ts). */
+.prose .cell-short {
+  white-space: nowrap;
+}
 .prose td[align="right"],
 .prose th[align="right"] {
   text-align: right;
@@ -2521,10 +2549,92 @@ math.tml-display {
     transition-delay: calc(4 * var(--reveal-stagger));
   }
 }
+/* ---------- Print (R6-D9, finding B15) ---------- */
+/* Paper gets the text: no header, footer, navigation, table of contents
+   or interactive furniture; black on white in the light palette; external
+   link targets printed after the link; no page break inside a table, a
+   figure, a code block or right after a heading. */
 @media print {
   [data-reveal] {
     opacity: 1 !important;
     transform: none !important;
+  }
+  @page {
+    margin: 18mm 16mm;
+  }
+  /* Whatever theme is on screen, paper is light: system colours of a light
+     scheme, text in CanvasText (no literal colours, see the header). */
+  :root {
+    color-scheme: light !important;
+  }
+  html {
+    background: none;
+    font-size: 11pt;
+  }
+  body,
+  body :is(h1, h2, h3, h4, p, li, dt, dd, td, th, caption, a, time, span, strong, em, code, pre, blockquote) {
+    color: CanvasText !important;
+    -webkit-text-fill-color: CanvasText;
+  }
+  main {
+    background: none;
+  }
+  .site-header,
+  .site-footer,
+  .skip-link,
+  .breadcrumb,
+  .toc,
+  .heading-anchor,
+  .table-hint,
+  .related,
+  .post-footer > p:last-child,
+  [data-theme-toggle],
+  .hub,
+  .actions {
+    display: none !important;
+  }
+  .container,
+  .post,
+  .post-layout {
+    max-width: none;
+    padding: 0;
+    display: block;
+  }
+  .page {
+    padding-top: 0;
+  }
+  .prose {
+    max-width: none;
+    font-size: 11.5pt;
+    line-height: 1.45;
+  }
+  .prose a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-family: var(--font-sans);
+    font-size: 0.8em;
+    overflow-wrap: anywhere;
+  }
+  .table-scroll {
+    overflow: visible;
+    background: none;
+  }
+  .prose :is(table, figure, pre, .math-display, blockquote) {
+    break-inside: avoid;
+  }
+  .prose .heading {
+    break-after: avoid;
+  }
+  .card,
+  .box,
+  .notice,
+  .cite {
+    box-shadow: none;
+    background: none;
+    border-color: GrayText;
+  }
+  .gradient-text {
+    background: none;
+    -webkit-text-fill-color: currentColor;
   }
 }
 

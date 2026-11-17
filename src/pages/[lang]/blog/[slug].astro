@@ -30,7 +30,8 @@ const { post, other, seriesPosts, related } = Astro.props;
 const lang = Astro.params.lang as Lang;
 const t = useTranslations(lang);
 const d = post.entry.data;
-const { Content, headings } = await render(post.entry);
+const { Content, headings, remarkPluginFrontmatter } = await render(post.entry);
+const tocLabels = (remarkPluginFrontmatter?.tocLabels ?? {}) as Record<string, string>;
 const cats = await categoryMap();
 const cat = cats.get(d.category.id);
 if (!cat) throw new Error(`Unknown category "${d.category.id}" in blog/${post.entry.id}`);
@@ -152,13 +153,13 @@ const jsonLd = [
           )
         }
 
-        {showToc && <Toc lang={lang} headings={tocHeadings} variant="details" />}
+        {showToc && <Toc lang={lang} headings={tocHeadings} labels={tocLabels} variant="details" />}
 
         <div class="prose">
           <Content />
         </div>
       </div>
-      {showToc && <Toc lang={lang} headings={tocHeadings} variant="side" />}
+      {showToc && <Toc lang={lang} headings={tocHeadings} labels={tocLabels} variant="side" />}
     </div>
 
     <footer class="post-footer">

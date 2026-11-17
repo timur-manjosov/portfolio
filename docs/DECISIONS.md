@@ -1420,3 +1420,89 @@ all four Lighthouse categories, and body text already reaches 16:1.
   the colour tokens (the dark palette and its snapshot are unchanged).
 - `prefers-contrast: more` and `forced-colors` cover the new elements
   (hub, chips, now strip, TOC, tables).
+- Icon set (`Icon.astro`): eight line icons drawn for this site on one
+  16-unit grid (own drawings, no third-party set and so no licence to
+  carry) plus GitHub's mark, used only to link to GitHub. A web manifest and
+  192/512 px icons complete the favicon set (B18).
+
+## R6-D10. Open Graph images: Chromium screenshot of a template
+
+- **Decision:** home, the two main listings, the main pages, every post and
+  every project get their own 1200×630 image (`src/lib/og.ts` decides,
+  `tools/og-images.mjs` renders). After `astro build`, the tool reads each
+  page's head (`og:image:alt` = title, `<html lang>`, `og:type`,
+  `article:section`, `article:published_time`), fills an HTML template in
+  the light palette with the self-hosted Inter, and screenshots it with
+  Chromium through Playwright. Images are cached in `.cache/og/` by the
+  SHA-256 of their full HTML: the same content gives the same file, and a
+  rebuild without changes starts no browser.
+- **Why:** no new dependency (Playwright is already a dev dependency, used
+  by `brand-assets.mjs` the same way since R4), no network, the same fonts
+  and colours as the site, and the image cannot disagree with the page
+  because it is made from the page's own meta tags.
+- **Alternatives:** `satori` + `@resvg/resvg-js` (SVG → PNG without a
+  browser): two new dependencies, a native binary per platform (resvg-js,
+  MPL-2.0) and a second layout engine whose text layout differs from the
+  site's; `@resvg/resvg-wasm` with a hand-written SVG template: no text
+  wrapping, so long German titles would need our own line breaking.
+  Committing generated PNGs: every new post would need a manual step that
+  `publish` cannot do.
+- **Consequence:** every build needs Chromium (`/usr/bin/chromium`, else
+  Playwright's own). CI now installs it before `npm run check` (one step
+  moved up in `.github/workflows/check.yml`). The release build on Timur's
+  machine uses the system Chromium.
+
+## R6-D11. Search engines: page graph, one identity, a validator
+
+- **Page graph:** `BaseLayout` adds a page node (`WebPage`, `ProfilePage`
+  for About, `CollectionPage` + `ItemList` for listings) and a
+  `BreadcrumbList` to every indexable page; posts add `BlogPosting` in the
+  `Blog` of their language (with `citation` from the sources section, which
+  `rehype-article.ts` now hands to the page), projects
+  `SoftwareSourceCode`. References resolve inside each page's graph (the
+  Blog node is repeated on posts) so a validator can check them without
+  fetching other pages. `workTranslation` stays symmetric for pairs, as
+  in R5: the frontmatter does not say which version came first.
+- **One identity:** name, role, summary, studies and focus live only in
+  `src/data/site.ts` (`profile`); `site.description` and the two fact
+  strings left `ui.ts`, which keeps interface text only.
+- **`og:type`:** `website` for every non-post page (the brief asks for
+  `article` or `website`; `profile` on home and About is gone).
+- **Titles unique per language:** a DE/EN pair linked by hreflang may share
+  a title that is a proper name ("Aura", "Blog – Timur Manjosov"). Unique
+  across languages would mean renaming proper names; search engines treat
+  hreflang pairs as one page in different languages.
+- **Validator instead of online tools:** `tools/check-jsonld.mjs` in
+  `check:seo` (types, required fields, references, forbidden markup,
+  agreement with the visible text, identity).
+
+## R6-D12. AI systems: llms.txt, Markdown twins, robots switch
+
+- **llms.txt** rebuilt after the current llmstxt.org text (read
+  2026-11-17): H1, blockquote, free text, H2 link lists with one sentence
+  per entry, "Optional" last; every entry from the content, the identity
+  from `profile`. Every indexable page links it with `rel="describedby"`
+  (also from llmstxt.org). Effect unproven (`docs/SEO.md`), cheap, kept.
+- **llms-full.txt:** all public posts as Markdown, 108 KB at six posts.
+- **Markdown twins** at `<URL>index.md` (llmstxt.org: "URLs without file
+  names should append `index.html.md` or `index.md`"; the shorter one).
+  Made from the Markdown source, not converted back from HTML: it is what
+  Timur wrote, formulas stay TeX, comments are dropped, site links become
+  absolute, inline SVG figures become their `<title>`/`<desc>`. Not for
+  contact, privacy and imprint (private data, not content).
+- **robots.txt** from one file, `src/data/crawlers.ts`, two groups with one
+  switch each (`search`, `training`); tokens and purposes from the
+  providers' pages, read 2026-11-17 (`docs/SEO.md`). Bingbot's page renders
+  only with JavaScript, so it was read with the one-page Playwright script
+  in `.tmp/` (no crawling).
+- **Content-Type of `.md` (proposal, not done):** Caddy's `file_server`
+  takes the type from Go's MIME table plus the system's `/etc/mime.types`;
+  whether that maps `.md` to `text/markdown` depends on the server. If
+  `verify:live` warns, the generator could add, in the site block,
+  `@md path *.md` + `header @md Content-Type "text/markdown; charset=utf-8"`.
+  The brief forbids changing the generator in this run, so this stays a
+  proposal for Timur.
+- **Full-text feeds:** posts are rendered for `content:encoded` with
+  Astro's container API (`experimental_AstroContainer`, the documented way
+  to render a content entry outside a page); heading anchors and the
+  table hints are dropped, site URLs made absolute.

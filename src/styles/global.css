@@ -2349,6 +2349,10 @@ a.chip {
   border-bottom: 1px solid var(--color-border-strong);
   white-space: nowrap;
 }
+/* The empty corner of a matrix table (rehype-article.ts) keeps the rule. */
+.prose thead td {
+  border-bottom: 1px solid var(--color-border-strong);
+}
 .prose tbody th {
   font-weight: var(--weight-label);
 }
@@ -2358,9 +2362,13 @@ a.chip {
 .prose .cell-short {
   white-space: nowrap;
 }
-.prose td[align="right"],
-.prose th[align="right"] {
+/* Column alignment from the Markdown ("---:"), as classes
+   (rehype-article.ts). */
+.prose .align-right {
   text-align: right;
+}
+.prose .align-center {
+  text-align: center;
 }
 .table-hint {
   display: none;

@@ -42,20 +42,26 @@ function svgText(svg: string, lang: Lang): string {
   return `*[${lang === "de" ? "Grafik" : "Figure"}: ${parts}]*`;
 }
 
-/** Site-relative links and images → absolute; comments out; images and
- *  inline SVG figures become their text alternative, figure captions stay. */
+/** Site-relative links and images → absolute; comments and formula
+ *  descriptions out; images and inline SVG figures become their text
+ *  alternative, figure captions stay. */
 export function standalone(body: string, lang: Lang): string {
-  return body
-    .replace(/<!--[\s\S]*?-->\n?/g, "")
-    .replace(/<svg\b[\s\S]*?<\/svg>/g, (svg) => svgText(svg, lang))
-    .replace(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/g, (_, c: string) => `\n\n${c.trim()}`)
-    .replace(/<\/?figure[^>]*>/g, "")
-    .replace(/!\[([^\]]*)\]\((?!https?:)[^)]*\)/g, (_, alt: string) =>
-      lang === "de" ? `*[Bild: ${alt}]*` : `*[Image: ${alt}]*`,
-    )
-    .replace(/\]\((\/[^)\s]*)\)/g, (_, path: string) => `](${SITE_URL}${path})`)
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return (
+    body
+      .replace(/<!--[\s\S]*?-->\n?/g, "")
+      // A formula's spoken description ("$tex %% words$", rehype-temml) is
+      // for screen readers; the twin keeps plain TeX.
+      .replace(/\s*(?<!\\)%%[^$\n]*(?=\$)/g, "")
+      .replace(/<svg\b[\s\S]*?<\/svg>/g, (svg) => svgText(svg, lang))
+      .replace(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/g, (_, c: string) => `\n\n${c.trim()}`)
+      .replace(/<\/?figure[^>]*>/g, "")
+      .replace(/!\[([^\]]*)\]\((?!https?:)[^)]*\)/g, (_, alt: string) =>
+        lang === "de" ? `*[Bild: ${alt}]*` : `*[Image: ${alt}]*`,
+      )
+      .replace(/\]\((\/[^)\s]*)\)/g, (_, path: string) => `](${SITE_URL}${path})`)
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
 }
 
 function render(o: {

@@ -4,6 +4,7 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import remarkMath from "remark-math";
 import rehypeArticle from "./src/lib/rehype-article";
 import rehypeFootnoteLang from "./src/lib/rehype-footnote-lang";
+import rehypeHeadingIdsLetter from "./src/lib/rehype-heading-ids-letter";
 import rehypeStripComments from "./src/lib/rehype-strip-comments";
 import rehypeTemml from "./src/lib/rehype-temml";
 import remarkImagePolicy from "./src/lib/remark-image-policy";
@@ -47,6 +48,8 @@ export default defineConfig({
         // Astro adds heading ids after user plugins; the autolinker needs
         // them earlier.
         rehypeHeadingIds,
+        // "1. …" headings: ids that start with a letter (html-validate).
+        rehypeHeadingIdsLetter,
         // A real, focusable link after each heading, grouped with it in
         // div.heading. Its name is "<Link to this section> <heading>": the
         // first part is a hidden element on every page that renders

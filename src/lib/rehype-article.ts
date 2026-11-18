@@ -7,6 +7,8 @@
  *    a focusable scroll box (`div.table-scroll`), so a wide table scrolls
  *    by itself instead of widening the page. A table whose estimated natural width exceeds a phone screen gets
  *    a written hint below it (shown on small screens only, global.css).
+ *    Column alignment becomes a class (the align attribute is obsolete);
+ *    a table with an empty top-left header cell gets row headers.
  * 2. Sources. The last h2 section whose heading names sources ("Quellen",
  *    "Literatur", "Further reading", "Sources", "References") is wrapped in
  *    `section.sources` so it can be set apart (smaller, hanging indents).
@@ -72,15 +74,46 @@ const SHORT_CELL = 12;
 
 function markShortCells(n: HastNode): void {
   if (isElement(n, "td") || isElement(n, "th")) {
-    if (text(n).trim().length <= SHORT_CELL) {
-      if (!n.properties) n.properties = {};
-      const props = n.properties;
-      const cls = Array.isArray(props.className) ? (props.className as string[]) : [];
-      props.className = [...cls, "cell-short"];
+    if (!n.properties) n.properties = {};
+    const props = n.properties;
+    const cls = Array.isArray(props.className) ? (props.className as string[]) : [];
+    // GFM column alignment ("---:") arrives as the obsolete align attribute;
+    // a class carries it instead (global.css).
+    if (typeof props.align === "string") {
+      cls.push(`align-${props.align}`);
+      delete props.align;
     }
+    if (text(n).trim().length <= SHORT_CELL) cls.push("cell-short");
+    if (cls.length) props.className = cls;
     return;
   }
   for (const c of n.children ?? []) markShortCells(c);
+}
+
+/** A table whose top-left header cell is empty is a matrix: its first
+ *  column labels the rows. The empty corner becomes a <td> (an empty <th>
+ *  names nothing, axe empty-table-header) and the first cell of every body
+ *  row a row header (<th scope="row">), so screen readers announce
+ *  "Ethereum, löst: …" instead of a bare value. */
+function matrixHeaders(table: HastNode): void {
+  const thead = table.children?.find((c) => isElement(c, "thead"));
+  const tbody = table.children?.find((c) => isElement(c, "tbody"));
+  const headRow = thead?.children?.find((c) => isElement(c, "tr"));
+  const corner = headRow?.children?.find((c) => isElement(c));
+  if (!corner || !isElement(corner, "th") || text(corner).trim() !== "") return;
+  corner.tagName = "td";
+  // With row headers, the column headers name their direction too (H63).
+  for (const cell of headRow?.children ?? []) {
+    if (isElement(cell, "th")) cell.properties = { ...(cell.properties ?? {}), scope: "col" };
+  }
+  for (const row of tbody?.children ?? []) {
+    if (!isElement(row, "tr")) continue;
+    const first = row.children?.find((c) => isElement(c));
+    if (first && isElement(first, "td")) {
+      first.tagName = "th";
+      first.properties = { ...(first.properties ?? {}), scope: "row" };
+    }
+  }
 }
 
 let tableCounter = 0;
@@ -117,6 +150,7 @@ function tables(parent: HastNode, lang: Lang): void {
       properties: { className: ["table-scroll"], tabIndex: 0 },
       children: [node],
     };
+    matrixHeaders(node);
     markShortCells(node);
     const wide = estimateRem(node) > NARROW_REM;
     const hint: HastNode[] = wide

@@ -28,5 +28,8 @@ function strip(node: HastNode): void {
 export default function rehypeStripComments() {
   return (tree: HastNode) => {
     strip(tree);
+    // A note at the very top of a file leaves the line break after it as
+    // the first node; the layout would print it as trailing whitespace.
+    while (tree.children?.[0]?.type === "text" && !tree.children[0].value?.trim()) tree.children.shift();
   };
 }

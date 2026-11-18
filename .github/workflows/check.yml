@@ -78,7 +78,8 @@ jobs:
       # 2026-11-17 (publisher bot protection; docs/DECISIONS.md R6-D13):
       # Kydland/Prescott 1977 (University of Chicago Press) in the Bitcoin
       # post, Horowitz/Sahni 1974 and Lagarias/Odlyzko 1985 (ACM) in the
-      # subset-sum post.
+      # subset-sum post. Also one investing.com news URL in the Bitcoin
+      # post (403 in CI, headline confirmed via syndication; R6-D13).
       - name: External links (lychee)
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
@@ -92,6 +93,7 @@ jobs:
             --exclude ^https://doi.org/10.1086/260580
             --exclude ^https://doi.org/10.1145/321812.321823
             --exclude ^https://doi.org/10.1145/2455.2461
+            --exclude ^https://www\.investing\.com/news/economy-news/fed-rate-hike-odds-in-december-at-88-after-hot-cpi-cme-fedwatch-5017585$
             --root-dir ${{ github.workspace }}/dist
             dist
           fail: true

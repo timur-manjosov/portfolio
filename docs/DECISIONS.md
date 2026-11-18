@@ -1528,6 +1528,10 @@ all four Lighthouse categories, and body text already reaches 16:1.
   (CoinDesk, investing.com, Crypto Briefing) answered a normal fetch; if
   one of them blocks lychee in CI, it gets its own exclusion with the same
   reasoning.
+- **Addendum (CI, PR #26):** exactly one investing.com URL
+  (`…/fed-rate-hike-odds-in-december-at-88-after-hot-cpi-cme-fedwatch-5017585`)
+  is now excluded as well: bot-blocked (403), headline confirmed via
+  syndication, reachable in a browser. No domain pattern.
 
 ## R6-D14. The Bitcoin post: setting, metadata, checks
 

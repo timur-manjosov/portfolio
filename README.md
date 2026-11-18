@@ -25,7 +25,7 @@ npm run dev     # http://localhost:4321, drafts visible, live reload
 | `npm run new:post`, `new:project` | Scaffold a post or project as a draft (see below) |
 | `npm run edit -- <page \| post <slug> \| project <slug>>`, `edit:now` | Open the file in `$EDITOR`; sets `updated` on pages/projects, validates the frontmatter |
 | `npm run publish -- --target <ssh-target>` | Content update after the first go-live: build, change overview, confirm, switch, HTTP check (`--dry-run`, `--rollback`; `docs/PUBLISHING.md`) |
-| `npm run check` | **The gate**: lint, types, both builds, CSP, links, HTML, SEO/JSON-LD, HTTP, contrast, dark-palette snapshot, axe, drafts filter, leak check, build modes, fixtures, scheduled posts, languages per post, publish (local target), scaffolder/editor round trip, images, GitHub metadata, posts on every surface, pre-push exit codes, Caddy generator, i18n report, `npm audit` |
+| `npm run check` | **The gate**: lint, types, both builds, CSP, links, HTML, SEO/JSON-LD, HTTP, contrast, dark-palette snapshot, axe, drafts filter, leak check, build modes, fixtures, scheduled posts, languages per post, publish (local target), scaffolder/editor round trip, images, GitHub metadata, posts on every surface, article numbers, verify:live against broken local variants, pre-push exit codes, Caddy generator, i18n report, `npm audit` |
 | `npm run check:articles:system` | Reruns every computation of the blog posts (`tests/articles/`; Python 3 + system Chromium) |
 | `npm run check:browser` | Playwright + axe in Chromium: light/dark, 320–1280 px, no-JS, cookies, third parties, CSP violations, toggles, search, feeds, redirects, language door (`npx playwright install chromium` once) |
 | `npm run check:browser:system` | the same with the installed `/usr/bin/chromium` (no browser download) |
@@ -33,6 +33,7 @@ npm run dev     # http://localhost:4321, drafts visible, live reload
 | `npm run report:weight` | Page weight and request count per page |
 | `npm run format` | Biome: format + safe fixes |
 | `npm run caddy:example` | Regenerate `deploy/Caddyfile.example` from `deploy/site-config.json` |
+| `npm run verify:live` | Read-only check of the live site after an upload: sitemap URLs, headers + CSP, feeds, robots/llms files, security.txt, 404, hreflang, canonical, JSON-LD, no scheduled post reachable (`--base <url>`; tested by `check:verify-live` in `check`) |
 | `npm run check:prepush` | GO / NO-GO for every commit a push would upload: private values, server details, tokens, non-noreply e-mails, files that belong in `.gitignore` (`docs/GO-LIVE.md` step 3) |
 | `npm run check:dark-tokens` | Dark palette against its snapshot (part of `check`); `-- --update` only after a deliberate decision |
 | `node tools/screenshots.mjs` | Design review screenshots, light + dark, overflow at 320 px → `.screenshots/` |

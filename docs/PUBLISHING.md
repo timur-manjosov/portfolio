@@ -134,6 +134,20 @@ CSP-Fehler. Per Kommandozeile:
 curl -sI https://timurmanjosov.com/de/blog/mein-titel/   # 200, strenge CSP
 ```
 
+Die ganze Seite auf einmal, nur lesend (alle URLs der Sitemap, Header und
+CSP, Feeds, `robots.txt`, `llms.txt`, `llms-full.txt`, `security.txt`,
+404, `hreflang`, canonical, JSON-LD; kein geplanter Artikel erreichbar):
+
+```sh
+npm run verify:live                                  # https://timurmanjosov.com
+npm run verify:live -- --base https://example.org    # andere Adresse
+```
+
+Ausgabe getrennt nach FEHLER und WARNUNG, Exit-Code 0 nur ohne FEHLER. Der
+Content-Type der Markdown-Zwillinge (`.md`) ist nur eine WARNUNG: er hängt
+von Caddys MIME-Tabelle ab (DECISIONS R6-D12). Höchstens vier Abrufe
+gleichzeitig, rund 160 insgesamt.
+
 Zurück zur vorigen Version (wird per HTTP geprüft, sonst bleibt alles wie
 es ist):
 

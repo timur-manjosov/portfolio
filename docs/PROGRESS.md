@@ -47,10 +47,10 @@ after the run. Order (brief §0): 2.1, 2.2, 2.8, 2.3 with 2.4, 2.5, 2.6,
 - [x] R6.1 Baseline: `npm run check` (fails only at `npm audit`: new moderate astro advisory), `tools/measure.mjs` (size by type + CLS), `tools/lighthouse.mjs` (9 pages, all 100 except the 404's SEO), screenshots `.tmp/baseline/`, findings B1–B19 (DECISIONS R6)
 - [x] R6.2 Design research → `docs/DESIGN-REFERENCES.md` (15 references, screenshots + measured type in `.tmp/refs/`)
 - [x] R6.8 Maintenance (R6-D1): PATH (`39da05b`), astro 7.4.12 + katex override 0.19.1, audit 0 (`9d88a70`), no Buffer#slice exists, Biome hint (`762431e`), prepush multi-commit test (`86125d2`)
-- [ ] R6.3/4 Design work + screenshot rounds
-- [ ] R6.5 SEO + AI visibility
-- [ ] R6.6 Bitcoin article (DE + EN), fact check, number script
-- [ ] R6.7 Aporia; due posts
+- [x] R6.3/4 Design work (`138a9d1`, `d8c15a3`, `30f6f17`) + screenshot rounds 1–3 (`98ba216`, `7cdf893`, VERIFICATION R6 §2)
+- [x] R6.5 SEO + AI visibility (`b61e90e`, `16232d4`, `328d768`)
+- [x] R6.6 Bitcoin article (DE + EN, dated 2026-11-18), fact check (VERIFICATION R6 §3), number script + `check:article-numbers` (`6f5e89d`, `ba3e08f`); new picomatch advisory gated by `tools/check-audit.mjs` (R6-D15, `8e78d87`)
+- [x] R6.7 Aporia (`64376fe`); due posts CSP (2026-11-06) and Subset Sum (2026-11-13) public, on every surface (`check:post-surfaces`: 8 posts)
 - [ ] R6.9 verify:live
 - [ ] R6.10 Close: gate, prepush GO, docs, `.cache/pr.md`
 

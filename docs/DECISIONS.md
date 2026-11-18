@@ -1608,3 +1608,24 @@ all four Lighthouse categories, and body text already reaches 16:1.
 - **`wordCount` counts words**, not Markdown tokens (comments, link
   targets, table pipes, list markers were counted before): JSON-LD
   `wordCount` and the reading time match the visible text more closely.
+
+## R6-D17. `check:prepush`: two false positives made precise
+
+- **Finding (2026-11-18, closing run):** NO-GO with 8 findings, all false:
+  the GitHub logo's SVG path in `src/components/Icon.astro` contains
+  coordinates that read as an IPv4 address (four numbers joined by dots), and
+  `src/data/crawlers.ts` stores the user-agent names robots.txt publishes
+  ("OAI-SearchBot", "Claude-SearchBot", …) in a field called `token`, read
+  as a "secret assignment". The commits cannot be rewritten (the brief
+  forbids touching the history, and the push uploads every commit).
+- **Decision:** narrow the two rules instead of exempting files: the
+  address search skips only the values of SVG geometry attributes (`d`,
+  `points`, `viewBox`), the rest of the line is still searched; a "secret
+  assignment" is exempt only if its value is one of the user-agent names in
+  `src/data/crawlers.ts` at the head of the range and consists of letters
+  and hyphens. `check:prepush-exit` proves both GO cases and two controls
+  that must stay NO-GO (an address next to path data, a token value with
+  digits in the crawler file).
+- **Alternatives:** an allowlist of commits or files (would hide a real
+  secret added later to the same file); renaming the field (the old
+  commits would still be flagged).

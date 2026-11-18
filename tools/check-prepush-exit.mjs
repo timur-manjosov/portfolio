@@ -10,6 +10,7 @@
 //   NO-GO (private committer in the middle of eight)  → 1, names that commit
 //   NO-GO (a server path in an added line)            → 1
 //   NO-GO (a private file that cannot be read)        → 1 (fail closed)
+//   GO (SVG path data, published user-agent names)    → 0; controls → 1
 //   usage error, unknown ref                          → 2
 import { spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -116,6 +117,47 @@ try {
     `exit ${p.status}: ${p.stdout.slice(-300)}`,
   );
 
+  // Two false positives found on 2026-11-18 (DECISIONS R6-D17): SVG path
+  // data that reads like an IPv4 address, and the user-agent names that
+  // robots.txt publishes, kept in a field called `token`. Both are GO; the
+  // controls next to them stay NO-GO.
+  const e = repo();
+  dirs.push(e.dir);
+  const base5 = e.commit("README.md", "base\n", NOREPLY);
+  e.commit(
+    "icon.svg",
+    '<svg viewBox="0 0 24 24"><path d="M12 .5a11.5 11.5 0 0 0-3.64 1.26 3.36.96.1"/></svg>\n',
+    NOREPLY,
+  );
+  e.commit(
+    "src/data/crawlers.ts",
+    'export const agents = [{ token: "Claude-SearchBot" }, { token: "Applebot-Extended" }];\n',
+    NOREPLY,
+  );
+  p = check(e.dir, "--base", base5);
+  expect(
+    p.status === 0 && /\nGO:/.test(p.stdout),
+    "GO with SVG path data and published user-agent names",
+    `exit ${p.status}: ${p.stdout.slice(-300)}`,
+  );
+  // Assembled at run time: the literals in this file would themselves be findings.
+  const address = [198, 18, 7, 9].join(".");
+  e.commit("page.html", `<a href="http://${address}/"><svg><path d="M3.36.96.1"/></svg></a>\n`, NOREPLY);
+  p = check(e.dir, "--base", base5);
+  expect(
+    p.status === 1 && /IPv4 address/.test(p.stdout),
+    "NO-GO for an address next to path data",
+    `exit ${p.status}: ${p.stdout.slice(-300)}`,
+  );
+  const fake = ["a1b2c3d4", "e5f6g7h8"].join("");
+  e.commit("src/data/crawlers.ts", `export const agents = [{ token: "${fake}" }];\n`, NOREPLY);
+  p = check(e.dir, "--base", base5);
+  expect(
+    p.status === 1 && /secret assignment/.test(p.stdout),
+    "NO-GO for a token value that is not a user-agent name",
+    `exit ${p.status}: ${p.stdout.slice(-300)}`,
+  );
+
   p = check(a.dir, "--bogus");
   expect(p.status === 2, "usage error", `exit ${p.status}`);
   p = check(a.dir, "--base", "no-such-ref");
@@ -125,5 +167,5 @@ try {
 }
 
 r.done(
-  `${cases} cases: GO → 0 (also with six commits since origin/main), NO-GO (address, committer in the middle, server path, unreadable private file) → 1, usage → 2`,
+  `${cases} cases: GO → 0 (also with six commits since origin/main, SVG path data, published user-agent names), NO-GO (address, committer in the middle, server path, unreadable private file, IPv4 next to path data, non-user-agent token) → 1, usage → 2`,
 );

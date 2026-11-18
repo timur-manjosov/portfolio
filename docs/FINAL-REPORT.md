@@ -1,5 +1,250 @@
 # Final report: timurmanjosov.com redesign
 
+# Revision 6 (2026-11-14 bis 2026-11-18)
+
+Design auf ein neues Niveau, Auffindbarkeit für Suchmaschinen und
+KI-Systeme, dein Bitcoin-Text als geprüfter Artikel, Aporia, Wartung. Alles
+auf `r6-update` committet (von `origin/main`), nichts gepusht, nichts
+gemergt, nichts deployt, kein Server-Zugriff. Belege:
+`docs/VERIFICATION.md` (Revision 6, §1 vorher, §2 Screenshot-Runden,
+§3 Bitcoin-Artikel, §4 nachher), Entscheidungen: `docs/DECISIONS.md`
+R6-D1 bis R6-D15, Referenzen: `docs/DESIGN-REFERENCES.md`, Sichtbarkeit:
+`docs/SEO.md`.
+
+## Was sich geändert hat
+
+- **Design** (R6-D2 bis D9): Fließtext in STIX Two Text (passt zu den
+  Formeln in STIX Two Math), Oberfläche und Überschriften weiter in Inter,
+  eine fluide Typoskala, Lesemaß um 65 Zeichen statt 84–90. Artikelseite mit
+  Inhaltsverzeichnis (zur Build-Zeit, auf breiten Schirmen sticky, ohne JS),
+  Ankern an Überschriften, gesetzten Tabellen (Caption, scrollbar mit
+  Hinweis), Quellenabschnitt, Fußnoten, „Weiterlesen“, Druckstil.
+  Startseite: ein Satz, wer und was, eine Hauptaktion, daneben der
+  **Knotenpunkt** als statisches SVG-Netz (Knoten sind echte Links mit
+  Live-Zahlen, keine Bewegung, kein JS). Blogindex als scanbare Liste,
+  Projektkarten mit klarer Hierarchie, ein Icon-Set, Web-Manifest,
+  App-Icons, `theme-color` hell/dunkel, gegliederter Footer. Drei
+  Screenshot-Runden (360–1920 px, hell/dunkel, 200 % Zoom, reduzierte
+  Bewegung, Druck-PDF).
+- **Sichtbarkeit** (R6-D10 bis D12): JSON-LD als ein `@graph` pro Seite mit
+  stabilen `@id`s (WebSite, Person, ProfilePage, Blog/BlogPosting mit
+  `citation`, BreadcrumbList, CollectionPage, SoftwareSourceCode), eigener
+  Validator; Open-Graph-Bilder 1200×630 pro Seite, lokal zur Build-Zeit;
+  `llms.txt` nach llmstxt.org, `llms-full.txt`, Markdown-Zwillinge;
+  `robots.txt` mit Schalter pro Crawler-Gruppe; Tests `check:seo` und
+  `check:ai` im Gate.
+- **Inhalt:** der Bitcoin-Artikel (DE + EN, unten), das Projekt Aporia
+  (DE + EN, nur aus README, `Cargo.toml` und CI belegt, `draft-review`).
+- **Wartung** (R6-D1, D15): fester `PATH` in `deploy/apply-on-server.sh`
+  (mit Stub-Test), astro 7.4.12 und katex per `overrides` auf 0.19.1
+  (gerendertes HTML vorher/nachher byte-gleich), der vermeintliche
+  `Buffer.slice`-Fall war ein Typhinweis (behoben durch Typisierung, nicht
+  durch `subarray`), Biome-Hinweis, `check:prepush` mit mehreren Commits
+  getestet, `npm run verify:live` mit Test gegen kaputte Varianten. Neu am
+  18.11.: eine Advisory für `picomatch` ohne verfügbaren Fix (nur
+  Build-Zeit), siehe Abweichungen.
+
+## Gemessen (vorher → nachher)
+
+| | Vorher (origin/main) | Nachher |
+|---|---|---|
+| Startseite DE, gzip inkl. Schriften | 60,5 KB | 63,5 KB (Budget 120) |
+| Langer Artikel mit Formeln | 462,4 KB | 235,1 KB (STIX Two Math als Subset) |
+| Bitcoin-Artikel | – | 213,2 KB |
+| JavaScript | 1,2 KB | 1,2 KB (Budget 15) |
+| CLS, alle gemessenen Seiten | 0 | 0 |
+| Lighthouse Start DE/EN, Projekte, Artikel | 100/100/100/100 | 100/100/100/100 |
+| Kontrast Fließtext hell/dunkel | 16,26 / 16,62 : 1 | unverändert (116 Paare AA) |
+
+Kein Budget erhöht. Der Dunkel-Snapshot ist unverändert.
+
+## Referenzen mit der größten Wirkung
+
+1. **Tufte CSS + practicaltypography.com:** Lesemaß um 65 Zeichen und der
+   Zeilenabstand (unser Text lief 84–90 Zeichen breit).
+2. **overreacted.io + gwern.net:** Serife für langen Text, Sans für die
+   Oberfläche, daher STIX Two Text neben Inter.
+3. **joshwcomeau.com + MDN:** das Inhaltsverzeichnis als ruhige Liste in
+   einer eigenen Spalte, sticky auf breiten Schirmen.
+4. **maggieappleton.com + lea.verou.me:** ein Satz, wer und was, eine
+   Hauptaktion, die Bereiche als benannte Ziele, Artikel als scanbare Liste.
+
+Übernommen sind Prinzipien und Proportionen, kein Code, keine Texte, keine
+Farben; fremde Screenshots liegen nur in `.tmp/`.
+
+## Bitcoin-Artikel
+
+- **DE:** „Bitcoin: Was in den nächsten Jahrzehnten entschieden wird“,
+  `/de/blog/bitcoin-was-in-den-naechsten-jahrzehnten-entschieden-wird/`,
+  4.966 Wörter.
+- **EN:** „Bitcoin: what gets decided in the coming decades“ (Satzschreibung
+  wie alle englischen Titel der Seite),
+  `/en/blog/bitcoin-what-gets-decided-in-the-coming-decades/`, 5.629 Wörter,
+  `status: draft-review`.
+- Datum 2026-11-18, Rubrik Standpunkte/Opinions, Paar-Schlüssel
+  `bitcoin-coming-decades`. Wortzahl = Wörter des Markdown-Texts ohne
+  Kommentare, Link-Ziele und Tabellenstriche.
+- **Schalter:** `PERSÖNLICHE_ANGABEN: veröffentlichen`, nichts gestrichen.
+  Titel, Beschreibung, Open Graph, JSON-LD, Feed-Kopf, `llms.txt`-Eintrag
+  und Suchindex-Auszug nennen nur das Thema; `check:post-surfaces` prüft
+  das mit einer Wortliste.
+- Formel als MathML (Temml) mit gesprochener Beschreibung (`alttext`), fünf
+  Tabellen mit Caption, Zahlen aus `tests/articles/bitcoin_security_budget.py`
+  (186 Prüfungen in DE + EN, `check:article-numbers`).
+
+### (1) Korrekturen am Wortlaut
+
+| Z. | Vorher | Nachher | Quelle |
+|---|---|---|---|
+| 15 | „nur einen niedrigen einstelligen Prozentanteil“ | „nur unter einem Prozent“ | CCAF, „Funding Bitcoin's Future“: 0,67 % in den 90 Tagen bis 4.10.2026, https://www.jbs.cam.ac.uk/2026/paying-for-bitcoins-security-as-the-subsidy-fades/ |
+| 63 | „Aktivierungsclient seit 30.03.2026“ | „Aktivierungsclient (nur CTV) seit 30.03.2026“ | Client aktiviert nur BIP-119, Delving Bitcoin 9.2.2026, https://mirror.b10c.me/delvingbitcoin-org/2026-02-09-bip-119-ctv-activation-client-id2242.html |
+| 68 | „Im Juni 2026 unterzeichneten 66 Entwickler“ | „Im Juni 2025 …“ | offener Brief vom 9.6.2025, https://ctv-csfs.com/ |
+| 68 | „fast sechs Monate ins Fenster hinein“ | „über sieben Monate ins Fenster hinein“ | Fensterbeginn 30.3.2026 (s. o.), bis 13.11.2026 7,5 Monate |
+| 77 | „Changpeng Zhao schlug im Juli 2026 vor“ | „… im Juni 2026 vor“ | Podcast 18.6.2026, https://crypto.news/cz-proposes-freezing-satoshi-bitcoin-stash-to-stop-quantum-theft/ |
+| 87 | „von Vitalik Buterin und Justin Drake vorgestellt“ | „von Vitalik Buterin und zuvor von Justin Drake vorgestellt“ | Drake: https://blog.ethereum.org/2025/07/31/lean-ethereum ; Buterin: Juli 2026 (The Block) |
+| 155 | „Anfang des 20. Jahrhunderts wertlos“ | „in der ersten Hälfte des 20. Jahrhunderts wertlos“ | Russland 1917, China 1949 |
+
+Alle Korrekturen stehen gleich in der englischen Fassung.
+
+### (2) Nur gemeldet, nicht geändert
+
+- **Z. 15/17–34 und 196, Preis:** Die Tabelle rechnet mit 74.000 $, der
+  Standabsatz nennt „unter 70.000“ und „rund 46 Prozent unter 126.000“
+  (≈ 68.000 $; bei 74.000 $ wären es ≈ 41 %). Beides sind deine Eingaben;
+  du entscheidest, welcher Preis gilt.
+- Z. 35: Goldmarkt „um 24 Billionen“ als Größenordnung vertretbar (WGC:
+  rund 30 Bio. $); mit dem Bestand von 2040 (≈ 20,9 Mio. BTC) wären es
+  ≈ 24,8 Bio. $.
+- Z. 43 „vernichtend“, Z. 149 „ohne Pensionsfonds“, Z. 154 „die schnellste
+  Zinswende der Geschichte“ (belegt ist: die schnellste seit Anfang der
+  1980er): Wertungen und Zuspitzungen.
+- Z. 53 Merged Mining „in kleinem Maßstab“: Einschätzung, nicht mit Zahlen
+  geprüft.
+- Z. 58 „fast fünf Jahre“ seit Taproot: am 14.11.2026 genau fünf Jahre.
+- Z. 65 „im Testnetz“: die Transaktionen liefen auf Signet, einem der
+  Testnetze.
+- Z. 69 „Vertreten von der Knots-Seite“: Zuspitzung (BIP-110 aus dem
+  Knots-Umfeld ist selbst eine Konsensänderung).
+- Z. 75: seit Taproot zusätzlich Schnorr-Signaturen auf derselben Kurve,
+  für die Quantenfrage gleichwertig. BSI „zehn bis fünfzehn Jahre“ steht so
+  bei extraETF, auf den BSI-Seiten selbst fand sich kein Zeitraum.
+- Z. 78/80 „sechzehn Jahre“: gezählt ab den letzten Bewegungen der frühen
+  Coins (2010), ab Netzstart wären es fast 18.
+- Z. 84 Monero „Konsensmechanismus mehrfach planmäßig geändert“: gemeint
+  sind die geplanten Upgrades des PoW-Algorithmus (2018–2019 viermal);
+  kein klarer Fehler.
+- Z. 85 Art. 79 AMLR verbietet das Führen anonymisierender Konten
+  (einschließlich Anonymitäts-Kryptowerte); „handeln oder verwahren“ ist
+  die praktische Folge.
+- Z. 112: bei 60.000–100.000 $ lag die Marktkapitalisierung bei 1,2–2,0
+  Bio. $, die 6,38 Mrd. also bei 0,3–0,5 %; die Rechnung mit 2 Bio. stimmt.
+- Z. 122–146 Drawdowns aus den gerundeten Werten 93,75 / 85,2 / 83,8 /
+  77,5 %: Abweichung unter einem Prozentpunkt. Z. 131 „~1,5 Jahre“: es
+  waren 1,7 Jahre (Juni 2011 bis Februar 2013).
+- Z. 147 Mt. Gox 2011: der Hack (Juni) löste den Absturz aus, das Tief kam
+  im November.
+- Z. 148 „einer von sechzehn“: vier streng fallende Werte haben 1/24, viermal
+  Kopf 1/16; die Aussage trägt.
+- Z. 153 „Leitzinsen zwischen 3 und 6 Prozent“: 13 von 18 Fed-Jahresmitteln
+  1990–2007 liegen darin, Ausnahmen 1990, 2000, 2002–2004, EZB 2003–2005
+  bei 2 %; als „Normalzustand“ vertretbar.
+- Z. 192 „über 0,78 BTC bis 2032“: stimmt, ist aber unscharf (3,125 bis
+  2028, 1,5625 bis 2032, ab 2032 genau 0,78125).
+
+### (3) Abgeschwächt, nicht verifizierbar, ohne Quellen-URL
+
+- **Abgeschwächt:** Z. 110 „Rekord bei 61,19 Milliarden Dollar“ → „rund 61
+  Milliarden Dollar“ (61,19 nirgends auffindbar; The Block nennt „around
+  $61.5 billion“, SoSoValue je nach Tag 58–63 Mrd.).
+- **Nur bis September belegt:** Z. 63 „Signalisierung bei 0 %“ (Spark,
+  15.9.2026); für November keine neuere Quelle gefunden.
+- **Ohne Link:** „block-builders.de: Monero ab 10. Juli 2027 – EU verbietet
+  Börsen, nicht deine Wallet“: nicht gefunden, bleibt ohne Link.
+- **Mit Link, aber abweichendem Originaltitel** (gekürzt oder übersetzt,
+  Datum und Inhalt passen): CoinDesk 13.11., AMINA, Spark, Blockhead,
+  investing.com (Original vom 10.11. US-Zeit).
+- **Linkprüfung:** drei DOIs blocken automatische Abrufe (403) und sind
+  einzeln von lychee ausgenommen (R6-D13), darunter Kydland/Prescott 1977.
+- Mit `*` markierte Belege in VERIFICATION R6 §3 sind über die
+  Ergebniszusammenfassung der Websuche gelesen, nicht als ganze Seite.
+
+### Seit dem 14.11.2026 (Vorschläge, nicht umgesetzt)
+
+- Kurs: Laut Suchergebnissen fiel Bitcoin bis zum 15.11. weiter in den
+  Bereich um 65.000 $ (Schlagzeile Coinpedia, nicht selbst geprüft). Bei
+  einer Aktualisierung des Standabsatzes Preis, Abstand zum Hoch,
+  Fear-and-Greed und ETF-Abflüsse gemeinsam neu erheben.
+- Fed-Sitzung 8./9.12.2026: nach dem Termin das Ergebnis statt der
+  Wahrscheinlichkeit nennen.
+- CTV-Signalisierung: aktueller Wert statt des Septemberstands.
+
+### Englische Fassung: schwierige Stellen
+
+- „wird fast immer geschummelt“ → „people almost always cheat“.
+- „Hauptbahnhof“ (Schelling-Punkt) → „main station“.
+- „Und hier wird es brisant“ → „this is where it gets explosive“.
+- „Kinderkrankheiten, die sich auswachsen“ → „teething troubles that will
+  be outgrown“ (beim Gegenlesen am 18.11. geglättet).
+- „vernichtend“ → „devastating“.
+- Deutsche Begriffe mit Erklärung: „BSI (Federal Office for Information
+  Security)“, „§ 23 EStG (the German Income Tax Act)“; deutsche
+  Quellentitel mit Übersetzung in Klammern.
+
+## Die zwei fälligen Artikel
+
+„Content-Security-Policy für statische Seiten“ (2026-11-06) und „Subset
+Sum: NP-vollständig und trotzdem oft leicht“ (2026-11-13) sind mit jedem
+Build ab ihrem Datum öffentlich; `check:post-surfaces` findet sie in Index,
+Rubrik, Tags, Feed, Sitemap, Suche, `llms.txt` und JSON-LD, `check:ai` in
+`llms-full.txt` und den Zwillingen.
+
+## Schalter und optionale Schritte
+
+- **Trainings-Crawler sperren:** in `src/data/crawlers.ts` bei der Gruppe
+  `training` `allow: true` auf `allow: false`, bauen, veröffentlichen.
+  Dann steht für GPTBot, ClaudeBot, Google-Extended, Applebot-Extended und
+  CCBot `Disallow: /` in `robots.txt`. `robots.txt` ist eine Bitte, keine
+  Durchsetzung: seriöse Crawler halten sich daran, verhindern kann sie
+  nichts.
+- **Optional:** Domain in der Google Search Console und in Bing Webmaster
+  Tools bestätigen und die Sitemap einreichen (`docs/SEO.md`). Der Build
+  pingt nichts an.
+
+## Nicht prüfbar (alles auf dem Server)
+
+Echte Header von Caddy (HSTS, CSP), der `Content-Type` der `.md`-Dateien
+(Vorschlag R6-D12), `security.txt` (nur mit der privaten Kontaktadresse
+im Release), die Sprachtür am echten Host. Nach dem Hochladen prüft
+`npm run verify:live` das alles nur lesend: Sitemap-URLs mit 200,
+Sicherheitsheader und CSP, HSTS, `robots.txt`, `llms*.txt`, Feeds,
+`security.txt`-Ablauf, 404, `hreflang`, canonical, JSON-LD, der
+Bitcoin-Artikel in beiden Sprachen, kein geplanter Artikel erreichbar;
+der Content-Type der Zwillinge ist nur eine Warnung.
+
+## Abweichungen von den Vorgaben
+
+- **Formel mit Temml statt KaTeX:** KaTeX braucht Inline-Styles, die die CSP
+  verbietet; Temml liest dasselbe TeX und erzeugt MathML (D6, R6-D14).
+- **`npm audit`:** `picomatch` ≤ 4.0.7 (GHSA-fc5q-39xc-vjpf, hoch) hat keine
+  korrigierte Version; nur Build-Zeit, für Besucher nicht erreichbar.
+  `npm run audit` lässt genau diese Advisory durch und schlägt von selbst
+  wieder an, sobald eine neuere picomatch-Version erscheint (R6-D15).
+- **Linkprüfung:** drei DOIs einzeln ausgenommen (R6-D13).
+- **Wortzahl:** zählt jetzt nur Wörter (Lesezeit des Bitcoin-Artikels
+  24 → 23 Minuten).
+- Kein Budget erhöht, kein Dunkel-Snapshot geändert.
+
+## Was das Startskript jetzt tut
+
+`ship-update.sh` pusht `r6-update`, öffnet den Pull Request mit Titel und
+Text aus `.cache/pr.md`, wartet auf die CI, führt per Squash-Merge
+zusammen, baut das Release aus `main`, legt es auf dem Server bereit und
+macht den Trockenlauf. Dein einziger Schritt ist der `sudo`-Aufruf, den es
+am Ende ausgibt. Danach: `npm run verify:live`.
+
+Zu lesen (`CONTENT-TODO.md`): die englische Fassung des Bitcoin-Artikels,
+die gemeldeten Punkte des Faktenchecks (vor allem der Preis) und Aporia.
+
 # Revision 5 (2026-10-30)
 
 Veröffentlichen ohne Code, vier Startartikel, pushfertiger Branch. Alles auf

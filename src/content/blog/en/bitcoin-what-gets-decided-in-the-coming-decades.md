@@ -179,7 +179,7 @@ Table: What the designs solve and what they create in return
 | Monero   | both, cleanly           | no scarcity narrative, regulatory exclusion     |
 | Solana   | speed, usage            | validator concentration, outage history         |
 
-These are not teething troubles that will grow out. They are trade-offs. You cannot have an immutable monetary policy and permanently funded security at the same time. And the faster and more flexible a protocol is, the more centralised it is. Bitcoin is slow and rigid because nobody coordinates.
+These are not teething troubles that will be outgrown. They are trade-offs. You cannot have an immutable monetary policy and permanently funded security at the same time. And the faster and more flexible a protocol is, the more centralised it is. Bitcoin is slow and rigid because nobody coordinates.
 
 Bitcoin's greatest strength, its immutability, is its greatest weakness here. Ethereum was able to replace its consensus mechanism completely. Bitcoin cannot do that without breaking precisely the promise its value rests on.
 

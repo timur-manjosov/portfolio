@@ -75,9 +75,11 @@ const allPages = {
   "ds-en": "/en/blog/double-spend-race-recomputed/",
   "csp-de": "/de/blog/content-security-policy-statische-seiten/",
   "subset-de": "/de/blog/subset-sum-np-vollstaendig-und-leicht/",
-  // Revision 6: the Bitcoin article (both languages).
-  "btc-de": "/de/blog/bitcoin-was-entschieden-wird/",
-  "btc-en": "/en/blog/bitcoin-what-gets-decided/",
+  // Revision 6: the Bitcoin article (both languages) and Aporia.
+  "btc-de": "/de/blog/bitcoin-was-in-den-naechsten-jahrzehnten-entschieden-wird/",
+  "btc-en": "/en/blog/bitcoin-what-gets-decided-in-the-coming-decades/",
+  aporia: "/de/projects/aporia/",
+  "aporia-en": "/en/projects/aporia/",
   // Test fixtures (dist-drafts only): example post with maths and code.
   post: "/de/blog/beispiel-rsa-mathe/",
 };

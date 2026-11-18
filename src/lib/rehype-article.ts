@@ -72,6 +72,51 @@ function estimateRem(table: HastNode): number {
 /** Cells of at most this many characters get `cell-short` (no wrapping). */
 const SHORT_CELL = 12;
 
+/** A cell that is mostly figures ("~33 Mio. $", "−93 %", "~170 $ (Jan.
+ *  2015)") gets `cell-num`: tabular figures line its column up, and up to
+ *  NUM_CELL characters it stays on one line (a value split over three lines
+ *  is harder to read than a table that scrolls). Only those cells get
+ *  tabular figures, because Inter's tabular forms also widen the hyphen
+ *  ("Stake-Konzentration", "BIP-110" would read "Stake - Konzentration"). */
+const NUM_CELL = 24;
+function isNumeric(t: string): boolean {
+  const digits = t.match(/\d/g)?.length ?? 0;
+  const letters = t.match(/\p{L}/gu)?.length ?? 0;
+  return digits > 0 && letters <= 2 * digits && !/\p{L}-|-\p{L}/u.test(t);
+}
+
+/** Identifiers like "BIP-360" or "SHA-256" must not break at their hyphen
+ *  (a line ending in "BIP-" with "360" on the next): wrapped in
+ *  `span.nobr`. Code, maths and SVG keep their own text. */
+const IDENT = /\b[A-Z][A-Za-z_]*-\d+\b/g;
+const KEEP_TEXT = new Set(["code", "pre", "script", "style", "svg", "math"]);
+
+function keepIdentifiers(n: HastNode): void {
+  if (!n.children || (n.tagName && KEEP_TEXT.has(n.tagName))) return;
+  const out: HastNode[] = [];
+  for (const c of n.children) {
+    if (c.type !== "text" || !c.value || !c.value.match(IDENT)) {
+      if (c.type === "element") keepIdentifiers(c);
+      out.push(c);
+      continue;
+    }
+    let last = 0;
+    for (const m of c.value.matchAll(IDENT)) {
+      const at = m.index ?? 0;
+      if (at > last) out.push({ type: "text", value: c.value.slice(last, at) });
+      out.push({
+        type: "element",
+        tagName: "span",
+        properties: { className: ["nobr"] },
+        children: [{ type: "text", value: m[0] }],
+      });
+      last = at + m[0].length;
+    }
+    if (last < c.value.length) out.push({ type: "text", value: c.value.slice(last) });
+  }
+  n.children = out;
+}
+
 function markShortCells(n: HastNode): void {
   if (isElement(n, "td") || isElement(n, "th")) {
     if (!n.properties) n.properties = {};
@@ -83,7 +128,10 @@ function markShortCells(n: HastNode): void {
       cls.push(`align-${props.align}`);
       delete props.align;
     }
-    if (text(n).trim().length <= SHORT_CELL) cls.push("cell-short");
+    const t = text(n).trim();
+    const numeric = isNumeric(t);
+    if (t.length <= SHORT_CELL || (numeric && t.length <= NUM_CELL)) cls.push("cell-short");
+    if (numeric) cls.push("cell-num");
     if (cls.length) props.className = cls;
     return;
   }
@@ -306,6 +354,7 @@ export default function rehypeArticle() {
   return (tree: HastNode, file: VFile) => {
     const lang = langOf(file.path ?? file.history?.at(-1));
     tableCounter = 0;
+    keepIdentifiers(tree);
     tables(tree, lang);
     codeBlocks(tree);
     const citations = sources(tree);

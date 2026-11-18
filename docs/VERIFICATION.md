@@ -96,6 +96,26 @@ four posts) × 360/390/768/1024/1280/1920 × light/dark, plus 200 % zoom at
 after the fixes: header two rows at 360, header icons from the new icon
 set, no new findings.
 
+**Round 3 (r3, r3b, 2026-11-18)** after the Bitcoin post, Aporia and the
+two posts that became due (CSP 2026-11-06, Subset Sum 2026-11-13): both
+Bitcoin posts, Aporia DE/EN, CSP, Subset Sum, home DE, blog DE, projects
+× 390/1280 × light/dark, print PDF of the German Bitcoin post; element
+captures at 3× (`.tmp/zoom-el.mjs`) of every table, the formula and the
+sources section.
+
+| Page | Width | Mode | Finding | Correction |
+|---|---|---|---|---|
+| Bitcoin DE/EN | all | both | Table text "Stake-Konzentration", "Soft-Fork-Versuch", "BIP-110" with visibly spaced hyphens: Inter's tabular figures (`tnum`) widen the hyphen too (measured: "a-a" 22 → 25 px) | Tabular figures only in cells marked `cell-num` at build time (mostly figures, no hyphenated word); other cells proportional |
+| Bitcoin DE/EN | 1280 | both | Line ending in "BIP-" with "360" on the next line; in the table "OP_CAT (BIP-" / "347)" | Identifiers "ABC-123" wrapped in `span.nobr` at build time (`rehype-article.ts`), code/maths untouched |
+| all posts with tables | all | both | Rule under the last row shorter and fainter than the others (clipped by the scroll box's 8 px corner radius) | No rule under the last row |
+| Bitcoin DE | 390 | both | Cycle table: "~170 $ (Jan. 2015)" broken over three lines although the table scrolls anyway | Numeric cells up to 24 characters stay on one line; the table scrolls with edge shadow and hint |
+| Bitcoin DE | 390 | light | Opinion note: "(18." / "November 2026)" | `.notice time` does not wrap |
+| Bitcoin DE | print | – | Fine: tables with caption and header rule, formula, sources, no navigation | – |
+| Aporia, projects, home | 390/1280 | both | Fine: Aporia card in the grid and on the home page, fact box with stack and repo link | – |
+
+Element captures after the fixes (r3b): all five tables at 390 light and
+dark, the ECC and Subset Sum tables unchanged apart from the last rule.
+
 ## R6 §3. Bitcoin-Artikel
 
 Timurs Text `prompts/bitcoin-artikel-quelle.md` (Stand 13./14.11.2026),

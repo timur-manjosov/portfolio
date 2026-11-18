@@ -924,6 +924,10 @@ a.chip {
   width: 0.25rem;
   background: var(--gradient-accent);
 }
+/* A date is one unit: "(18. November 2026)" never breaks after "18.". */
+.notice time {
+  white-space: nowrap;
+}
 
 .meta {
   display: flex;
@@ -2326,8 +2330,22 @@ a.chip {
   border-collapse: collapse;
   font-size: var(--text-sm);
   line-height: 1.45;
-  font-variant-numeric: tabular-nums lining-nums;
+  font-variant-numeric: lining-nums;
   min-width: 100%;
+}
+/* Tabular figures only in numeric cells (rehype-article.ts): Inter's
+   tabular forms also widen the hyphen of words like "Stake-Konzentration". */
+.prose .cell-num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+/* The scroll box's rounded corners would clip a rule under the last row
+   into a shorter, fainter line; the table ends with its content. */
+.prose tbody tr:last-child > * {
+  border-bottom: 0;
+}
+/* "BIP-360", "SHA-256": no line break at the hyphen (rehype-article.ts). */
+.prose .nobr {
+  white-space: nowrap;
 }
 .prose caption {
   caption-side: top;

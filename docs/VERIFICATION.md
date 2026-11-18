@@ -96,6 +96,156 @@ four posts) × 360/390/768/1024/1280/1920 × light/dark, plus 200 % zoom at
 after the fixes: header two rows at 360, header icons from the new icon
 set, no new findings.
 
+## R6 §3. Bitcoin-Artikel
+
+Timurs Text `prompts/bitcoin-artikel-quelle.md` (Stand 13./14.11.2026),
+gesetzt als `/de/blog/bitcoin-was-in-den-naechsten-jahrzehnten-entschieden-wird/`
+und übersetzt als `/en/blog/bitcoin-what-gets-decided-in-the-coming-decades/`.
+Schalter `PERSÖNLICHE_ANGABEN: veröffentlichen` (nichts gestrichen).
+"Z." = Zeile der Quelldatei. Abruf aller Quellen: **2026-11-17**. Mit `*`
+markierte Quellen wurden über die Ergebniszusammenfassung der Websuche
+gelesen, nicht als ganze Seite; alle anderen Seiten wurden selbst
+aufgerufen. Der Stand wurde **nicht** nachgezogen (Vorschläge:
+`docs/FINAL-REPORT.md`, Revision 6).
+
+Statuswerte nach dem Auftrag: bestätigt / korrigiert / abgeschwächt /
+entfernt / nicht verifizierbar / nur gemeldet. "Skript" =
+`tests/articles/bitcoin_security_budget.py` (186 Prüfungen in DE + EN,
+`npm run check:article-numbers`, dazu sechs absichtlich geänderte Zahlen,
+die alle gemeldet werden).
+
+### Faktencheck
+
+| Aussage (Zitatanfang, Zeile) | Status | Quelle |
+|---|---|---|
+| Z. 5 „alle zehn Minuten kommt ein Block dazu“ | bestätigt | Whitepaper, Abschn. 7: „blocks are generated every 10 minutes“, https://bitcoin.org/bitcoin.pdf |
+| Z. 6 „Alle vier Jahre halbiert sich die Belohnung … aktuell 3,125 BTC“ | bestätigt | 4. Halving, Block 840.000 am 20.4.2024, 6,25 → 3,125 BTC: The Block, https://www.theblock.co/post/289875 \*; 210.000 Blöcke ≈ 4 Jahre: Skript |
+| Z. 9 „Der Hashprice sinkt, Miner steigen aus, die Difficulty passt sich an“ | bestätigt | Blockhead, 11.11.2026 (Hashprice Oktober −17,5 %, Kapazität verlässt das Netz unter ~31 $), https://www.blockhead.co/2026/11/11/bitcoin-miners-q3-three-majors-earn-most-of-their-revenue-from-ai-while-others-sell-bitcoin-to-fund-the-pivot/ |
+| Z. 10 „Thomas Schelling (1960)“ | bestätigt | The Strategy of Conflict, Harvard University Press, Erstausgabe 1960 (ISBN 9780674840317 ist die Neuauflage) \* |
+| Z. 13 „im Whitepaper mit einem einzigen Satz abgehandelt“ | bestätigt | Whitepaper, Abschn. 6: „Once a predetermined number of coins have entered circulation, the incentive can transition entirely to transaction fees …“ (ein Satz), https://bitcoin.org/bitcoin.pdf |
+| Z. 15 „3,125 BTC × 144 … = 450 BTC … etwa 33 Millionen Dollar“ | bestätigt | Skript (33,3 Mio. $) |
+| Z. 15 „Gebühren machen davon derzeit nur einen niedrigen einstelligen Prozentanteil aus“ | **korrigiert** → „nur unter einem Prozent“ | CCAF, „Funding Bitcoin's Future“, 20.10.2026: 0,67 % des Minerumsatzes in den 90 Tagen bis 4.10.2026, https://www.jbs.cam.ac.uk/2026/paying-for-bitcoins-security-as-the-subsidy-fades/ |
+| Z. 17–34 Tabelle (450 / 225 / 112 / 56 / 28 BTC; ~33 / 17 / 8 / 4 / 2 Mio. $) | bestätigt | Skript; Ausnahme „Tabelle 1“: 112,5 / 56,25 / 28,125 abgeschnitten (Timurs Rundung) |
+| Z. 35 „Versechzehnfachung … 1,18 Millionen … um 24 Billionen … 19 Prozent pro Jahr“ | bestätigt | Skript (1.184.000 $; 23,8 Bio. $ mit dem heutigen Bestand von 20,1 Mio. BTC; 18,9 %/Jahr) |
+| Z. 35 „etwa die Größenordnung des gesamten Goldmarkts“ | bestätigt | WGC: 224.200 t oberirdischer Bestand Ende Q3 2026, „rund 30 Billionen US-Dollar“, https://www.gold.org/goldhub/data/above-ground-stocks \*; bei 3.879 $/oz am 13.11.2026 (Kitco \*) ≈ 28 Bio. $. Gemeldet: mit dem Bestand von 2040 (~20,9 Mio. BTC) wären es ~24,8 Bio. $ |
+| Z. 36 „Die Difficulty passt sich alle zwei Wochen an“ | bestätigt | alle 2.016 Blöcke = zwei Wochen bei 10 min, https://en.bitcoin.it/wiki/Difficulty |
+| Z. 37 „etwa sieben Transaktionen pro Sekunde“ | bestätigt | Croman et al. 2016, „On Scaling Decentralized Blockchains“: Obergrenze 3,3–7 Tx/s \* |
+| Z. 39 Carlsten et al. (2016) | bestätigt | Abstract: bei reinen Gebühren hohe Varianz der Blockerträge, „fork a wealthy block“ wird attraktiv, Selfish Mining mit beliebig kleinem Anteil profitabel, https://www.cs.princeton.edu/~arvindn/publications/mining_CCS.pdf |
+| Z. 39 Budish (2018) | bestätigt | NBER w24717: wiederkehrende Zahlungen an Miner müssen groß sein gegenüber dem einmaligen Nutzen eines Angriffs, https://www.nber.org/papers/w24717 |
+| Z. 43 „Peter Todd hat das 2022 öffentlich vorgeschlagen“ | bestätigt | Blogpost „Surprisingly, Tail Emission Is Not Inflationary“, auf der bitcoin-dev-Liste am 9.7.2022 angekündigt, https://gnusha.org/pi/bitcoindev/Ysm%2FdsclRdCUaiJ5@petertodd.org \* |
+| Z. 43 „die Reaktion war vernichtend“ | nur gemeldet | Wertung; der Thread zeigt deutlichen Widerspruch (u. a. Voskuil) |
+| Z. 44 „Monero macht es seit Jahren“ | bestätigt | 0,6 XMR pro Block nach dem Ende der Hauptemission (Mai/Juni 2022), https://docs.getmonero.org/technical-specs/ |
+| Z. 44 „0,5 BTC … 72 BTC täglich, rund 26.000 im Jahr, also etwa 0,12 Prozent“ | bestätigt | Skript (26.280 BTC; 0,125 %, Ausnahme „0,12 Prozent“: zwei Stellen abgeschnitten) |
+| Z. 44 „Goldförderung … 1,5 bis 2 Prozent des Bestands“ | bestätigt | 3.672 t Förderung 2025 auf 219.891 t Bestand ≈ 1,7 %, https://www.gold.org/about-gold/gold-supply/gold-mining/how-much-gold-has-been-mined \* |
+| Z. 44 „mehr als zehnmal knapper als Gold“ | bestätigt | Skript (Faktor 12 bei 1,5 %, 16 bei 2 %) |
+| Z. 46 „Kydland/Prescott 1977, Nobelpreis 2004“ | bestätigt | „Rules Rather than Discretion“, Journal of Political Economy 85 (1977); Nobelpreis 2004 für „the time consistency of economic policy …“, Econlib-Biografie \*, Nobel-Hintergrundpapier \* (nobelprize.org antwortet automatischen Abrufen mit 403) |
+| Z. 47 „geschätzt 3 bis 4 Millionen BTC … verloren“ | bestätigt | Chainalysis 2020: ~3,7 Mio. BTC (Decrypt \*); Glassnode ~3 Mio. \* |
+| Z. 50 „Blockgrößendebatten haben 2017 … zur Spaltung geführt“ | bestätigt | Bitcoin Cash, 1.8.2017 \* |
+| Z. 53 Merged Mining „funktioniert bereits in kleinem Maßstab“ | nur gemeldet | Einschätzung, in diesem Lauf nicht mit Zahlen geprüft |
+| Z. 58 „Seit Taproot im November 2021“ | bestätigt | Block 709.632, 14.11.2021, https://www.blockchain.com/explorer/blocks/btc/709632 \* |
+| Z. 58 „fast fünf Jahre“ | nur gemeldet | am 13./14.11.2026 genau fünf Jahre (Skript: 4,997 Jahre bis 13.11.) |
+| Z. 63 CTV + CSFS: „Aktivierungsclient seit 30.03.2026, Schwelle 90 % …, Fenster bis März 2027“ | **korrigiert**: „(nur CTV)“ eingefügt | Der Client aktiviert nur BIP-119 (Bit 5, Start 30.3.2026, Timeout 30.3.2027, 1.815/2.016 = 90 %), Delving Bitcoin 9.2.2026, https://mirror.b10c.me/delvingbitcoin-org/2026-02-09-bip-119-ctv-activation-client-id2242.html; AMINA (CSFS nicht Teil) |
+| Z. 63 „Signalisierung bei 0 %“ | bestätigt (Stand Sept. 2026) | Spark Research, 15.9.2026; für November keine neuere Quelle gefunden |
+| Z. 65 OP_CAT: „seit März 2026 vollständig, über 74.000 Transaktionen im Testnetz, keine Aktivierungsparameter“ | bestätigt | Status „Complete“ seit 1.3.2026, ~74.000 Tx, keine Mainnet-Parameter: AMINA, 30.7.2026; Spark „74K+“. Gemeldet: die Transaktionen liefen auf Signet, einem der Testnetze |
+| Z. 67 BIP-110 „im August 2026 an fehlender Miner-Zustimmung gescheitert“ | bestätigt | Spark: Abspaltung mit 2,53 % Hashrate nach zwei Blöcken stehen geblieben, https://www.spark.money/research/bitcoin-ossification-debate-protocol-evolution |
+| Z. 68 „Im Juni 2026 unterzeichneten 66 Entwickler einen offenen Brief“ | **korrigiert**: 2026 → 2025 | Brief vom 9.6.2025, 66 Unterzeichner, https://ctv-csfs.com/; Diskussion auf bitcoin-dev im Juni 2025. Spark (Timurs Quelle) nennt fälschlich Juni 2026 |
+| Z. 68 „fast sechs Monate ins Fenster hinein“ | **korrigiert** → „über sieben Monate“ | Fensterbeginn 30.3.2026 (Delving, s. o.); bis 13.11.2026 sind es 7,5 Monate (Skript) |
+| Z. 69 Saylor: „gut finanzierte Entwickler als größte Gefahr“ | bestätigt | „The biggest danger is a very talented, well-funded, well-intentioned developer …“ (16.9.2025), Protos, 26.1.2026, https://protos.com/ambitious-developers-are-biggest-risk-to-bitcoin-says-michael-saylor |
+| Z. 69 „Vertreten von der Knots-Seite“ | nur gemeldet | Zuspitzung: Dashjr lehnte CTV 2023 als Bedrohung ab (ForkLog \*), BIP-110 aus dem Knots-Umfeld ist aber selbst eine Konsensänderung |
+| Z. 70 „wie 2017 bei Bitcoin Cash“ | bestätigt | s. Z. 50 |
+| Z. 75 „ECDSA auf der Kurve secp256k1“ | bestätigt | gemeldet: seit Taproot zusätzlich Schnorr-Signaturen (BIP-340) auf derselben Kurve, für die Quantenfrage gleichwertig |
+| Z. 75 „Das deutsche BSI rechnet mit zehn bis fünfzehn Jahren“ | bestätigt an Timurs Quelle, nur gemeldet | extraETF, 20.7.2026: das BSI „rechnet mit zehn bis fünfzehn Jahren bis zu einem kryptografisch relevanten Quantencomputer“, https://extraetf.com/de/news/etf-news/die-bedrohung-von-bitcoin-durch-quantencomputer-ist-real-aber-nicht-akut; auf den BSI-Seiten zur Post-Quanten-Kryptografie steht kein Zeitraum (Abruf der EN-Seite) |
+| Z. 76 „Im Februar wurde BIP-360 aufgenommen, ein quantenresistenter Adresstyp“ | bestätigt | in das BIP-Repository gemergt, Bitcoin Magazine 12.2.2026 (P2MR, neuer Ausgabetyp), https://bitcoinmagazine.com/news/bitcoin-advances-toward-quantum-resistance |
+| Z. 76 „Im April folgte BIP-361 von Jameson Lopp und fünf weiteren Entwicklern“ | bestätigt | CoinDesk, 16.4.2026 (veröffentlicht am 14.4.; feste Fünf-Jahres-Migration, danach Einfrieren) |
+| Z. 77 „Changpeng Zhao schlug im Juli 2026 vor“ | **korrigiert**: Juli → Juni | Podcast „Galaxy Brains“ am 18.6.2026, crypto.news, 20.6.2026, https://crypto.news/cz-proposes-freezing-satoshi-bitcoin-stash-to-stop-quantum-theft/ (Berichte im Juli, z. B. coinpaprika 7.7.2026) |
+| Z. 77 „Satoshi Nakamotos rund 1,1 Millionen BTC“ | bestätigt | Schätzungen 1,0–1,1 Mio. (coinpaprika: 1,1 Mio.; CoinDesk, crypto.news: ~1 Mio.) |
+| Z. 78 Adam Back „plädiert für freiwillige Upgrades statt erzwungenem Stilllegen“ | bestätigt | CoinDesk, 16.4.2026, https://www.coindesk.com/tech/2026/04/16/bitcoin-s-quantum-debate-splits-as-adam-back-pushes-optional-upgrades-over-forced-freeze |
+| Z. 78/80 „in sechzehn Jahren“, „seit sechzehn Jahren als verloren“ | nur gemeldet | Zählweise ab den letzten Bewegungen der frühen Coins (2010); ab dem Netzstart (Januar 2009) wären es fast 18 Jahre |
+| Z. 84 Monero: feste Restbelohnung, Mining-Algorithmus für normale Prozessoren | bestätigt | RandomX seit 30.11.2019 (Block 1.978.433), https://docs.getmonero.org/technical-specs/ |
+| Z. 84 „Konsensmechanismus mehrfach planmäßig geändert“ | nur gemeldet | gemeint sind die geplanten Netz-Upgrades: der PoW-Algorithmus wechselte 2018–2019 viermal (CryptoNight v1, v2, R, RandomX); das Verfahren blieb Proof of Work. Kein klarer Fehler |
+| Z. 85 „ab dem 10. Juli 2027 verbietet Artikel 79 der EU-Geldwäscheverordnung …“ | bestätigt | VO (EU) 2024/1624, Art. 79 Abs. 1: Kredit-, Finanzinstitute und Anbieter von Kryptowerte-Dienstleistungen dürfen keine Konten führen, die Anonymisierung ermöglichen, ausdrücklich einschließlich Anonymitäts-Kryptowerten; Geltung ab 10.7.2027, https://www.springlex.eu/de/packages/aml/amlr-regulation/article-79/. Gemeldet: der Wortlaut verbietet das Führen solcher Konten; „handeln oder verwahren“ ist die praktische Folge |
+| Z. 87 Lean Ethereum „im Juli 2026 von Vitalik Buterin und Justin Drake vorgestellt“ | **korrigiert** → „im Juli 2026 von Vitalik Buterin und zuvor von Justin Drake vorgestellt“ | Drake: Ethereum-Foundation-Blog 31.7.2025, https://blog.ethereum.org/2025/07/31/lean-ethereum; Buterin: X-Post 4.7.2026, The Block 5.7.2026 |
+| Z. 87 „bis Ende 2029 über etwa sieben Hard Forks“ | bestätigt | Crypto Briefing, 4.11.2026 („approximately seven hard forks“, Ende 2029); The Block: sieben Upgrades bis 2029 |
+| Z. 88 „weshalb Ethereum wieder inflationär geworden ist“ | bestätigt | Angebot seit Dencun (März 2024) wieder wachsend, The Block 5.2.2025 \*, Blockworks \* |
+| Z. 105 Solana „Validator-Konzentration, Ausfallhistorie“ | bestätigt | Ausfälle 2021–2024, Helius, „A Complete History of Solana Outages“ \* |
+| Z. 107 „Ethereum konnte seinen Konsensmechanismus komplett austauschen“ | bestätigt | The Merge, 15.9.2022, https://ethereum.org/roadmap/merge/ |
+| Z. 110 „starteten am 11. Januar 2024 … bei etwa 46.000 Dollar … Hoch im Oktober 2025 bei über 126.000 … 2,7-Fache“ | bestätigt | Start 11.1.2024, Tagesspanne 45.605–49.111 $ (Kitco \*); Allzeithoch 126.296 $ am 6.10.2025, The Block 7.10.2025, https://www.theblock.co/post/373631/bitcoin-etfs-largest-daily-inflows-since-trump-election-blackrock-ibit-nears-100-billion-usd-aum; Faktor 2,74: Skript |
+| Z. 110 „Rekord bei 61,19 Milliarden Dollar“ | **abgeschwächt** → „rund 61 Milliarden Dollar“ | 61,19 nicht auffindbar; The Block 7.10.2025: „around $61.5 billion“; SoSoValue-Werte je nach Tag 58–63 Mrd. \*. Der Monat (Oktober 2025) ist bestätigt |
+| Z. 111 „Zwischen November 2025 und Februar 2026 … 6,38 Milliarden“ | bestätigt (im Rahmen der Anbieterunterschiede) | Monatswerte 3,5 + 1,1 + 1,6 + 0,206 ≈ 6,41 Mrd. $, CoinDesk 1.4.2026, https://www.coindesk.com/markets/2026/04/01/bitcoin-etfs-post-first-inflows-since-october-as-price-stabilizes; „$6.39 billion … four-month outflow streak“, circlo 2.3.2026 |
+| Z. 111 „fiel Bitcoin von über 100.000 auf nahezu 60.000 Dollar“ | bestätigt | Tief 60.008 $ am 5./6.2.2026, The Block, https://www.theblock.co/post/388759/bitcoin-sees-flash-crash-60000 |
+| Z. 112 „im Bereich von zwei Billionen … etwa 0,3 Prozent“ | bestätigt (Rechnung), nur gemeldet | Skript (0,32 %). Gemeldet: bei 60.000–100.000 $ lag die Marktkapitalisierung bei 1,2–2,0 Bio. $, die 6,38 Mrd. also bei 0,3–0,5 % |
+| Z. 113 Gabaix und Koijen (2021): ein Dollar bewegt „um etwa fünf Dollar“ | bestätigt | NBER w28967: „investing $1 in the stock market increases the market's aggregate value by about $5“, https://www.nber.org/papers/w28967 |
+| Z. 122–146 Zyklus-Tabelle (Hoch, Tief, Drawdown) | bestätigt | Spark-Glossar „Bear Market“ (~32/~2, ~1.150/~170, ~19.783/~3.122, ~69.044/~15.479 $), https://www.spark.money/glossary/bear-market; NYDIG über Motley Fool \*. Ausnahme „Drawdowns“: aus den eigenen gerundeten Werten 93,75 / 85,2 / 83,8 / 77,5 %, Abweichung < 1 Prozentpunkt (Skript) |
+| Z. 131 „~1,5 Jahre“ bis zum neuen Hoch nach 2011 | nur gemeldet | Hoch 9.6.2011 (31,91 $), neues Hoch 27.2.2013, also 1,7 Jahre, Bitcoin Magazine \* |
+| Z. 147 Mt.-Gox-Hack 2011, Mt.-Gox-Zusammenbruch, ICO-Blase, Terra/Luna, Celsius, Three Arrows, FTX | bestätigt | allgemein dokumentierte Ereignisse, in diesem Lauf nicht einzeln aufgerufen; gemeldet: der Hack (Juni 2011) löste den Absturz aus, das Tief kam im November |
+| Z. 148 „in einem von sechzehn Fällen“ | nur gemeldet | stimmt für viermal Kopf (1/16); vier streng fallende Werte bei unabhängigen Ziehungen haben 1/24 (Skript). Die Aussage trägt |
+| Z. 149 „2022 ohne Pensionsfonds“ | nur gemeldet | Zuspitzung, nicht als Tatsachenbehauptung geprüft |
+| Z. 151 „Beim Halving 2024 sank das tägliche Neuangebot von 900 auf 450 BTC“ | bestätigt | Skript; The Block 20.4.2024 \* |
+| Z. 153 „Die Jahre 2009 bis 2021 – Nullzins, teils Negativzins“ | bestätigt | Fed Funds nahe null 2009–2015 und 2020–2021 (FRED FEDFUNDS); EZB-Leitzinsen, https://www.ecb.europa.eu/stats/policy_and_exchange_rates/key_ecb_interest_rates/html/index.en.html |
+| Z. 153 „Der Normalzustand der 1990er bis 2007 lag bei Leitzinsen zwischen 3 und 6 Prozent“ | nur gemeldet | Fed-Jahresmittel 1990–2007: 13 von 18 zwischen 3 und 6 %; Ausnahmen 1990 (8,1 %), 2000 (6,2 %), 2002–2004 (1,1–1,7 %), https://fred.stlouisfed.org/series/FEDFUNDS; EZB 2,0 % von Juni 2003 bis Dezember 2005. Als „Normalzustand“ vertretbar, kein klarer Fehler |
+| Z. 154 „2022, die schnellste Zinswende der Geschichte“ | nur gemeldet | die schnellste seit Anfang der 1980er (NPR \*, WEF-Vergleich 1988–2022 \*); „der Geschichte“ ist eine Zuspitzung |
+| Z. 154 „Bitcoin verlor rund 77 Prozent“ | bestätigt | s. Zyklus-Tabelle |
+| Z. 155 „Russische und chinesische Aktien wurden Anfang des 20. Jahrhunderts wertlos“ | **korrigiert** → „in der ersten Hälfte des 20. Jahrhunderts“ | Russland 1917, China 1949 (Dimson/Marsh/Staunton, Global Investment Returns Yearbook \*) |
+| Z. 155 „der Nikkei brauchte vom Hoch 1989 über 30 Jahre“ | bestätigt | Schlusshoch 38.915,87 am 29.12.1989, neues Hoch am 22.2.2024 (34 Jahre), nippon.com \* |
+| Z. 161 Szenariorechnung (drei Werte) | bestätigt | Skript |
+| Z. 163 Diversifikationsrendite „näherungsweise ½ × (Σwᵢσᵢ² − σₚ²)“ | bestätigt | Willenbrock (2011), Gl. 10, https://arxiv.org/abs/1109.1256 (gelesen über ar5iv) |
+| Z. 166 „setzt die 12-Monats-Haltefrist neu an … steuerpflichtiges Veräußerungsgeschäft nach § 23 EStG“ | bestätigt | § 23 Abs. 1 Satz 1 Nr. 2 EStG (Frist ein Jahr), https://www.gesetze-im-internet.de/estg/__23.html; Tausch gilt als Veräußerung und Neuanschaffung: BMF-Schreiben vom 6.3.2025 (über CMS \*) |
+| Z. 185 BIPs auf GitHub, mempool.space, Glassnode, Coin Metrics, Cambridge Mining Map | bestätigt | bekannte Datenquellen, nicht einzeln aufgerufen |
+| Z. 192 „Die Belohnung liegt bis 2032 noch über 0,78 BTC pro Block“ | nur gemeldet | stimmt, ist aber unscharf: 3,125 bis 2028, 1,5625 bis 2032, ab 2032 genau 0,78125 (Skript) |
+| Z. 196 „unter 70.000 Dollar“ (13./14.11.2026) | bestätigt | CoinDesk, 13.11.2026: „fell below $70,000“ |
+| Z. 196 „rund 46 Prozent unter dem Hoch von 126.000 Dollar“ | bestätigt, nur gemeldet | entspricht ~68.000 $ (Skript); am 13.11. unter 68.000 $ (Cointelegraph über edgex, https://pro.edgex.exchange/en-US/news/article/crypto-fear-greed-index-20-bitcoin-68k). Gemeldet: die Tabelle in Z. 17–34 rechnet mit 74.000 $ (bei 74.000 $ wären es ~41 %). Eingabewerte nicht angeglichen, Timur entscheidet |
+| Z. 196 „Fear-and-Greed-Index stand bei 20“ | bestätigt | 13.11.2026, edgex/Cointelegraph (s. o.) |
+| Z. 196 „1,56 Milliarden Dollar Nettoabfluss im Jahresverlauf“ | bestätigt | CoinDesk, 13.11.2026, https://www.coindesk.com/markets/2026/11/13/bitcoin-etfs-are-now-down-over-usd1-5-billion-in-net-outflows-for-the-year |
+| Z. 196 „für den 9. Dezember eine Fed-Zinserhöhung mit rund 88 Prozent“ | bestätigt | 88,8 % für +25 Bp im Dezember, investing.com 10.11.2026; FOMC-Sitzung 8.–9.12.2026, https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm |
+
+### Quellenabschnitt: Links
+
+| Eintrag | Link | Befund |
+|---|---|---|
+| Carlsten et al. (2016) | https://www.cs.princeton.edu/~arvindn/publications/mining_CCS.pdf | Titel identisch (erweiterte Fassung des CCS-Papiers) |
+| Budish (2018) | https://www.nber.org/papers/w24717 | identisch |
+| Gabaix, Koijen (2021) | https://www.nber.org/papers/w28967 | identisch |
+| Kydland, Prescott (1977) | https://doi.org/10.1086/260580 | DOI; der Verlag antwortet automatischen Abrufen mit 403, daher einzeln von der Linkprüfung der CI ausgenommen (DECISIONS R6-D13) |
+| Schelling (1960) | https://www.hup.harvard.edu/books/9780674840317 | Verlagsseite der Neuauflage; Titel identisch |
+| CoinDesk (13.11.2026) | s. o. | Timurs Titel ist eine deutsche Wiedergabe von „Bitcoin ETFs are now down over $1.5 billion in net outflows for the year“; Datum identisch |
+| AMINA Bank (30.07.2026) | https://aminagroup.com/research/bitcoin-fork-august-2026-bip-110-ecash-covenants-and-the-quantum-clock/ | Originaltitel enthält zusätzlich „eCash“; Timurs Titel gekürzt |
+| Spark Research (15.09.2026) | https://www.spark.money/research/bitcoin-ossification-debate-protocol-evolution | Originaltitel länger („… and the Future of Protocol Upgrades“) |
+| CoinDesk (16.04.2026) | s. o. | identisch |
+| extraETF | s. o. | identisch; Datum 20.7.2026 (aktualisiert 7.10.2026), bei Timur ohne Datum |
+| Blockhead (11.11.2026) | s. o. | Originaltitel „Bitcoin Miners' Q3 Shows Hashprice Competing With AI Leases for Every Megawatt“; Timurs Titel gekürzt |
+| Crypto Briefing | https://cryptobriefing.com/ethereum-fork-plan-lean-ethereum-2029/ | identisch; Datum 4.11.2026, bei Timur ohne Datum |
+| block-builders.de | – | **nicht gefunden** (Websuche, auch mit Domainfilter); bleibt ohne Link |
+| investing.com (11.11.2026) | https://www.investing.com/news/economy-news/fed-rate-hike-odds-in-december-at-88-after-hot-cpi-cme-fedwatch-5017585 | Originaltitel „Fed rate hike odds in December at 88% after hot CPI- CME Fedwatch“, veröffentlicht 10.11.2026 22:21 (US-Zeit); Timurs Titel ist eine deutsche Wiedergabe |
+
+Titel und Daten im Artikel bleiben wie bei Timur; wo der Originaltitel nur
+gekürzt oder übersetzt ist und Datum, Herausgeber und Inhalt eindeutig
+passen, ist der Link gesetzt (Auftrag 2.6: kein Eintrag mit einer
+fremden Quelle verlinkt).
+
+### Qualitätsdurchgang
+
+1. **Zahlen:** Skript und `check:article-numbers` grün (186 Prüfungen,
+   6/6 Mutationen erkannt); Tabelle oben vollständig für jede
+   nachprüfbare Aussage.
+2. **Gerenderte Seite:** siehe R6 §2, Runde 3 (390 und 1280 px, hell und
+   dunkel, fünf Tabellen mit `caption`, die Formel als MathML mit
+   `alttext`, Inhaltsverzeichnis, Quellenabschnitt, Druckansicht).
+3. **Auftauchen:** `check:post-surfaces` (Seite + JSON-LD, Blogindex,
+   Archiv, Kategorie „Standpunkte“/„Opinion“, jede Tag-Seite, Feed,
+   Sitemap, Suche, `llms.txt`) und `check:ai` (`llms-full.txt`,
+   Markdown-Zwilling) grün. **Neutral:** `check:post-surfaces` prüft für
+   diesen Artikel zusätzlich, dass Titel, Beschreibung, Open Graph,
+   Twitter-Karte, JSON-LD, Feed-Kopf, `llms.txt`-Eintrag, Suchindex-Titel
+   und -Beschreibung und der Kopf des Markdown-Zwillings keines der Wörter
+   des persönlichen Teils nennen (Gegenprobe: ein Wort aus der
+   Beschreibung in die Liste gesetzt → Fehler).
+4. **DE gegen EN gelesen** (Zahlen, Eigennamen, Tabellen, Listen):
+   gleiche Absätze, Überschriften, Tabellenzeilen und Listen; alle
+   Korrekturen in beiden Fassungen. Einzige Zusätze der Übersetzung sind
+   zwei Erklärungen für englische Leser: „BSI (Federal Office for
+   Information Security)“ und „§ 23 EStG (the German Income Tax Act)“,
+   dazu die Übersetzungen der deutschen Quellentitel in Klammern.
+
 # Revision 5 (2026-10-30)
 
 Launch posts, scheduled posts, `publish`, editing without code, GitHub

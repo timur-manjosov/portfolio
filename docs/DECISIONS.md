@@ -1506,3 +1506,59 @@ all four Lighthouse categories, and body text already reaches 16:1.
   Astro's container API (`experimental_AstroContainer`, the documented way
   to render a content entry outside a page); heading anchors and the
   table hints are dropped, site URLs made absolute.
+
+## R6-D13. External link check: three DOIs excluded one by one
+
+- **Finding:** CI checks external links with lychee (`--accept
+  200,202,206,429`). With today's build the subset-sum and CSP posts are
+  public for the first time, and the Bitcoin post adds its sources. Three
+  DOI targets answer automated requests with **403** (tested 2026-11-17 by
+  fetching each target): `10.1086/260580` (Kydland/Prescott 1977,
+  University of Chicago Press) and `10.1145/321812.321823`,
+  `10.1145/2455.2461` (Horowitz/Sahni 1974, Lagarias/Odlyzko 1985, ACM).
+  Every other new external link answered.
+- **Decision:** exclude exactly these three URLs in
+  `.github/workflows/check.yml`, with the reason in a comment there. The
+  DOI stays in the text: it is the stable identifier the brief asks for.
+- **Alternatives:** a browser user agent for lychee (would hide real
+  breakage on every site and pretends to be something it is not);
+  dropping the links (the brief prefers a stable URL); JSTOR or a mirror
+  (JSTOR blocks the same way, mirrors are not stable).
+- **Not excluded, noted as a risk:** the news sources of the Bitcoin post
+  (CoinDesk, investing.com, Crypto Briefing) answered a normal fetch; if
+  one of them blocks lychee in CI, it gets its own exclusion with the same
+  reasoning.
+
+## R6-D14. The Bitcoin post: setting, metadata, checks
+
+- **Text:** Timur's wording unchanged except the corrections of the fact
+  check (VERIFICATION R6 §3: seven corrections in six places, one
+  weakening); switch
+  `PERSÖNLICHE_ANGABEN: veröffentlichen`, nothing removed.
+- **Metadata:** slug `bitcoin-was-in-den-naechsten-jahrzehnten-entschieden-wird`
+  / `bitcoin-what-gets-decided-in-the-coming-decades`, pair key
+  `bitcoin-coming-decades`, category `opinion` (Standpunkte: the text is a
+  dated position, which is what the category promises), tags bitcoin,
+  security budget, governance, quantum computing, game theory. The
+  description names the four topics only. English title "Bitcoin: what
+  gets decided in the coming decades" (sentence case like every other
+  English title of the site), `status: draft-review` for the translation
+  only.
+- **Neutral surfaces, enforced:** `check:post-surfaces` keeps a short
+  list of words that mark the personal part of the text and fails if one
+  appears in the title, description, Open Graph/Twitter tags, JSON-LD,
+  feed item head, `llms.txt` entry, search-index title/description or the
+  Markdown twin's head. Full-text outputs (page, `content:encoded`, twin
+  body, `llms-full.txt`, the search index's text field, which full-text
+  search needs) show the text as published, as the brief says.
+- **Formula with a spoken description:** `$tex %% words$` puts the words
+  into the `alttext` of the `<math>` element (`rehype-temml.ts`); the
+  Markdown twin drops them and keeps plain TeX. MathML stays the
+  rendering (D6): the brief says "KaTeX", but KaTeX's HTML output needs
+  inline styles the CSP forbids; Temml reads the same TeX.
+- **Numbers:** `tests/articles/bitcoin_security_budget.py` recomputes every
+  number from the consensus parameters and the text's dated inputs and
+  checks both languages; deliberate deviations are named exceptions
+  ("Tabelle 1", "0,12 Prozent", "Drawdowns", "Preis").
+  `check:article-numbers` runs it in `npm run check` and proves it bites:
+  six copies with one changed number each must all fail.

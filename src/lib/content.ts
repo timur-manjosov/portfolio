@@ -101,9 +101,15 @@ export function forListing<C extends Localized>(items: Parsed<C>[], lang: Lang):
   return items.filter((i) => i.lang === lang || !keysInLang.has(i.key));
 }
 
-/** Words of a Markdown body (code and math count as words). */
+/** Words of a Markdown body (code and math count as words). Comments and
+ *  link targets are not text; tokens without a letter or digit (table
+ *  pipes, list markers, dashes, "=") are not words. */
 export function wordCount(body: string | undefined): number {
-  return (body ?? "").trim().split(/\s+/).filter(Boolean).length;
+  return (body ?? "")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/\]\([^)\s]*\)/g, "]")
+    .split(/\s+/)
+    .filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
 }
 
 /** Reading time in minutes at ~220 words per minute. */

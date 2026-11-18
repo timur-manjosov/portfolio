@@ -51,7 +51,7 @@ after the run. Order (brief §0): 2.1, 2.2, 2.8, 2.3 with 2.4, 2.5, 2.6,
 - [x] R6.5 SEO + AI visibility (`b61e90e`, `16232d4`, `328d768`)
 - [x] R6.6 Bitcoin article (DE + EN, dated 2026-11-18), fact check (VERIFICATION R6 §3), number script + `check:article-numbers` (`6f5e89d`, `ba3e08f`); new picomatch advisory gated by `tools/check-audit.mjs` (R6-D15, `8e78d87`)
 - [x] R6.7 Aporia (`64376fe`); due posts CSP (2026-11-06) and Subset Sum (2026-11-13) public, on every surface (`check:post-surfaces`: 8 posts)
-- [ ] R6.9 verify:live
+- [x] R6.9 `verify:live` + `check:verify-live` (6 cases against the local server), PUBLISHING §4, GO-LIVE §9
 - [ ] R6.10 Close: gate, prepush GO, docs, `.cache/pr.md`
 
 ## Revision 5 (brief `prompts/portfolio-umbau-5.md`, 2026-10-29/30)

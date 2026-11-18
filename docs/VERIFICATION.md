@@ -266,6 +266,62 @@ fremden Quelle verlinkt).
    Information Security)“ und „§ 23 EStG (the German Income Tax Act)“,
    dazu die Übersetzungen der deutschen Quellentitel in Klammern.
 
+## R6 §4. After (2026-11-18, branch `r6-update`)
+
+Same tools and settings as §1; system Chromium 157.0.8103.78. The page set
+gained the Bitcoin post (`tools/measure-pages.mjs`).
+
+**Transfer size and layout shift** (`node tools/measure.mjs dist`):
+
+| Page | Requests | HTML | CSS | JS | Fonts | Images | Total (KB, gzip) | CLS | Before |
+|---|---|---|---|---|---|---|---|---|---|
+| Start DE `/de/` | 7 | 4.4 | 10.3 | 1.2 | 47.1 | 0.3 | 63.5 | 0.000 | 60.5 |
+| Start EN `/en/` | 7 | 4.3 | 10.3 | 1.2 | 47.1 | 0.3 | 63.3 | 0.000 | 60.4 |
+| Blog index `/de/blog/` | 7 | 3.8 | 10.3 | 1.2 | 47.1 | 0.3 | 62.9 | 0.000 | 59.2 |
+| Long post (maths, code) | 10 | 14.4 | 10.3 | 1.2 | 208.8 | 0.3 | 235.1 | 0.000 | 462.4 |
+| Bitcoin post (tables, formula) | 9 | 22.7 | 10.3 | 1.2 | 178.6 | 0.3 | 213.2 | 0.000 | – |
+| Projects `/en/projects/` | 8 | 3.5 | 10.3 | 1.8 | 47.1 | 0.3 | 63.1 | 0.000 | 59.7 |
+| Project page `/de/projects/aura/` | 8 | 4.0 | 10.3 | 1.2 | 75.0 | 0.3 | 90.9 | 0.000 | 59.7 |
+| About `/de/about/` | 9 | 4.9 | 10.3 | 1.2 | 105.3 | 0.3 | 122.1 | 0.000 | 60.7 |
+| Now `/de/now/` | 8 | 3.2 | 10.3 | 1.2 | 75.0 | 0.3 | 90.1 | 0.000 | 58.9 |
+| Not found | 7 | 2.5 | 10.3 | 1.2 | 47.1 | 0.3 | 61.6 | 0.000 | 58.6 |
+
+Budgets (brief §2.3): home 63.5 KB of 120 KB including fonts, JS 1.2 KB of
+15 KB, CLS 0 everywhere; no budget raised. Pages with running text load
+STIX Two Text (R6-D3; files: 27.9 KiB upright, 30.3 KiB italic where
+used); the long post halved because STIX Two Math is now a subset (file
+103.6 KiB, before 394 KB as measured in §1).
+
+**Lighthouse** (`node tools/lighthouse.mjs dist`, mobile):
+
+| Page | Perf. | A11y | Best Pr. | SEO | FCP | LCP | TBT | CLS |
+|---|---|---|---|---|---|---|---|---|
+| Start DE | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Start EN | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Blog index | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Long post (maths, code) | 100 | 100 | 100 | 100 | 1.1 s | 1.1 s | 50 ms | 0 |
+| Bitcoin post | 100 | 100 | 100 | 100 | 1.1 s | 1.1 s | 0 ms | 0 |
+| Projects | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Project page | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| About | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Now | 100 | 100 | 100 | 100 | 0.9 s | 0.9 s | 0 ms | 0 |
+| Not found `/de/404/` | 100 | 100 | 100 | 63 | 0.9 s | 0.9 s | 0 ms | 0 |
+
+The 404's SEO score is low by design, as before (`noindex`, no canonical).
+
+**Contrast:** 116 pairs, all AA; body text 16.26:1 light, 16.62:1 dark
+(AAA), unchanged; dark palette unchanged (`check:dark-tokens`, no
+snapshot update in this revision).
+
+**Gates:** `npm run check` green (including the new `check:article-numbers`,
+`check:verify-live` and the audit gate of R6-D15);
+`npm run check:browser:system` green (96 pages, axe light + dark, overflow
+320–1280, no-JS, 0 CSP violations, no third-party requests or cookies).
+
+**Word count:** `wordCount` (JSON-LD, reading time) now counts words only:
+no comments, link targets, table pipes or list markers. Bitcoin post DE
+5,269 → 4,966 words (24 → 23 min).
+
 # Revision 5 (2026-10-30)
 
 Launch posts, scheduled posts, `publish`, editing without code, GitHub

@@ -5,6 +5,7 @@ export const DEFAULT_PAGES = {
   "Start EN": "/en/",
   "Blog index": "/de/blog/",
   "Long post (maths, code)": "/de/blog/doppelausgabe-whitepaper-nachgerechnet/",
+  "Bitcoin post (tables, formula)": "/de/blog/bitcoin-was-in-den-naechsten-jahrzehnten-entschieden-wird/",
   Projects: "/en/projects/",
   "Project page": "/de/projects/aura/",
   About: "/de/about/",

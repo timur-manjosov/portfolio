@@ -3,9 +3,11 @@
 Resume point for interrupted runs, updated after every finished step.
 Current state first; the revisions below are the history.
 
-## Revision 6 in progress (2026-11-14 to 2026-11-18)
+## Revision 6 done (2026-11-14 to 2026-11-18)
 
-Branch `r6-update`. Resume at the first open item of "Revision 6" below.
+Branch `r6-update`, everything committed; the start script pushes, opens
+the pull request (`.cache/pr.md`), merges after CI and stages the release.
+Summary: `docs/FINAL-REPORT.md`, Revision 6.
 The section "Stand und nächste Schritte (2026-10-30)" is the state before
 this revision (the site went live on 2026-10-30).
 
@@ -52,7 +54,7 @@ after the run. Order (brief §0): 2.1, 2.2, 2.8, 2.3 with 2.4, 2.5, 2.6,
 - [x] R6.6 Bitcoin article (DE + EN, dated 2026-11-18), fact check (VERIFICATION R6 §3), number script + `check:article-numbers` (`6f5e89d`, `ba3e08f`); new picomatch advisory gated by `tools/check-audit.mjs` (R6-D15, `8e78d87`)
 - [x] R6.7 Aporia (`64376fe`); due posts CSP (2026-11-06) and Subset Sum (2026-11-13) public, on every surface (`check:post-surfaces`: 8 posts)
 - [x] R6.9 `verify:live` + `check:verify-live` (6 cases against the local server), PUBLISHING §4, GO-LIVE §9
-- [~] R6.10 Close: gate + browser suite + Lighthouse + budgets green (VERIFICATION R6 §4), docs and FINAL-REPORT R6 written; open: `.cache/pr.md`, `check:prepush` GO
+- [x] R6.10 Close: gate + browser suite + Lighthouse + budgets green (VERIFICATION R6 §4), docs and FINAL-REPORT R6 written, `.cache/pr.md` written, `check:prepush` GO
 
 ## Revision 5 (brief `prompts/portfolio-umbau-5.md`, 2026-10-29/30)
 

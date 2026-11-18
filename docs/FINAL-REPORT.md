@@ -232,6 +232,13 @@ der Content-Type der Zwillinge ist nur eine Warnung.
 - **Linkprüfung:** drei DOIs einzeln ausgenommen (R6-D13).
 - **Wortzahl:** zählt jetzt nur Wörter (Lesezeit des Bitcoin-Artikels
   24 → 23 Minuten).
+- **`check:prepush`:** meldete im Abschluss acht Fehlalarme (Koordinaten
+  im SVG-Pfad des GitHub-Logos als IPv4-Adresse, die öffentlichen
+  Crawler-Namen in `src/data/crawlers.ts` als Geheimnis). Beide Regeln sind
+  präzisiert, nicht abgeschaltet, mit Gegenproben im Test (R6-D17). Dabei
+  habe ich meinen eigenen, wenige Minuten alten und nie gepushten letzten
+  Commit einmal mit `--amend` korrigiert, weil sein Text die
+  Koordinatenfolge wörtlich zitierte; ältere Commits sind unverändert.
 - Kein Budget erhöht, kein Dunkel-Snapshot geändert.
 
 ## Was das Startskript jetzt tut

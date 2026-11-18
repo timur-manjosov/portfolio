@@ -1589,3 +1589,22 @@ all four Lighthouse categories, and body text already reaches 16:1.
 - **Revision:** as soon as `picomatch` > 4.0.7 is published, the gate
   fails; update (`npm update picomatch` or via Astro/Vite), confirm the
   advisory is gone, delete the exception.
+
+## R6-D16. Tables and word count after screenshot round 3
+
+- **Tabular figures only where they align numbers.** Inter's `tnum` also
+  widens the hyphen (measured 22 → 25 px for "a-a"), so
+  "Stake-Konzentration" read as "Stake - Konzentration". `rehype-article.ts`
+  marks cells that are mostly figures (`cell-num`); only those get
+  `tabular-nums`, and up to 24 characters they stay on one line.
+  Alternatives: `tnum` everywhere and live with the gaps; non-breaking
+  hyphens in the text (changes the author's characters and search text).
+- **Identifiers keep their hyphen** ("BIP-360", "SHA-256"): wrapped in
+  `span.nobr` at build time; code and maths untouched. Alternative:
+  U+2011 in the Markdown (same objection as above).
+- **No rule under the last table row:** the scroll box's 8 px radius
+  clipped it into a shorter, fainter line. Alternative: drop the radius
+  (the focus ring follows it).
+- **`wordCount` counts words**, not Markdown tokens (comments, link
+  targets, table pipes, list markers were counted before): JSON-LD
+  `wordCount` and the reading time match the visible text more closely.

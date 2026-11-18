@@ -1562,3 +1562,30 @@ all four Lighthouse categories, and body text already reaches 16:1.
   ("Tabelle 1", "0,12 Prozent", "Drawdowns", "Preis").
   `check:article-numbers` runs it in `npm run check` and proves it bites:
   six copies with one changed number each must all fail.
+
+## R6-D15. `npm run audit`: one exception for an unfixed build-time advisory
+
+- **Finding (2026-11-18):** `npm audit` reports **GHSA-fc5q-39xc-vjpf**
+  (CVE-2026-112366, high, CWE-1333) for `picomatch` ≤ 4.0.7: ReDoS when an
+  attacker controls both the glob pattern and the matched string (read at
+  github.com/advisories; published 2026-10-19, widened 2026-11-17). 4.0.7
+  is the latest release, **no patched version exists**. It reaches 13
+  packages, all through Astro, Vite, tinyglobby and anymatch; the old
+  `npm audit --audit-level=moderate` therefore failed the gate and CI.
+- **Assessment:** not reachable. `picomatch` runs only at build time (and
+  in the local dev server), matching the repository's own globs against
+  its own file paths. The site is static files behind Caddy; no Node
+  process runs on the server, no visitor input reaches a glob.
+- **Decision:** `npm run audit` is now `tools/check-audit.mjs`: it fails on
+  every moderate-or-worse advisory except listed exceptions, and an
+  exception **expires by itself** when the package publishes a version
+  newer than the last vulnerable one or when the advisory's range
+  changes. Five synthetic reports prove the rules bite on every run.
+- **Alternatives:** `npm audit fix --force` (forbidden; would install
+  astro 5.3.0, two majors back); an `overrides` entry (there is no fixed
+  version to pin); `--audit-level=critical` (would hide every other high
+  finding); `audit-ci` or `better-npm-audit` (a new dependency for twenty
+  lines of logic).
+- **Revision:** as soon as `picomatch` > 4.0.7 is published, the gate
+  fails; update (`npm update picomatch` or via Astro/Vite), confirm the
+  advisory is gone, delete the exception.

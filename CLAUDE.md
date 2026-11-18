@@ -134,9 +134,11 @@ runs as root on the VPS. Aura (`aura.timurmanjosov.com`) has its own Caddy
 block and containers on the same host: never touch them. The generator
 proves the rest of the Caddyfile stays byte-identical.
 
-`npm audit`: 3 **low** findings (katex via remark-math's syntax parser,
-build-time only, KaTeX not used for rendering), documented as non-blocking
-in `docs/VERIFICATION.md` §9. `npm run audit` fails on moderate or worse.
+`npm run audit` (`tools/check-audit.mjs`) fails on moderate or worse,
+except named build-time-only advisories without any fixed version; each
+exception expires when a newer version of the package appears (today:
+picomatch GHSA-fc5q-39xc-vjpf, DECISIONS R6-D15). katex is pinned past its
+advisory by an `overrides` entry (R6-D1).
 
 ## GitHub-Workflow
 

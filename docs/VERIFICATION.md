@@ -1192,6 +1192,14 @@ only "fix" (`npm audit fix --force`) downgrades remark-math to 3.0.1, a
 breaking change. `npm run audit` uses `--audit-level=moderate`, so a
 moderate or worse finding fails the check.
 
+**Update R6 (2026-11-18):** the katex advisory is gone (override to
+0.19.1, DECISIONS R6-D1). `npm run audit` is now `tools/check-audit.mjs`:
+moderate or worse fails, except picomatch GHSA-fc5q-39xc-vjpf (high, no
+patched version, build time only), which expires as soon as a newer
+picomatch is published (DECISIONS R6-D15). Output on 2026-11-18: "5
+self-test cases; 1 advisory(ies), none blocking; excepted:
+GHSA-fc5q-39xc-vjpf".
+
 ## 10. Accessibility
 
 - **axe-core in jsdom**, tags `wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa,

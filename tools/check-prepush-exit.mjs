@@ -5,9 +5,12 @@
 //   node tools/check-prepush-exit.mjs
 //
 //   GO (only noreply commits)                        → 0, prints "GO:"
+//   GO (six noreply commits since origin/main)        → 0
 //   NO-GO (a commit with a private address)           → 1, prints "NO-GO:"
+//   NO-GO (private committer in the middle of eight)  → 1, names that commit
 //   NO-GO (a server path in an added line)            → 1
 //   NO-GO (a private file that cannot be read)        → 1 (fail closed)
+//   GO (SVG path data, published user-agent names)    → 0; controls → 1
 //   usage error, unknown ref                          → 2
 import { spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -35,10 +38,15 @@ function repo() {
   // The check reads the public facts from src/data/site.ts (untracked here).
   mkdirSync(join(dir, "src/data"), { recursive: true });
   copyFileSync(resolve(import.meta.dirname, "../src/data/site.ts"), join(dir, "src/data/site.ts"));
-  const commit = (file, text, email) => {
+  const commit = (file, text, email, committerEmail = email) => {
     writeFileSync(join(dir, file), text);
     git("add", file);
-    git("-c", "user.name=Test", "-c", `user.email=${email}`, "commit", "-q", "-m", `add ${file}`);
+    const p = spawnSync(
+      "git",
+      ["-c", "user.name=Test", "-c", `user.email=${email}`, "commit", "-q", "-m", `add ${file}`],
+      { cwd: dir, encoding: "utf8", env: { ...process.env, GIT_COMMITTER_EMAIL: committerEmail } },
+    );
+    if (p.status !== 0) throw new Error(`git commit: ${p.stderr}`);
     return git("rev-parse", "HEAD");
   };
   return { dir, git, commit };
@@ -84,6 +92,72 @@ try {
     `exit ${p.status}: ${p.stdout.slice(-300)}`,
   );
 
+  // Several commits since origin/main (the start script's case, R6 §2.8 d):
+  // every commit is checked, the count does not matter. Without --base the
+  // check uses origin/main.
+  const d = repo();
+  dirs.push(d.dir);
+  d.commit("README.md", "base\n", NOREPLY);
+  d.git("update-ref", "refs/remotes/origin/main", "HEAD");
+  for (const n of [1, 2, 3, 4, 5, 6]) d.commit(`f${n}.txt`, `change ${n}\n`, NOREPLY);
+  p = check(d.dir);
+  expect(
+    p.status === 0 && /6 commit\(s\) in origin\/main\.\.HEAD/.test(p.stdout) && /\nGO:/.test(p.stdout),
+    "GO with six commits since origin/main",
+    `exit ${p.status}: ${p.stdout.slice(-300)}`,
+  );
+  // One commit in the middle with a private committer address (the author is
+  // fine): NO-GO, and the finding names that commit.
+  const middle = d.commit("g.txt", "middle\n", NOREPLY, "someone@example.org");
+  d.commit("h.txt", "after\n", NOREPLY);
+  p = check(d.dir);
+  expect(
+    p.status === 1 && new RegExp(`${middle.slice(0, 8)}\\s+committer`).test(p.stdout),
+    "NO-GO for a private committer in the middle of eight commits",
+    `exit ${p.status}: ${p.stdout.slice(-300)}`,
+  );
+
+  // Two false positives found on 2026-11-18 (DECISIONS R6-D17): SVG path
+  // data that reads like an IPv4 address, and the user-agent names that
+  // robots.txt publishes, kept in a field called `token`. Both are GO; the
+  // controls next to them stay NO-GO.
+  const e = repo();
+  dirs.push(e.dir);
+  const base5 = e.commit("README.md", "base\n", NOREPLY);
+  e.commit(
+    "icon.svg",
+    '<svg viewBox="0 0 24 24"><path d="M12 .5a11.5 11.5 0 0 0-3.64 1.26 3.36.96.1"/></svg>\n',
+    NOREPLY,
+  );
+  e.commit(
+    "src/data/crawlers.ts",
+    'export const agents = [{ token: "Claude-SearchBot" }, { token: "Applebot-Extended" }];\n',
+    NOREPLY,
+  );
+  p = check(e.dir, "--base", base5);
+  expect(
+    p.status === 0 && /\nGO:/.test(p.stdout),
+    "GO with SVG path data and published user-agent names",
+    `exit ${p.status}: ${p.stdout.slice(-300)}`,
+  );
+  // Assembled at run time: the literals in this file would themselves be findings.
+  const address = [198, 18, 7, 9].join(".");
+  e.commit("page.html", `<a href="http://${address}/"><svg><path d="M3.36.96.1"/></svg></a>\n`, NOREPLY);
+  p = check(e.dir, "--base", base5);
+  expect(
+    p.status === 1 && /IPv4 address/.test(p.stdout),
+    "NO-GO for an address next to path data",
+    `exit ${p.status}: ${p.stdout.slice(-300)}`,
+  );
+  const fake = ["a1b2c3d4", "e5f6g7h8"].join("");
+  e.commit("src/data/crawlers.ts", `export const agents = [{ token: "${fake}" }];\n`, NOREPLY);
+  p = check(e.dir, "--base", base5);
+  expect(
+    p.status === 1 && /secret assignment/.test(p.stdout),
+    "NO-GO for a token value that is not a user-agent name",
+    `exit ${p.status}: ${p.stdout.slice(-300)}`,
+  );
+
   p = check(a.dir, "--bogus");
   expect(p.status === 2, "usage error", `exit ${p.status}`);
   p = check(a.dir, "--base", "no-such-ref");
@@ -92,4 +166,6 @@ try {
   for (const d of dirs) rmSync(d, { recursive: true, force: true });
 }
 
-r.done(`${cases} cases: GO → 0, NO-GO (address, server path, unreadable private file) → 1, usage → 2`);
+r.done(
+  `${cases} cases: GO → 0 (also with six commits since origin/main, SVG path data, published user-agent names), NO-GO (address, committer in the middle, server path, unreadable private file, IPv4 next to path data, non-user-agent token) → 1, usage → 2`,
+);

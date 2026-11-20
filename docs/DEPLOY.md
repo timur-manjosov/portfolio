@@ -109,7 +109,15 @@ bash ~/deploy-staging/<id>/apply-on-server.sh --dry-run
 `--dry-run` is evaluated before anything else, needs no sudo and only uses
 reading commands (`sha256sum -c`, `tar -t`, `cmp`, `stat`,
 `systemctl is-active`, `caddy adapt` to `/dev/null`). It prints every step a
-real run would take and exits 0 only if all preconditions hold. Then:
+real run would take and exits 0 only if all preconditions hold.
+
+Since revision 6 the script sets its own `PATH`
+(`/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`) as its
+first statement. Before, a dry run as a normal user over SSH stopped with
+`missing tool: runuser`, because `/usr/sbin` is not in that session's PATH
+(with sudo it was never a problem). `npm run check:apply-path` runs the dry
+run with a PATH that contains no system directory and checks that every
+installed tool is found. Then:
 
 ```sh
 sudo bash ~/deploy-staging/<id>/apply-on-server.sh

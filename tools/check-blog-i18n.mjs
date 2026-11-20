@@ -74,7 +74,7 @@ function checkPair(from, to) {
   const sm = sitemapEntry(from);
   expect(sm.includes(`hreflang="${tl}" href="${SITE}${to}"`), where, "sitemap entry without the alternate");
   expect(
-    h.includes(`"workTranslation":{"@id":"${SITE}${to}#post"}`),
+    h.includes(`"workTranslation":{"@type":"BlogPosting","@id":"${SITE}${to}#post",`),
     where,
     "JSON-LD without workTranslation",
   );
@@ -108,7 +108,7 @@ function checkSingle(url) {
   // Discoverable from the other language, marked as foreign.
   const listing = html(`/${other}/blog/`);
   const item = listing.match(
-    new RegExp(`<li class="entry" lang="${lang}">(?:(?!</li>).)*href="${url}"(?:(?!</li>).)*</li>`, "s"),
+    new RegExp(`<li class="entry[^"]*" lang="${lang}">(?:(?!</li>).)*href="${url}"(?:(?!</li>).)*</li>`, "s"),
   )?.[0];
   expect(Boolean(item), where, `not listed (with lang="${lang}") in /${other}/blog/`);
   expect(Boolean(item?.includes('class="badge"')), where, `no "only in" badge in /${other}/blog/`);

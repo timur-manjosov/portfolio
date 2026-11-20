@@ -12,6 +12,6 @@ interface Props {
 const { lang, projects, headingLevel = 3 } = Astro.props;
 ---
 
-<ul class="entry-list entry-list--grid" data-project-list>
-  {projects.map((p) => <ProjectCard lang={lang} project={p} headingLevel={headingLevel} featured={p.entry.data.featured} />)}
+<ul class="card-grid" data-project-list>
+  {projects.map((p) => <ProjectCard lang={lang} project={p} headingLevel={headingLevel} />)}
 </ul>

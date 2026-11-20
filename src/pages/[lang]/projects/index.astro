@@ -3,7 +3,8 @@ import ProjectList from "../../../components/ProjectList.astro";
 import { LANGS, type Lang, type UiKey } from "../../../i18n/ui";
 import { slugify, useTranslations } from "../../../i18n/utils";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import { allProjects, forListing } from "../../../lib/content";
+import { allProjects, forListing, projectUrl } from "../../../lib/content";
+import { itemList } from "../../../lib/seo";
 
 export function getStaticPaths() {
   return LANGS.map((lang) => ({ params: { lang } }));
@@ -17,6 +18,10 @@ const stages = [...new Set(projects.map((p) => p.entry.data.stage))];
 const tags = [
   ...new Map(projects.flatMap((p) => p.entry.data.tags.map((tag) => [slugify(tag), tag] as const))).entries(),
 ].sort((a, b) => a[1].localeCompare(b[1]));
+const list = itemList(
+  `/${lang}/projects/`,
+  projects.map((p) => ({ name: p.entry.data.title, url: projectUrl(p) })),
+);
 ---
 
 <BaseLayout
@@ -25,6 +30,9 @@ const tags = [
   description={t("projects.description")}
   section="projects"
   alternates={{ de: "/de/projects/", en: "/en/projects/" }}
+  pageType="CollectionPage"
+  mainEntity={list["@id"] as string}
+  jsonLd={[list]}
 >
   <div class="container container--wide page">
     <header class="page-header">

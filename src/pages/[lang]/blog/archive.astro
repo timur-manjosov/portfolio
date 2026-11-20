@@ -4,6 +4,7 @@ import { LANGS, type Lang } from "../../../i18n/ui";
 import { formatDate, isoDate, localePath, useTranslations } from "../../../i18n/utils";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { allPosts, forListing, postUrl } from "../../../lib/content";
+import { itemList } from "../../../lib/seo";
 
 export function getStaticPaths() {
   return LANGS.map((lang) => ({ params: { lang } }));
@@ -17,6 +18,10 @@ for (const p of posts) {
   const y = p.entry.data.date.getUTCFullYear();
   years.set(y, [...(years.get(y) ?? []), p]);
 }
+const list = itemList(
+  `/${lang}/blog/archive/`,
+  posts.map((p) => ({ name: p.entry.data.title, url: postUrl(p) })),
+);
 ---
 
 <BaseLayout
@@ -25,6 +30,10 @@ for (const p of posts) {
   description={t("blog.archiveDescription")}
   section="blog"
   alternates={{ de: "/de/blog/archive/", en: "/en/blog/archive/" }}
+  pageType="CollectionPage"
+  crumbs={[{ name: t("blog.title"), path: localePath(lang, "blog/") }]}
+  mainEntity={list["@id"] as string}
+  jsonLd={[list]}
 >
   <div class="container page">
     <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>

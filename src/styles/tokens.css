@@ -17,24 +17,71 @@
  * motion has its own tokens.
  */
 
+/* ---- Fonts (R6-D3) ----
+   Inter for interface, headings and labels; STIX Two Text for long running
+   text (posts, About, project pages), drawn to sit next to STIX Two Math, the
+   formula font. All self-hosted (font-src 'self'), SIL OFL 1.1, licences in
+   src/assets/fonts/. A font file is only downloaded by pages that use it;
+   tools/subset-fonts.mjs regenerates them. */
 @font-face {
   font-family: "Inter";
   font-style: normal;
   font-weight: 100 900;
   /* swap: text is readable immediately in the fallback font. Inter is
-     preloaded in <head>, so the swap normally happens before first paint.
-     Licence: src/assets/fonts/Inter-OFL.txt (SIL OFL 1.1). */
+     preloaded in <head>, so the swap normally happens before first paint. */
   font-display: swap;
   src: url("../assets/fonts/inter-variable-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "STIX Two Text";
+  font-style: normal;
+  font-weight: 400 700;
+  /* Preloaded on pages with running text (Head.astro, `serif`). */
+  font-display: swap;
+  src: url("../assets/fonts/stix-two-text-latin-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "STIX Two Text";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../assets/fonts/stix-two-text-latin-italic.woff2") format("woff2");
 }
 
 @font-face {
   font-family: "STIX Two Math";
   font-style: normal;
   font-weight: 400;
-  /* Only downloaded on pages that contain <math>. */
+  /* Only downloaded on pages that contain <math>; subset to the blocks a
+     formula can use (104 KB instead of 394 KB). */
   font-display: swap;
   src: url("../assets/fonts/stix-two-math.woff2") format("woff2");
+}
+
+/* Fallback faces with the web fonts' proportions, so the swap moves no
+   line (CLS 0). Width ratio measured in Chromium on a German and English
+   sample against the metric-compatible Liberation Sans / Liberation Serif
+   (= Arial / Times New Roman); ascent, descent and line gap are the web
+   fonts' hhea values divided by that ratio (tools/subset-fonts.mjs prints
+   them). */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial"), local("Liberation Sans"), local("Helvetica");
+  size-adjust: 106.45%;
+  ascent-override: 91.01%;
+  descent-override: 22.66%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "STIX Two Text Fallback";
+  src: local("Times New Roman"), local("Liberation Serif"), local("Times");
+  size-adjust: 104.74%;
+  ascent-override: 72.75%;
+  descent-override: 22.72%;
+  line-gap-override: 23.87%;
 }
 
 :root {
@@ -111,28 +158,38 @@
   /* Behind the top of every page: the two tints, fading out before the
      content starts. On the home page it is a little larger and sits behind
      the hero (there is no framed hero box any more). */
+  /* R6 (finding B19): the second tint is smaller and starts above the page,
+     so in dark mode the teal no longer is the loudest surface at 1280 px. */
   --gradient-page:
     radial-gradient(48rem 20rem at 8% -4rem, var(--color-glow-1) 0%, transparent 72%),
-    radial-gradient(40rem 18rem at 96% -6rem, var(--color-glow-2) 0%, transparent 72%);
+    radial-gradient(32rem 14rem at 96% -6rem, var(--color-glow-2) 0%, transparent 70%);
   --gradient-home:
     radial-gradient(56rem 30rem at 6% -6rem, var(--color-glow-1) 0%, transparent 70%),
-    radial-gradient(44rem 26rem at 100% 2rem, var(--color-glow-2) 0%, transparent 70%);
+    radial-gradient(34rem 18rem at 100% -6rem, var(--color-glow-2) 0%, transparent 68%);
 
-  /* ---- Typography ---- */
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* ---- Typography (R6-D3) ---- */
+  --font-sans: "Inter", "Inter Fallback", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "STIX Two Text", "STIX Two Text Fallback", "Times New Roman", serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
   --font-math: "STIX Two Math", math;
 
+  /* One fluid scale (utopia.fyi method): every step interpolates between
+     its size at a 360 px and at a 1240 px viewport. Roles after Material 3:
+     label (xs, sm), body (base), title (lg, xl), headline (2xl, 3xl),
+     display (the hero name). */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
-  --text-base: 1.0625rem;
-  --text-lg: 1.1875rem;
-  --text-xl: clamp(1.25rem, 1.18rem + 0.3vw, 1.4rem);
-  --text-2xl: clamp(1.45rem, 1.3rem + 0.7vw, 1.8rem);
-  --text-3xl: clamp(2rem, 1.6rem + 1.8vw, 3rem);
+  --text-base: clamp(1rem, 0.9744rem + 0.1136vw, 1.0625rem); /* 16 → 17 */
+  --text-lg: clamp(1.0625rem, 1.0369rem + 0.1136vw, 1.125rem); /* 17 → 18 */
+  --text-xl: clamp(1.1875rem, 1.1364rem + 0.2273vw, 1.3125rem); /* 19 → 21 */
+  --text-2xl: clamp(1.375rem, 1.2727rem + 0.4545vw, 1.625rem); /* 22 → 26 */
+  --text-3xl: clamp(1.875rem, 1.6193rem + 1.1364vw, 2.5rem); /* 30 → 40 */
   /* Hero name. The lower bound must stay ≥ 1.5rem (24 px): the contrast
      check treats the name as large text and verifies this bound. */
-  --text-display: clamp(2.6rem, 1.5rem + 4.6vw, 4.5rem);
+  --text-display: clamp(2.5rem, 1.8864rem + 2.7273vw, 4rem); /* 40 → 64 */
+  /* Running text in STIX Two Text: its x-height is 47 % of the size (Inter:
+     55 %), so it is set larger to read at the same apparent size. */
+  --text-prose: clamp(1.1875rem, 1.1364rem + 0.2273vw, 1.3125rem); /* 19 → 21 */
 
   /* Weights (Inter variable): headings never above 600. */
   --weight-body: 400;
@@ -140,12 +197,19 @@
   --weight-strong: 560;
   --weight-heading: 600;
 
-  --leading-tight: 1.18;
+  --leading-tight: 1.2;
   --leading-display: 1.06;
-  --leading-normal: 1.65;
-  --tracking-tight: -0.018em;
-  --tracking-display: -0.034em;
-  --measure: 68ch;
+  --leading-normal: 1.6;
+  --leading-prose: 1.6;
+  --tracking-tight: -0.015em;
+  --tracking-display: -0.032em;
+  /* Line length of running text: 31em of STIX Two Text is 63–70
+     characters per line (measured in R6 §2.4; Tufte CSS and
+     practicaltypography.com aim at about 65). In em, not ch: `ch` is the
+     width of "0", which says little about a proportional font. */
+  --measure: 31em;
+  /* Interface text (lists, cards, descriptions in Inter): ~70 characters. */
+  --measure-ui: 38rem;
 
   /* ---- Spacing ---- */
   --space-1: 0.25rem;
@@ -157,12 +221,15 @@
   --space-7: 3rem;
   --space-8: 4.5rem;
   --space-9: 6.5rem;
-  /* Between the sections of a page (home): more air than inside them. */
-  --space-section: clamp(4.5rem, 3rem + 5vw, 7.5rem);
+  /* Between the sections of a page (home): more air than inside them, but
+     not so much that a wide screen reads as empty (R6 finding B4). */
+  --space-section: clamp(3.5rem, 2.5909rem + 4.0404vw, 6rem);
 
   /* ---- Layout ---- */
   --content-width: 46rem;
   --wide-width: 72rem;
+  /* Posts on wide screens: the text column plus the table of contents. */
+  --toc-width: 15rem;
   --gutter: clamp(1rem, 0.6rem + 2vw, 2rem);
   --header-height: 3.75rem;
 

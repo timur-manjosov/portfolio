@@ -14,7 +14,7 @@
  * This URL stays the hreflang x-default of the home pages.
  */
 import Head from "../components/Head.astro";
-import { ui } from "../i18n/ui";
+import { profile } from "../data/site";
 import { globalGraph } from "../lib/seo";
 
 const alternates = { de: "/de/", en: "/en/" };
@@ -27,7 +27,7 @@ const alternates = { de: "/de/", en: "/en/" };
     <Head
       lang="en"
       fullTitle="Timur Manjosov"
-      description={`${ui.en["site.description"]} / ${ui.de["site.description"]}`}
+      description={profile.summary.en}
       alternates={alternates}
       xDefault="/"
       jsonLd={globalGraph("en")}

@@ -1179,3 +1179,457 @@ visitors never cause a request (`connect-src 'self'` unchanged).
 - No project has `repo:` yet (the existing ones keep their hand-written
   stack and links); `new:project` writes the field as a comment.
   `check:github-meta`: 31 cases with mocked answers and two real builds.
+
+---
+
+# Revision 6 (brief `prompts/portfolio-umbau-6.md`, 2026-11-14)
+
+Design on a new level, visibility for search engines and AI systems,
+Timur's Bitcoin text as a checked article, Aporia, maintenance. Branch
+`r6-update` from `origin/main`; no push, no deployment in this run (the
+start script ships after the run).
+
+## Revision 6 / Befunde (baseline, before any change)
+
+From the screenshots in `.tmp/baseline/` (nine pages × 390/768/1280 ×
+light/dark) and the measurements in `docs/VERIFICATION.md` R6 §1. Each
+finding is the starting point of a change in R6-D*; the number is cited
+there.
+
+| # | Where | Finding |
+|---|---|---|
+| B1 | every text page | The measure is `68ch`, but `ch` is the width of "0", which in Inter is wider than an average letter: a line of the long post holds 84–90 characters at 1280 px. Comfortable reading is 60–75. |
+| B2 | posts with maths | Running text in Inter (a grotesque) next to STIX Two Math (a Times-like serif): formulas look smaller and foreign in the line; long German text in a grotesque at 17 px tires. |
+| B3 | cards (home, projects) | `text-wrap: balance` on titles in narrow cards produces three-line stairs ("Die Doppelausgabe- / Rechnung im Bitcoin- / Whitepaper"); `pretty` on short card texts leaves very short lines. |
+| B4 | home, prose | Rhythm: up to 7.5 rem between home sections plus the hero padding reads as empty at 1280; in prose the space before an h2 (3 rem) is four times the space after it (0.75 rem), which is right in direction but heavy. |
+| B5 | home hero | The only element on the right is a terminal-style spec sheet, generic and unrelated to the "Knotenpunkt" idea; three equal-weight buttons (About, Write to me, GitHub) blur where to click; the /now card and the contact box sit between the hero and the projects and break the flow. |
+| B6 | home | Four posts in a three-column grid leave one card alone in the second row; two current projects in a 4/2 split make the section look half empty. |
+| B7 | project cards | Aura and Epiphyte both carry the gradient contour of "featured", so it no longer marks anything; no repository link on the card; the stack as mono chips is louder than the title. |
+| B8 | projects | The filter box (status, tag, reset) is a large filled panel for three projects. |
+| B9 | blog index | Categories are a loose row of underlined links without counts; entries have no year grouping; the date sits below the description, so the list cannot be scanned by date; no filter. |
+| B10 | post | The table of contents is a large box before the text and pushes the first paragraph below the fold (390 and 1280); at 1280 about 270 px stay empty on each side; footnotes and sources appear in the TOC like chapters. |
+| B11 | post, 390 | TOC entries that wrap put their number next to the last line (inline-block links), which looks ragged. |
+| B12 | post header | The title (tight tracking, balance) breaks at hyphens ("Doppelausgabe- / Rechnung"); date, updated date, reading time and category share one small grey line without hierarchy. |
+| B13 | tables | `display: block; overflow-x: auto` without a visible hint that a table scrolls; proportional figures; captions unstyled. |
+| B14 | headings | The "#" anchors are visible on hover only and not reachable by keyboard (`tabindex=-1`, `aria-hidden`). |
+| B15 | post end | No styled sources section, no "read next", no print stylesheet (header, footer and tinted backgrounds would print). |
+| B16 | footer | One flat row of links; no structure, the main sections are missing. |
+| B17 | maths pages | 394 KB of STIX Two Math, unsubsetted, on every page with a formula. |
+| B18 | head | No `theme-color`; one Open Graph image for every page; the favicon set has no 180 px PNG reference besides the touch icon and no manifest. |
+| B19 | dark mode | The palette itself works (unchanged since R3); the strong teal glow top right is the loudest surface of the page at 1280. |
+
+Not a finding: CLS is 0 everywhere, every page except the 404 scores 100 in
+all four Lighthouse categories, and body text already reaches 16:1.
+
+## R6-D1. Maintenance (brief §2.8)
+
+- **a) `apply-on-server.sh` PATH:** fixed `PATH` as the first command
+  (commit `39da05b`, `check:apply-path`, `docs/DEPLOY.md`).
+- **b) Dependencies.** `npm audit` on `origin/main` failed (moderate):
+  `astro` ≤ 7.4.6 (GHSA-mh32-jxcr-mh9f), plus low ones for
+  `fast-xml-parser` (GHSA-474x-hrwr-fgx4, via `@astrojs/rss`) and `katex`.
+  The KaTeX advisory checked at the source (github.com/advisories, read
+  2026-11-14): **GHSA-238p-pmpm-9mq7**, CVE-2026-103923, low (CVSS 4: 2.1),
+  affects 0.11.0 to < 0.18.2, **patched in 0.18.2**: an application that is
+  already prototype-polluted can enable `trust` and so XSS in KaTeX output.
+  We never run KaTeX: `remark-math` only uses the Markdown syntax extension
+  of `micromark-extension-math`, whose HTML part (the only one importing
+  KaTeX) is not loaded; formulas are rendered by Temml (D6).
+  - **Decision:** `astro` ^7.4.12, `@astrojs/markdown-remark` ^7.3.9,
+    `fast-xml-parser` 5.12.1 (within `@astrojs/rss`'s range), and an npm
+    **`overrides` entry `katex: ^0.19.1`** (the current release, 2026-10-23).
+  - **Alternatives:** `npm audit fix --force` (forbidden by the brief; it
+    would downgrade `remark-math` to 3.0.1, an incompatible major);
+    waiting for `micromark-extension-math` to widen its `^0.16` range
+    (open-ended).
+  - **Why the override is safe:** `micromark-extension-math` declares
+    `katex: ^0.16.0` but only its unused HTML module calls it. The rendered
+    HTML of every page is byte-identical before and after the update
+    (`node tools/compare-dist.mjs .tmp/html-before-deps dist`: 102 files,
+    0 differ, asset hashes masked). `npm audit`: 0 vulnerabilities.
+  - **Revision:** remove the override once `micromark-extension-math`
+    depends on katex ≥ 0.18.2 itself.
+- **c) `Buffer.slice` and Biome.** The deprecation is a **type-level**
+  hint of `astro check` (ts 6387) at `tools/edit-content.mjs:91`
+  (`after.slice(…)`): the variable `file` was declared without a type, so
+  TypeScript resolved `readFileSync(file, "utf8")` to its `Buffer`
+  overload and treated `after` as a `Buffer`. At run time `after` is a
+  string and `String#slice` is not deprecated, so `subarray` (which strings
+  do not have) would have been wrong. The fix types `file` as a string
+  (JSDoc), which picks the string overload; the hint is gone (`astro check`:
+  0 errors, 0 warnings, 0 hints). The Biome info in
+  `tests/articles/csp_experiments.mjs` (a lone block without declarations,
+  `noUselessLoneBlockStatements`) is fixed by dropping the braces.
+- **d) `check:prepush` with several commits:** it already checks the author
+  and committer address of **every** commit in `origin/main..HEAD` (no
+  count). `check:prepush-exit` now proves it: six noreply commits since an
+  `origin/main` ref → GO, exit 0; a private committer address in the middle
+  of eight commits → NO-GO, exit 1, and the finding names that commit. On
+  `r6-update` (3 commits at the time): GO.
+
+## R6-D2. Design direction
+
+- **Decision:** keep the site recognisable (Inter for the interface, the
+  Material 3 colour roles and box construction of R4, the dark palette, the
+  "Knotenpunkt" idea) and raise the craft where the findings B1–B19 point:
+  reading typography, rhythm, the home page's message, scannable lists, the
+  post page's furniture, details. Principles come from
+  `docs/DESIGN-REFERENCES.md`; the most influential are named there.
+- **Alternatives:** a new visual identity (new colours, new display face):
+  rejected, the brief wants the existing site "one level up", not a
+  different one; a minimal text-only restyle: rejected, it would leave B5,
+  B6, B9, B10 and B16 open.
+
+## R6-D3. Typography: STIX Two Text for running text, Inter for everything else
+
+- **Decision:** long running text (posts, About, project pages, every
+  `.prose`) is set in **STIX Two Text** (variable, weights 400–700, roman +
+  italic, Google's Latin subset from `@fontsource-variable/stix-two-text`
+  5.3.0: 27.9 + 30.3 KB). Inter stays for navigation, headings, cards,
+  lists, tables, captions and labels. One fluid type scale (utopia.fyi
+  method, 360 → 1240 px) with Material 3 role names. Running text 19 →
+  21 px (STIX's x-height is 47 % of the size, Inter's 55 %: 21 px STIX reads
+  like 18 px Inter), leading 1.6, measure **31em** (63–70 characters per
+  line, measured in R6 §2.4), headings `text-wrap: pretty` instead of
+  `balance` (B3, B12), tabular figures in tables and dates.
+- **Why STIX Two Text:** it is the text companion of STIX Two Math, the
+  formula font the site already ships (B2): same design, same x-height, so
+  `p = 1 − q` sits in the line instead of looking smaller and foreign.
+  Serif running text with sans headings is the pattern of the long-read
+  references (overreacted.io, gwern.net, Tufte CSS, practicaltypography).
+- **Alternatives:** Source Serif 4 (OFL, but with the Reserved Font Name
+  "Source": a subset is a Modified Version and may not carry the name; and
+  51 + 52 KB); Literata (OFL, no RFN, 52 + 54 KB, no math companion); Inter
+  for everything with a corrected measure (smallest, but leaves B2).
+- **Licence (checked at the source, 2026-11-14):** STIX fonts,
+  github.com/stipub/stixfonts `OFL.txt`: SIL OFL 1.1, "Copyright 2001-2021
+  The STIX Fonts Project Authors …, with Reserved Font Name "TM Math"." Our
+  files keep their names "STIX Two Text" / "STIX Two Math", so the RFN does
+  not apply. Licence files: `src/assets/fonts/STIX-Two-Text-OFL.txt`,
+  `STIX-Two-Math-OFL.txt` (whose copyright line now matches the original,
+  including the RFN clause).
+- **Subsetting (B17):** STIX Two Math 403 KB → **104 KB** with
+  `tools/subset-fonts.mjs` (HarfBuzz via the dev dependency `subset-font`,
+  see below): Latin, Greek, operators, arrows, delimiters, the TeX styles of
+  the mathematical alphanumerics, MATH-table closure kept, hinting dropped.
+  STIX Two Text is used as published (no modification).
+- **No layout shift:** fallback faces "Inter Fallback" (Arial/Liberation
+  Sans, `size-adjust` 106.45 %) and "STIX Two Text Fallback" (Times/
+  Liberation Serif, 104.74 %), ratios measured in Chromium on a German and
+  English sample; ascent/descent/line gap from the fonts' hhea tables.
+  Inter is preloaded everywhere, STIX Two Text only on pages with running
+  text (`serif` prop of BaseLayout).
+- **New dev dependency `subset-font` 2.9.0** (BSD-3-Clause, maintained,
+  last release 2026-09; 9 packages incl. `harfbuzzjs` (MIT) and `fontverter`
+  (MIT)). Build-time tool only, never shipped; it makes the subsets
+  reproducible from the npm font packages instead of committing a binary
+  nobody can regenerate. Alternative `pyftsubset` (fonttools) needs a
+  Python package install outside the repo.
+
+## R6-D4. Prose details
+
+- Heading anchors (B14): a real link after each heading, grouped with it
+  in `div.heading`, keyboard-reachable, named "Link zu diesem Abschnitt
+  <Überschrift>" through `aria-labelledby` (a hidden label on every page +
+  the heading id), visible on hover/focus, faint on touch screens, hanging
+  in the left margin from 48rem.
+- Tables (B13): `src/lib/rehype-article.ts` turns a paragraph "Tabelle: …"
+  / "Table: …" right before a table into its `<caption>`, wraps every table
+  in a focusable scroll box with edge shadows (CSS-only scroll shadows:
+  "local" cover layers over "scroll" shadow layers), and adds a written
+  hint below tables wider than a phone screen (estimated at build time,
+  shown below 40rem). Inter, `tabular-nums`, header row with a stronger
+  rule. The wrapper has no landmark role: one region per table would crowd
+  the landmark list (and html-validate requires unique landmark names).
+- Sources (B15): the last h2 section whose heading names sources is
+  wrapped in `section.sources` (rule above, smaller text, hanging indents).
+  Footnotes stay at the end in the text face, smaller.
+- Hyphenation only below 40rem (`hyphens: auto` with a 8/4/4 limit), where
+  long German compounds otherwise leave holes.
+
+## R6-D5. Post page
+
+- Header: category breadcrumb, title, the description as a lead, a byline
+  (author, published, updated, reading time; dates in the text colour, no
+  separator dots that could start a wrapped line).
+- Table of contents (B10, B11): built at build time from h2/h3, from
+  ~1,500 words and three sections on (`toc` in the frontmatter overrides),
+  footnotes never listed. Narrow screens: a closed `<details>` above the
+  text ("Inhalt · 7 Abschnitte"); from 64rem: a sticky column right of the
+  text, a quiet list with a rule on its left. Two renderings, one shown by
+  CSS, no JS. The post container is only as wide as text + TOC (62rem), so
+  no empty margin at 1280 px.
+- After the text: tags, translation link, a "How to cite this post" box
+  (author, title, site, date, URL), "Read next" (up to three posts of the
+  same language ranked by shared tags and category), back link.
+- Not done: highlighting the current section in the TOC (needs JS or
+  scroll-driven animations with a per-heading rule; not worth the weight).
+
+## R6-D6. Blog index and lists
+
+- Posts are a **list** (B9): date column (tabular figures, from a
+  container width of 34rem; container query), title, description, meta
+  (category, reading time, badges); on the blog index grouped by year
+  with day + month in the date column.
+- Filter: the categories with posts as Material filter chips with counts
+  ("Alle 4", "Technik 1", …), each a link to the category page, the
+  current one in the tonal container (`aria-current`). Works without JS;
+  the full-text search stays on /search.
+
+## R6-D7. Home page and the "Knotenpunkt"
+
+- **Decision:** hero = eyebrow, name, one claim, one lead sentence, **one**
+  primary action (About) and a text link to the blog (B5). Right of it the
+  **Knotenpunkt**: the site as a small network, the person in the centre,
+  six nodes around it (About, Projects with the number of active projects,
+  Blog with the number of posts, Now with its date, Contact, GitHub). The
+  nodes are ordinary links in a list on a 3×3 grid; the edges are an inline
+  SVG stretched over the same grid (`preserveAspectRatio="none"`,
+  `vector-effect: non-scaling-stroke`), drawn in token colours, aria-hidden;
+  the edge of a hovered/focused node turns to the accent (`:has`). No JS,
+  no motion (so nothing to switch off under reduced motion). Below 40rem
+  the edges disappear and the nodes form a two-column list.
+- **Function, not decoration:** it answers "where can I go and what is
+  there" with live numbers from the content, and it is the brief's idea
+  of the site as a hub made visible.
+- Below: the three newest posts as a list (no lonely card in a second row,
+  B6), the current projects as cards, /now as one quiet strip. The spec
+  sheet and the contact box are gone from the home page (contact is a hub
+  node and in the footer).
+- **Alternatives:** a decorative random mesh (rejected: "keine Deko ohne
+  Funktion"); an animated graph (rejected: motion rule, JS).
+
+## R6-D8. Projects
+
+- Cards: status, title, the one-sentence summary, the stack as a quiet
+  mono line instead of chips (B7: chips were louder than the title), the
+  last update and the repository link as its own target, the arrow. No
+  "featured" gradient contour any more (B7). Grid: as many 17rem columns as
+  fit, four in a row when there are four.
+- Filter (B8): a toolbar row with a rule below instead of a filled panel.
+- Project page: the facts (links, stack, started, updated, tags) in a box
+  beside the text from 64rem (sticky), above it on small screens; the
+  text in the reading face like posts.
+
+## R6-D9. Details
+
+- Footer (B16): four groups (pages, more, feeds and machine-readable files,
+  legal) and one line with copyright and "no cookies, no tracking".
+- `theme-color` for light and dark (B18); dark mode's teal tint smaller
+  and starting above the page (B19), done in the gradient geometry, not in
+  the colour tokens (the dark palette and its snapshot are unchanged).
+- `prefers-contrast: more` and `forced-colors` cover the new elements
+  (hub, chips, now strip, TOC, tables).
+- Icon set (`Icon.astro`): eight line icons drawn for this site on one
+  16-unit grid (own drawings, no third-party set and so no licence to
+  carry) plus GitHub's mark, used only to link to GitHub. A web manifest and
+  192/512 px icons complete the favicon set (B18).
+
+## R6-D10. Open Graph images: Chromium screenshot of a template
+
+- **Decision:** home, the two main listings, the main pages, every post and
+  every project get their own 1200×630 image (`src/lib/og.ts` decides,
+  `tools/og-images.mjs` renders). After `astro build`, the tool reads each
+  page's head (`og:image:alt` = title, `<html lang>`, `og:type`,
+  `article:section`, `article:published_time`), fills an HTML template in
+  the light palette with the self-hosted Inter, and screenshots it with
+  Chromium through Playwright. Images are cached in `.cache/og/` by the
+  SHA-256 of their full HTML: the same content gives the same file, and a
+  rebuild without changes starts no browser.
+- **Why:** no new dependency (Playwright is already a dev dependency, used
+  by `brand-assets.mjs` the same way since R4), no network, the same fonts
+  and colours as the site, and the image cannot disagree with the page
+  because it is made from the page's own meta tags.
+- **Alternatives:** `satori` + `@resvg/resvg-js` (SVG → PNG without a
+  browser): two new dependencies, a native binary per platform (resvg-js,
+  MPL-2.0) and a second layout engine whose text layout differs from the
+  site's; `@resvg/resvg-wasm` with a hand-written SVG template: no text
+  wrapping, so long German titles would need our own line breaking.
+  Committing generated PNGs: every new post would need a manual step that
+  `publish` cannot do.
+- **Consequence:** every build needs Chromium (`/usr/bin/chromium`, else
+  Playwright's own). CI now installs it before `npm run check` (one step
+  moved up in `.github/workflows/check.yml`). The release build on Timur's
+  machine uses the system Chromium.
+
+## R6-D11. Search engines: page graph, one identity, a validator
+
+- **Page graph:** `BaseLayout` adds a page node (`WebPage`, `ProfilePage`
+  for About, `CollectionPage` + `ItemList` for listings) and a
+  `BreadcrumbList` to every indexable page; posts add `BlogPosting` in the
+  `Blog` of their language (with `citation` from the sources section, which
+  `rehype-article.ts` now hands to the page), projects
+  `SoftwareSourceCode`. References resolve inside each page's graph (the
+  Blog node is repeated on posts) so a validator can check them without
+  fetching other pages. `workTranslation` stays symmetric for pairs, as
+  in R5: the frontmatter does not say which version came first.
+- **One identity:** name, role, summary, studies and focus live only in
+  `src/data/site.ts` (`profile`); `site.description` and the two fact
+  strings left `ui.ts`, which keeps interface text only.
+- **`og:type`:** `website` for every non-post page (the brief asks for
+  `article` or `website`; `profile` on home and About is gone).
+- **Titles unique per language:** a DE/EN pair linked by hreflang may share
+  a title that is a proper name ("Aura", "Blog – Timur Manjosov"). Unique
+  across languages would mean renaming proper names; search engines treat
+  hreflang pairs as one page in different languages.
+- **Validator instead of online tools:** `tools/check-jsonld.mjs` in
+  `check:seo` (types, required fields, references, forbidden markup,
+  agreement with the visible text, identity).
+
+## R6-D12. AI systems: llms.txt, Markdown twins, robots switch
+
+- **llms.txt** rebuilt after the current llmstxt.org text (read
+  2026-11-17): H1, blockquote, free text, H2 link lists with one sentence
+  per entry, "Optional" last; every entry from the content, the identity
+  from `profile`. Every indexable page links it with `rel="describedby"`
+  (also from llmstxt.org). Effect unproven (`docs/SEO.md`), cheap, kept.
+- **llms-full.txt:** all public posts as Markdown, 108 KB at six posts.
+- **Markdown twins** at `<URL>index.md` (llmstxt.org: "URLs without file
+  names should append `index.html.md` or `index.md`"; the shorter one).
+  Made from the Markdown source, not converted back from HTML: it is what
+  Timur wrote, formulas stay TeX, comments are dropped, site links become
+  absolute, inline SVG figures become their `<title>`/`<desc>`. Not for
+  contact, privacy and imprint (private data, not content).
+- **robots.txt** from one file, `src/data/crawlers.ts`, two groups with one
+  switch each (`search`, `training`); tokens and purposes from the
+  providers' pages, read 2026-11-17 (`docs/SEO.md`). Bingbot's page renders
+  only with JavaScript, so it was read with the one-page Playwright script
+  in `.tmp/` (no crawling).
+- **Content-Type of `.md` (proposal, not done):** Caddy's `file_server`
+  takes the type from Go's MIME table plus the system's `/etc/mime.types`;
+  whether that maps `.md` to `text/markdown` depends on the server. If
+  `verify:live` warns, the generator could add, in the site block,
+  `@md path *.md` + `header @md Content-Type "text/markdown; charset=utf-8"`.
+  The brief forbids changing the generator in this run, so this stays a
+  proposal for Timur.
+- **Full-text feeds:** posts are rendered for `content:encoded` with
+  Astro's container API (`experimental_AstroContainer`, the documented way
+  to render a content entry outside a page); heading anchors and the
+  table hints are dropped, site URLs made absolute.
+
+## R6-D13. External link check: three DOIs excluded one by one
+
+- **Finding:** CI checks external links with lychee (`--accept
+  200,202,206,429`). With today's build the subset-sum and CSP posts are
+  public for the first time, and the Bitcoin post adds its sources. Three
+  DOI targets answer automated requests with **403** (tested 2026-11-17 by
+  fetching each target): `10.1086/260580` (Kydland/Prescott 1977,
+  University of Chicago Press) and `10.1145/321812.321823`,
+  `10.1145/2455.2461` (Horowitz/Sahni 1974, Lagarias/Odlyzko 1985, ACM).
+  Every other new external link answered.
+- **Decision:** exclude exactly these three URLs in
+  `.github/workflows/check.yml`, with the reason in a comment there. The
+  DOI stays in the text: it is the stable identifier the brief asks for.
+- **Alternatives:** a browser user agent for lychee (would hide real
+  breakage on every site and pretends to be something it is not);
+  dropping the links (the brief prefers a stable URL); JSTOR or a mirror
+  (JSTOR blocks the same way, mirrors are not stable).
+- **Not excluded, noted as a risk:** the news sources of the Bitcoin post
+  (CoinDesk, investing.com, Crypto Briefing) answered a normal fetch; if
+  one of them blocks lychee in CI, it gets its own exclusion with the same
+  reasoning.
+- **Addendum (CI, PR #26):** exactly one investing.com URL
+  (`…/fed-rate-hike-odds-in-december-at-88-after-hot-cpi-cme-fedwatch-5017585`)
+  is now excluded as well: bot-blocked (403), headline confirmed via
+  syndication, reachable in a browser. No domain pattern.
+
+## R6-D14. The Bitcoin post: setting, metadata, checks
+
+- **Text:** Timur's wording unchanged except the corrections of the fact
+  check (VERIFICATION R6 §3: seven corrections in six places, one
+  weakening); switch
+  `PERSÖNLICHE_ANGABEN: veröffentlichen`, nothing removed.
+- **Metadata:** slug `bitcoin-was-in-den-naechsten-jahrzehnten-entschieden-wird`
+  / `bitcoin-what-gets-decided-in-the-coming-decades`, pair key
+  `bitcoin-coming-decades`, category `opinion` (Standpunkte: the text is a
+  dated position, which is what the category promises), tags bitcoin,
+  security budget, governance, quantum computing, game theory. The
+  description names the four topics only. English title "Bitcoin: what
+  gets decided in the coming decades" (sentence case like every other
+  English title of the site), `status: draft-review` for the translation
+  only.
+- **Neutral surfaces, enforced:** `check:post-surfaces` keeps a short
+  list of words that mark the personal part of the text and fails if one
+  appears in the title, description, Open Graph/Twitter tags, JSON-LD,
+  feed item head, `llms.txt` entry, search-index title/description or the
+  Markdown twin's head. Full-text outputs (page, `content:encoded`, twin
+  body, `llms-full.txt`, the search index's text field, which full-text
+  search needs) show the text as published, as the brief says.
+- **Formula with a spoken description:** `$tex %% words$` puts the words
+  into the `alttext` of the `<math>` element (`rehype-temml.ts`); the
+  Markdown twin drops them and keeps plain TeX. MathML stays the
+  rendering (D6): the brief says "KaTeX", but KaTeX's HTML output needs
+  inline styles the CSP forbids; Temml reads the same TeX.
+- **Numbers:** `tests/articles/bitcoin_security_budget.py` recomputes every
+  number from the consensus parameters and the text's dated inputs and
+  checks both languages; deliberate deviations are named exceptions
+  ("Tabelle 1", "0,12 Prozent", "Drawdowns", "Preis").
+  `check:article-numbers` runs it in `npm run check` and proves it bites:
+  six copies with one changed number each must all fail.
+
+## R6-D15. `npm run audit`: one exception for an unfixed build-time advisory
+
+- **Finding (2026-11-18):** `npm audit` reports **GHSA-fc5q-39xc-vjpf**
+  (CVE-2026-112366, high, CWE-1333) for `picomatch` ≤ 4.0.7: ReDoS when an
+  attacker controls both the glob pattern and the matched string (read at
+  github.com/advisories; published 2026-10-19, widened 2026-11-17). 4.0.7
+  is the latest release, **no patched version exists**. It reaches 13
+  packages, all through Astro, Vite, tinyglobby and anymatch; the old
+  `npm audit --audit-level=moderate` therefore failed the gate and CI.
+- **Assessment:** not reachable. `picomatch` runs only at build time (and
+  in the local dev server), matching the repository's own globs against
+  its own file paths. The site is static files behind Caddy; no Node
+  process runs on the server, no visitor input reaches a glob.
+- **Decision:** `npm run audit` is now `tools/check-audit.mjs`: it fails on
+  every moderate-or-worse advisory except listed exceptions, and an
+  exception **expires by itself** when the package publishes a version
+  newer than the last vulnerable one or when the advisory's range
+  changes. Five synthetic reports prove the rules bite on every run.
+- **Alternatives:** `npm audit fix --force` (forbidden; would install
+  astro 5.3.0, two majors back); an `overrides` entry (there is no fixed
+  version to pin); `--audit-level=critical` (would hide every other high
+  finding); `audit-ci` or `better-npm-audit` (a new dependency for twenty
+  lines of logic).
+- **Revision:** as soon as `picomatch` > 4.0.7 is published, the gate
+  fails; update (`npm update picomatch` or via Astro/Vite), confirm the
+  advisory is gone, delete the exception.
+
+## R6-D16. Tables and word count after screenshot round 3
+
+- **Tabular figures only where they align numbers.** Inter's `tnum` also
+  widens the hyphen (measured 22 → 25 px for "a-a"), so
+  "Stake-Konzentration" read as "Stake - Konzentration". `rehype-article.ts`
+  marks cells that are mostly figures (`cell-num`); only those get
+  `tabular-nums`, and up to 24 characters they stay on one line.
+  Alternatives: `tnum` everywhere and live with the gaps; non-breaking
+  hyphens in the text (changes the author's characters and search text).
+- **Identifiers keep their hyphen** ("BIP-360", "SHA-256"): wrapped in
+  `span.nobr` at build time; code and maths untouched. Alternative:
+  U+2011 in the Markdown (same objection as above).
+- **No rule under the last table row:** the scroll box's 8 px radius
+  clipped it into a shorter, fainter line. Alternative: drop the radius
+  (the focus ring follows it).
+- **`wordCount` counts words**, not Markdown tokens (comments, link
+  targets, table pipes, list markers were counted before): JSON-LD
+  `wordCount` and the reading time match the visible text more closely.
+
+## R6-D17. `check:prepush`: two false positives made precise
+
+- **Finding (2026-11-18, closing run):** NO-GO with 8 findings, all false:
+  the GitHub logo's SVG path in `src/components/Icon.astro` contains
+  coordinates that read as an IPv4 address (four numbers joined by dots), and
+  `src/data/crawlers.ts` stores the user-agent names robots.txt publishes
+  ("OAI-SearchBot", "Claude-SearchBot", …) in a field called `token`, read
+  as a "secret assignment". The commits cannot be rewritten (the brief
+  forbids touching the history, and the push uploads every commit).
+- **Decision:** narrow the two rules instead of exempting files: the
+  address search skips only the values of SVG geometry attributes (`d`,
+  `points`, `viewBox`), the rest of the line is still searched; a "secret
+  assignment" is exempt only if its value is one of the user-agent names in
+  `src/data/crawlers.ts` at the head of the range and consists of letters
+  and hyphens. `check:prepush-exit` proves both GO cases and two controls
+  that must stay NO-GO (an address next to path data, a token value with
+  digits in the crawler file).
+- **Alternatives:** an allowlist of commits or files (would hide a real
+  secret added later to the same file); renaming the field (the old
+  commits would still be flagged).

@@ -1,11 +1,13 @@
 ---
 import { render } from "astro:content";
+import Arrow from "../../../components/Arrow.astro";
 import Toc from "../../../components/Toc.astro";
 import type { Lang } from "../../../i18n/ui";
 import { formatDate, isoDate, localePath, useTranslations } from "../../../i18n/utils";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import { allPosts, isHidden, postUrl, readingTime } from "../../../lib/content";
-import { absolute, PERSON_ID, WEBSITE_ID } from "../../../lib/seo";
+import { allPosts, isHidden, postUrl, readingTime, relatedPosts, wordCount } from "../../../lib/content";
+import { ogImageFor } from "../../../lib/og";
+import { absolute, blogId, blogNode, PERSON_ID, pageId, ref } from "../../../lib/seo";
 import { categoryMap, categoryUrl, seriesUrl, tagUrl } from "../../../lib/taxonomy";
 
 export async function getStaticPaths() {
@@ -20,44 +22,82 @@ export async function getStaticPaths() {
             .filter((s) => s.lang === p.lang && s.entry.data.series === p.entry.data.series)
             .sort((a, b) => (a.entry.data.seriesPart ?? 0) - (b.entry.data.seriesPart ?? 0))
         : [],
+      related: relatedPosts(posts, p, 3),
     },
   }));
 }
 
-const { post, other, seriesPosts } = Astro.props;
+const { post, other, seriesPosts, related } = Astro.props;
 const lang = Astro.params.lang as Lang;
 const t = useTranslations(lang);
 const d = post.entry.data;
-const { Content, headings } = await render(post.entry);
-const cat = (await categoryMap()).get(d.category.id);
+const { Content, headings, remarkPluginFrontmatter } = await render(post.entry);
+const tocLabels = (remarkPluginFrontmatter?.tocLabels ?? {}) as Record<string, string>;
+// The entries of the sources section (rehype-article.ts), for JSON-LD citation.
+const citations = (remarkPluginFrontmatter?.citations ?? []) as { name: string; url?: string }[];
+const cats = await categoryMap();
+const cat = cats.get(d.category.id);
 if (!cat) throw new Error(`Unknown category "${d.category.id}" in blog/${post.entry.id}`);
 const url = postUrl(post);
 const minutes = readingTime(post.entry.body);
+const words = wordCount(post.entry.body);
 
-const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
-const showToc = d.toc ?? tocHeadings.length >= 3;
+// Table of contents from about 1,500 words and three sections on (brief R6
+// §2.3); `toc: true/false` in the frontmatter overrides.
+const tocHeadings = headings.filter((h) => (h.depth === 2 || h.depth === 3) && h.slug !== "footnote-label");
+const sectionCount = tocHeadings.filter((h) => h.depth === 2).length;
+const showToc = d.toc ?? (words >= 1500 && sectionCount >= 3);
 
 const alternates: Partial<Record<Lang, string>> = { [lang]: url };
 if (other) alternates[other.lang] = postUrl(other);
 
+const published = formatDate(d.date, lang);
+const citation =
+  lang === "de"
+    ? `Timur Manjosov: „${d.title}“. timurmanjosov.com, ${published}. ${absolute(url)}`
+    : `Timur Manjosov, “${d.title}”, timurmanjosov.com, ${published}. ${absolute(url)}`;
+
+const hidden = isHidden(post);
+const postId = `${absolute(url)}#post`;
 const jsonLd = [
+  blogNode(lang),
   {
     "@type": "BlogPosting",
-    "@id": `${absolute(url)}#post`,
+    "@id": postId,
     headline: d.title,
     description: d.description,
     url: absolute(url),
-    mainEntityOfPage: absolute(url),
+    ...(hidden ? {} : { mainEntityOfPage: ref(pageId(url)) }),
     inLanguage: lang,
     datePublished: isoDate(d.date),
     dateModified: isoDate(d.updated ?? d.date),
-    author: { "@id": PERSON_ID },
-    publisher: { "@id": PERSON_ID },
-    isPartOf: { "@id": WEBSITE_ID },
+    author: ref(PERSON_ID),
+    publisher: ref(PERSON_ID),
+    isPartOf: ref(blogId(lang)),
     articleSection: cat.data.label[lang],
-    keywords: d.tags.join(", "),
-    wordCount: (post.entry.body ?? "").split(/\s+/).filter(Boolean).length,
-    ...(other ? { workTranslation: { "@id": `${absolute(postUrl(other))}#post` } } : {}),
+    keywords: d.tags,
+    wordCount: words,
+    image: absolute(ogImageFor(url, hidden)),
+    ...(citations.length
+      ? {
+          citation: citations.map((c) => ({
+            "@type": "CreativeWork",
+            name: c.name,
+            ...(c.url ? { url: c.url } : {}),
+          })),
+        }
+      : {}),
+    ...(other
+      ? {
+          workTranslation: {
+            "@type": "BlogPosting",
+            "@id": `${absolute(postUrl(other))}#post`,
+            url: absolute(postUrl(other)),
+            headline: other.entry.data.title,
+            inLanguage: other.lang,
+          },
+        }
+      : {}),
   },
 ];
 ---
@@ -71,23 +111,32 @@ const jsonLd = [
   fallback={localePath(lang === "de" ? "en" : "de", "blog/")}
   ogType="article"
   jsonLd={jsonLd}
-  noindex={isHidden(post)}
-  article={{ published: d.date, modified: d.updated, tags: d.tags }}
+  noindex={hidden}
+  article={{ published: d.date, modified: d.updated, tags: d.tags, section: cat.data.label[lang] }}
+  crumbs={[
+    { name: t("blog.title"), path: localePath(lang, "blog/") },
+    { name: cat.data.label[lang], path: categoryUrl(lang, cat.id) },
+  ]}
+  mainEntity={postId}
+  markdownTwin
+  dateModified={isoDate(d.updated ?? d.date)}
   feeds={[{ title: `Timur Manjosov – ${cat.data.label[lang]}`, href: `${categoryUrl(lang, cat.id)}feed.xml` }]}
+  serif
 >
-  <article class="container page">
+  <article class="container post page">
     <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>
       <ol>
         <li><a href={localePath(lang, "blog/")}>{t("blog.title")}</a></li>
         <li><a href={categoryUrl(lang, cat.id)}>{cat.data.label[lang]}</a></li>
       </ol>
     </nav>
-    <header class="page-header">
+    <header class="post-header">
       <h1>{d.title}</h1>
-      <p>{d.description}</p>
-      <div class="meta">
+      <p class="post-header__lead">{d.description}</p>
+      <p class="byline">
+        <span class="byline__author">Timur Manjosov</span>
         <span>
-          {t("blog.published")} <time datetime={isoDate(d.date)}>{formatDate(d.date, lang)}</time>
+          {t("blog.published")} <time datetime={isoDate(d.date)}>{published}</time>
         </span>
         {
           d.updated && (
@@ -100,51 +149,56 @@ const jsonLd = [
         {cat.data.opinion && <span class="badge badge--accent">{t("blog.opinion")}</span>}
         {d.draft && <span class="badge">{t("blog.draft")}</span>}
         {post.scheduled && <span class="badge">{t("blog.scheduled")}</span>}
-      </div>
+      </p>
     </header>
 
-    {
-      cat.data.opinion && (
-        <p class="notice">
-          <strong>{t("blog.opinion")}:</strong> {t("blog.opinionNote")} (<time
-            datetime={isoDate(d.updated ?? d.date)}>{formatDate(d.updated ?? d.date, lang)}</time
-          >)
-        </p>
-      )
-    }
+    <div class="post-layout">
+      <div class="post-main">
+        {
+          cat.data.opinion && (
+            <p class="notice">
+              <strong>{t("blog.opinion")}:</strong> {t("blog.opinionNote")} (<time
+                datetime={isoDate(d.updated ?? d.date)}>{formatDate(d.updated ?? d.date, lang)}</time
+              >)
+            </p>
+          )
+        }
 
-    {
-      d.series && seriesPosts.length > 0 && (
-        <nav class="notice" aria-labelledby="series-nav">
-          <p id="series-nav">
-            {t("blog.series")}: <a href={seriesUrl(lang, d.series ?? "")}>{d.series}</a>, {t("blog.seriesPart")}{" "}
-            {d.seriesPart} {t("blog.seriesOf")} {seriesPosts.length}
-          </p>
-          <ol>
-            {seriesPosts.map((s) => (
-              <li>
-                {s.slug === post.slug ? (
-                  <span aria-current="page">{s.entry.data.title}</span>
-                ) : (
-                  <a href={postUrl(s)}>{s.entry.data.title}</a>
-                )}
-              </li>
-            ))}
-          </ol>
-        </nav>
-      )
-    }
+        {
+          d.series && seriesPosts.length > 0 && (
+            <nav class="notice" aria-labelledby="series-nav">
+              <p id="series-nav">
+                {t("blog.series")}: <a href={seriesUrl(lang, d.series ?? "")}>{d.series}</a>, {t("blog.seriesPart")}{" "}
+                {d.seriesPart} {t("blog.seriesOf")} {seriesPosts.length}
+              </p>
+              <ol>
+                {seriesPosts.map((s) => (
+                  <li>
+                    {s.slug === post.slug ? (
+                      <span aria-current="page">{s.entry.data.title}</span>
+                    ) : (
+                      <a href={postUrl(s)}>{s.entry.data.title}</a>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )
+        }
 
-    {showToc && <Toc lang={lang} headings={tocHeadings} />}
+        {showToc && <Toc lang={lang} headings={tocHeadings} labels={tocLabels} variant="details" />}
 
-    <div class="prose">
-      <Content />
+        <div class="prose">
+          <Content />
+        </div>
+      </div>
+      {showToc && <Toc lang={lang} headings={tocHeadings} labels={tocLabels} variant="side" />}
     </div>
 
-    <footer class="section">
+    <footer class="post-footer">
       {
         d.tags.length > 0 && (
-          <>
+          <div>
             <h2 class="visually-hidden">{t("blog.tags")}</h2>
             <ul class="tag-list">
               {d.tags.map((tag) => (
@@ -153,12 +207,12 @@ const jsonLd = [
                 </li>
               ))}
             </ul>
-          </>
+          </div>
         )
       }
       {
         other && (
-          <p class="meta section-footer">
+          <p class="meta">
             {t("blog.translation")}:{" "}
             <a href={postUrl(other)} hreflang={other.lang} lang={other.lang}>
               {other.entry.data.title}
@@ -166,7 +220,39 @@ const jsonLd = [
           </p>
         )
       }
-      <p class="section-footer"><a href={localePath(lang, "blog/")}>← {t("blog.backToBlog")}</a></p>
+      <section class="box box--filled box--sm cite" aria-labelledby="cite-title">
+        <h2 id="cite-title" class="cite__title">{t("blog.cite")}</h2>
+        <p>{citation}</p>
+      </section>
+      {
+        related.length > 0 && (
+          <section aria-labelledby="related-title">
+            <h2 id="related-title">{t("blog.related")}</h2>
+            <ul class="related">
+              {related.map((r) => {
+                const rc = cats.get(r.entry.data.category.id);
+                return (
+                  <li class="card box--sm">
+                    {rc && <p class="eyebrow">{rc.data.label[lang]}</p>}
+                    <h3>
+                      <a class="card__link" href={postUrl(r)}>
+                        {r.entry.data.title}
+                      </a>
+                    </h3>
+                    <div class="card__foot card__action">
+                      <p class="meta">
+                        <time datetime={isoDate(r.entry.data.date)}>{formatDate(r.entry.data.date, lang)}</time>
+                      </p>
+                      <Arrow />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )
+      }
+      <p><a href={localePath(lang, "blog/")}>← {t("blog.backToBlog")}</a></p>
     </footer>
   </article>
 </BaseLayout>

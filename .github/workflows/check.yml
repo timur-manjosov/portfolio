@@ -1,6 +1,7 @@
 # Quality gate for every push and pull request. Mirrors `npm run check`
-# (which runs locally without a browser) and adds the two checks that need
-# network or a real browser: the Playwright/axe suite and external links.
+# (its builds render the Open Graph images with Chromium, so Chromium is
+# installed first) and adds the two checks that need network or a real
+# browser page: the Playwright/axe suite and external links.
 #
 # This workflow only checks. It never deploys: deployment stays a manual,
 # reviewed step (docs/DEPLOY.md). No secrets, read-only token, and no
@@ -41,6 +42,11 @@ jobs:
 
       - run: npm ci
 
+      # Before the gate: every build renders the Open Graph images with
+      # Chromium (tools/og-images.mjs); the browser suite below needs it too.
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
       # lint, typecheck, both builds, CSP, internal links, HTML validation,
       # SEO/JSON-LD/sitemap, contrast, axe (jsdom), drafts filter, i18n
       # report, npm audit (moderate and above), dark-palette snapshot,
@@ -63,14 +69,17 @@ jobs:
             echo "adapt OK: $f"
           done
 
-      - name: Install Chromium for Playwright
-        run: npx playwright install --with-deps chromium
-
       # axe in light + dark, overflow at 320–1280 px, no-JS rendering,
       # third-party requests, cookies, theme toggle, language switcher,
       # filter, search, feeds, redirects.
       - run: npm run check:browser
 
+      # Excluded one by one, each answered 403 to an automated request on
+      # 2026-11-17 (publisher bot protection; docs/DECISIONS.md R6-D13):
+      # Kydland/Prescott 1977 (University of Chicago Press) in the Bitcoin
+      # post, Horowitz/Sahni 1974 and Lagarias/Odlyzko 1985 (ACM) in the
+      # subset-sum post. Also one investing.com news URL in the Bitcoin
+      # post (403 in CI, headline confirmed via syndication; R6-D13).
       - name: External links (lychee)
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
@@ -81,6 +90,10 @@ jobs:
             --exclude-path dist/search-index.json
             --exclude ^https://timurmanjosov.com/
             --exclude ^https://eprint.iacr.org/
+            --exclude ^https://doi.org/10.1086/260580
+            --exclude ^https://doi.org/10.1145/321812.321823
+            --exclude ^https://doi.org/10.1145/2455.2461
+            --exclude ^https://www\.investing\.com/news/economy-news/fed-rate-hike-odds-in-december-at-88-after-hot-cpi-cme-fedwatch-5017585$
             --root-dir ${{ github.workspace }}/dist
             dist
           fail: true

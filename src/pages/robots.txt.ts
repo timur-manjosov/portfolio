@@ -1,10 +1,13 @@
+import { crawlers } from "../data/crawlers";
 import { SITE_URL } from "../data/site";
+import { robotsTxt } from "../lib/robots";
 
 /**
- * Everything may be crawled, including by AI crawlers: the goal is to be
- * findable (decision and how to change it: docs/DECISIONS.md, "AI crawlers").
+ * robots.txt from src/data/crawlers.ts (one switch per group). The switches
+ * and what robots.txt can and cannot do: docs/SEO.md.
  */
 export function GET() {
-  const body = ["User-agent: *", "Allow: /", "", `Sitemap: ${SITE_URL}/sitemap.xml`, ""].join("\n");
-  return new Response(body, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  return new Response(robotsTxt(crawlers, SITE_URL), {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
 }

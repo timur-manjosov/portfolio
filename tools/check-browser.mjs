@@ -408,7 +408,8 @@ for (const rd of config.redirects) {
 
     // Card hover (R4-D4): lift ≤ 6 px, elevation up, gradient contour, state
     // layer 8 %, title in the accent colour, the arrow moves 2–4 px forward.
-    const card = ".bento .card:not(.card--featured):has(.card__link)";
+    // Home (R6-D7): the current projects are the cards of the page.
+    const card = ".card-grid .card:has(.card__link)";
     const before = await styleOf(page, card);
     const ringBefore = await styleOf(page, card, "::before");
     const layerBefore = await styleOf(page, `${card} .card__link`, "::after");
@@ -599,7 +600,7 @@ for (const rd of config.redirects) {
       state.marked === 0 && state.faded === 0,
       `hidden content: ${JSON.stringify(state)}`,
     );
-    const card = ".bento .card:has(.card__link)";
+    const card = ".card-grid .card:has(.card__link)";
     await page.hover(`${card} .card__link`);
     await page.hover(".hero .btn--primary");
     await page.waitForTimeout(300);

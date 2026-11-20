@@ -21,6 +21,8 @@ const tags = tagCounts(forListing(await allPosts(), lang));
   description={`${t("blog.allTags")} – ${t("blog.description")}`}
   section="blog"
   alternates={{ de: "/de/blog/tags/", en: "/en/blog/tags/" }}
+  pageType="CollectionPage"
+  crumbs={[{ name: t("blog.title"), path: localePath(lang, "blog/") }]}
 >
   <div class="container page">
     <nav class="breadcrumb" aria-label={t("a11y.breadcrumb")}>

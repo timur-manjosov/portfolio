@@ -124,7 +124,8 @@ try {
   expect(p.status === 0, "publish", `exit ${p.status}: ${out(p)}`);
   expect(current() === `releases/${ids.b}`, "publish", `current is ${current()}`);
   expect(history().join() === [ids.a, ids.b].join(), "publish", `history ${history()}`);
-  expect(/2 new or changed URL\(s\) checked/.test(p.stdout), "publish", "changed URLs not checked over HTTP");
+  // The new page, its Markdown twin (de/now/ is copied with index.md) and the changed /en/now/.
+  expect(/3 new or changed URL\(s\) checked/.test(p.stdout), "publish", "changed URLs not checked over HTTP");
   expect(existsSync(join(web, "current/de/neu-im-test/index.html")), "publish", "new page not served");
 
   // 3. A release that fails the HTTP check: switched back, removed.

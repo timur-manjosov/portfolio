@@ -101,10 +101,40 @@ export function forListing<C extends Localized>(items: Parsed<C>[], lang: Lang):
   return items.filter((i) => i.lang === lang || !keysInLang.has(i.key));
 }
 
-/** Reading time in minutes at ~220 words per minute (code and math count as words). */
+/** Words of a Markdown body (code and math count as words). Comments and
+ *  link targets are not text; tokens without a letter or digit (table
+ *  pipes, list markers, dashes, "=") are not words. */
+export function wordCount(body: string | undefined): number {
+  return (body ?? "")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/\]\([^)\s]*\)/g, "]")
+    .split(/\s+/)
+    .filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
+}
+
+/** Reading time in minutes at ~220 words per minute. */
 export function readingTime(body: string | undefined): number {
-  const words = (body ?? "").trim().split(/\s+/).filter(Boolean).length;
-  return Math.max(1, Math.round(words / 220));
+  return Math.max(1, Math.round(wordCount(body) / 220));
+}
+
+/**
+ * "Read next" for a post: other posts in the same language, ranked by shared
+ * tags (2 points each) and the same category (1 point), newest first on a
+ * tie; never the post itself or its translation. Falls back to the newest
+ * posts of that language when nothing is related.
+ */
+export function relatedPosts(posts: Parsed<"blog">[], post: Parsed<"blog">, n: number): Parsed<"blog">[] {
+  const tags = new Set(post.entry.data.tags);
+  const candidates = posts.filter((p) => p.lang === post.lang && p.key !== post.key);
+  const scored = candidates
+    .map((p) => ({
+      p,
+      score:
+        2 * p.entry.data.tags.filter((tag) => tags.has(tag)).length +
+        (p.entry.data.category.id === post.entry.data.category.id ? 1 : 0),
+    }))
+    .sort((a, b) => b.score - a.score || b.p.entry.data.date.valueOf() - a.p.entry.data.date.valueOf());
+  return scored.slice(0, n).map((s) => s.p);
 }
 
 export function postUrl(p: Parsed<"blog">): string {

@@ -49,7 +49,11 @@ function find(collection, name) {
   fail(`no ${collection} "${name}" in ${langs.join("/")}. Known: ${known.join(", ")}`);
 }
 
-let file;
+// Typed as a string: untyped, TypeScript resolved readFileSync(file, "utf8")
+// below to its Buffer overload and flagged `after.slice` as the deprecated
+// Buffer#slice (R6-D1 c). At run time both reads return strings.
+/** @type {string} */
+let file = "";
 let collection;
 if (what === "post" || what === "project") {
   if (!slug) fail(`usage: npm run edit -- ${what} <slug> [--lang de|en]`);

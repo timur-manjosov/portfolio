@@ -16,6 +16,9 @@
 //       deploy/build-release.sh --test-only uses it, and it marks such a
 //       release so that stage.sh and apply-on-server.sh refuse it.
 //
+// Every build except --dev also renders the Open Graph images
+// (tools/og-images.mjs, Chromium, cached in .cache/og/).
+//
 //   node tools/build.mjs --dev [--private <file>]
 //       dev server (drafts visible) with private data, for previewing.
 //
@@ -38,6 +41,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build, dev } from "astro";
 import { resolveBuildDay } from "../src/lib/schedule.ts";
+import { renderOgImages } from "./og-images.mjs";
 import { DEFAULT_PRIVATE_FILE, loadPrivateFile, PrivateDataError, TEST_MARKERS } from "./private-data.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -186,6 +190,15 @@ if (opts.dev) {
 } else {
   const outDir = resolve(root, opts.outDir);
   await build({ ...inline, outDir, force: true });
+  // Open Graph images of the pages that ask for one (tools/og-images.mjs).
+  try {
+    const og = await renderOgImages(outDir);
+    console.log(
+      `✓ Open Graph images: ${og.images} pages (${og.rendered} newly rendered, the rest from .cache/og)`,
+    );
+  } catch (error) {
+    fail([error.message]);
+  }
   if (opts.release) {
     const hits = scanOutput(outDir);
     // A visible TODO( never passes, not even in a test-only release; test

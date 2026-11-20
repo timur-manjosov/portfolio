@@ -3,6 +3,7 @@
  * sitemap.xml, llms.txt and the search index, so they cannot disagree with
  * each other or with the pages' own hreflang links.
  */
+import { profile } from "../data/site";
 import { LANGS, type Lang, ui } from "../i18n/ui";
 import {
   allPages,
@@ -60,7 +61,7 @@ export async function allRoutes(): Promise<RouteEntry[]> {
         alternates: both((l) => `/${l}/${path}`),
         lastmod,
       });
-    listing("", t["site.title"], t["site.description"], newest([...postDates, ...projectDates]));
+    listing("", t["site.title"], profile.summary[lang], newest([...postDates, ...projectDates]));
     listing("projects/", t["projects.title"], t["projects.description"], newest(projectDates));
     listing("blog/", t["blog.title"], t["blog.description"], newest(postDates));
     listing("blog/archive/", t["blog.archive"], t["blog.archiveDescription"], newest(postDates));

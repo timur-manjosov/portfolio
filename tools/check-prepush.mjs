@@ -18,8 +18,12 @@
 //      server user and host name, real web root) and from ~/.ssh/config
 //      (Host aliases, HostName and User of every block that is not a code
 //      host such as github.com), if that file exists;
+//      SVG geometry attributes (d, points, viewBox) are left out of the
+//      address search (path data is numbers and dots, not addresses);
 //   3. token and key patterns (private keys, GitHub/GitLab/AWS/Slack/OpenAI/
-//      Anthropic tokens, "secret = '…'" style assignments);
+//      Anthropic tokens, "secret = '…'" style assignments; the user-agent
+//      names robots.txt publishes, `token:` in src/data/crawlers.ts, are
+//      public and exempt if they are letters and hyphens only);
 // and per commit:
 //   4. author and committer e-mail: must be a GitHub noreply address
 //      (…@users.noreply.github.com);
@@ -179,6 +183,24 @@ const TOKENS = [
   ],
 ];
 
+// The user-agent names that robots.txt publishes (src/data/crawlers.ts at the
+// head of the range, field `token`) are public by definition, not secrets.
+// Only names of letters and hyphens qualify, so a real secret placed there
+// would still be reported.
+const PUBLIC_UA = new Set();
+try {
+  for (const m of git("show", `${head}:src/data/crawlers.ts`).matchAll(/\btoken:\s*"([^"]+)"/g))
+    if (/^[A-Za-z][A-Za-z-]*$/.test(m[1])) PUBLIC_UA.add(m[1]);
+} catch {
+  // no crawler list in this repository: nothing to exempt
+}
+const publicUserAgent = (match) => PUBLIC_UA.has(match.match(/["']([^"']+)["']$/)?.[1] ?? "");
+
+// SVG geometry ("M12 .5a11.5 …") is numbers and dots, so it can
+// look like an IPv4 address; its attribute values are left out of the
+// address search (everything else on the line is still searched).
+const withoutGeometry = (text) => text.replace(/\b(d|points|viewBox)="[^"]*"/g, '$1=""');
+
 const IGNORED = [
   [/(^|\/)\.directory$/, ".directory"],
   [/^release\//, "release/"],
@@ -205,13 +227,16 @@ function scanText(commit, where, text) {
   const lower = text.toLowerCase();
   for (const l of literals)
     if (lower.includes(l.value.toLowerCase())) add(commit, where, l.what, mask(l.value));
-  for (const ip of text.match(IPV4) ?? []) if (!harmlessIp(ip)) add(commit, where, "IPv4 address", mask(ip));
-  for (const ip of text.match(IPV6) ?? []) if (!harmlessIp6(ip)) add(commit, where, "IPv6 address", mask(ip));
+  const addressText = withoutGeometry(text);
+  for (const ip of addressText.match(IPV4) ?? [])
+    if (!harmlessIp(ip)) add(commit, where, "IPv4 address", mask(ip));
+  for (const ip of addressText.match(IPV6) ?? [])
+    if (!harmlessIp6(ip)) add(commit, where, "IPv6 address", mask(ip));
   for (const p of text.match(SERVER_PATH) ?? [])
     if (!PLACEHOLDER_PATHS.some((ok) => p.startsWith(ok))) add(commit, where, "server path", mask(p));
   for (const [re, what] of TOKENS) {
     const m = text.match(re);
-    if (m) add(commit, where, what, mask(m[0]));
+    if (m && !(what === "secret assignment" && publicUserAgent(m[0]))) add(commit, where, what, mask(m[0]));
   }
 }
 

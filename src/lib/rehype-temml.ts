@@ -11,6 +11,13 @@
  * and `$$…$$` into `<pre><code class="language-math math-display">`. Each of
  * those is replaced by a raw node holding Temml's markup; Astro serialises
  * raw nodes verbatim.
+ *
+ * A spoken description: `$\frac{1}{2} x %% one half x$`. Everything after
+ * `%%` is not rendered but becomes the `alttext` of the <math> element, the
+ * MathML attribute screen readers fall back on when they do not navigate
+ * the MathML itself. Without `%%` the MathML stands alone (it is
+ * accessible as it is; the description is for formulas whose reading
+ * order is not obvious).
  */
 import temml from "temml";
 
@@ -32,13 +39,30 @@ function textOf(node: HastNode): string {
   return (node.children ?? []).map(textOf).join("");
 }
 
-function render(tex: string, displayMode: boolean): string {
+const escapeAttr = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Splits `tex %% description` into the formula and its description. */
+export function splitDescription(source: string): { tex: string; alt?: string | undefined } {
+  // "%%" not preceded by a backslash ("\%" is a literal percent sign).
+  const at = source.search(/(?<!\\)%%/);
+  if (at < 0) return { tex: source };
+  const alt = source
+    .slice(at + 2)
+    .replace(/\s+/g, " ")
+    .trim();
+  return { tex: source.slice(0, at).trim(), alt: alt || undefined };
+}
+
+function render(source: string, displayMode: boolean): string {
+  const { tex, alt } = splitDescription(source);
   // throwOnError: a TeX typo should break the build, not ship a red error box.
-  const html = temml
+  let html = temml
     .renderToString(tex, { displayMode, throwOnError: true, annotate: true })
     // Temml adds this for Firefox/Safari; the stylesheet sets the same rule
     // on math.tml-display, so the attribute is redundant (and CSP-blocked).
     .replace(' style="display:block math;"', "");
+  if (alt) html = html.replace(/^<math\b/, `<math alttext="${escapeAttr(alt)}"`);
   if (html.includes("style=")) {
     throw new Error(
       `Temml produced an inline style attribute (blocked by the CSP) for: ${tex}\n` +

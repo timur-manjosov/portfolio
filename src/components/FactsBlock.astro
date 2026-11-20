@@ -5,7 +5,7 @@
  * bar). Values come from src/data/site.ts, the same source as JSON-LD and
  * /links.
  */
-import { accounts, person } from "../data/site";
+import { accounts, person, profile } from "../data/site";
 import type { Lang } from "../i18n/ui";
 import { useTranslations } from "../i18n/utils";
 
@@ -25,11 +25,11 @@ const t = useTranslations(lang);
     </div>
     <div class="fact">
       <dt>{t("facts.study")}</dt>
-      <dd>{t("facts.studyValue")}, <a href={person.university.url}>{person.university.name}</a></dd>
+      <dd>{profile.study[lang]}, <a href={person.university.url}>{person.university.name}</a></dd>
     </div>
     <div class="fact">
       <dt>{t("facts.focus")}</dt>
-      <dd>{t("facts.focusValue")}</dd>
+      <dd>{profile.focus[lang]}</dd>
     </div>
     <div class="fact">
       <dt>{t("facts.languages")}</dt>

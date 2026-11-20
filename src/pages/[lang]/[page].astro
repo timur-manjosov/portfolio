@@ -14,8 +14,9 @@ import type { Lang } from "../../i18n/ui";
 import { formatDate, isoDate, localePath, useTranslations } from "../../i18n/utils";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { allPages, pageUrl } from "../../lib/content";
+import { TWIN_PAGES } from "../../lib/markdown-twin";
 import { renderPrivateMarkdown } from "../../lib/private-markdown";
-import { absolute, PERSON_ID } from "../../lib/seo";
+import { PERSON_ID } from "../../lib/seo";
 
 export async function getStaticPaths() {
   const pages = await allPages();
@@ -40,21 +41,6 @@ const extraHtml = extraMarkdown ? await renderPrivateMarkdown(extraMarkdown) : n
 
 const sections: Record<string, Section> = { about: "about", now: "now", contact: "contact" };
 const section = sections[page.slug] ?? "other";
-
-const jsonLd =
-  page.slug === "about"
-    ? [
-        {
-          "@type": "ProfilePage",
-          "@id": `${absolute(pageUrl(page))}#page`,
-          url: absolute(pageUrl(page)),
-          name: d.title,
-          inLanguage: lang,
-          dateModified: isoDate(d.updated),
-          mainEntity: { "@id": PERSON_ID },
-        },
-      ]
-    : [];
 ---
 
 <BaseLayout
@@ -65,8 +51,11 @@ const jsonLd =
   alternates={alternates}
   fallback={localePath(lang === "de" ? "en" : "de")}
   noindex={d.noindex}
-  ogType={page.slug === "about" ? "profile" : "website"}
-  jsonLd={jsonLd}
+  pageType={page.slug === "about" ? "ProfilePage" : "WebPage"}
+  mainEntity={page.slug === "about" ? PERSON_ID : undefined}
+  markdownTwin={TWIN_PAGES.includes(page.slug)}
+  dateModified={isoDate(d.updated)}
+  serif
 >
   <article class="container page">
     <header class="page-header">

@@ -184,6 +184,15 @@ curl -sI https://timurmanjosov.com/lab/                # 301 → /en/projects/
 curl -sI https://aura.timurmanjosov.com/               # unchanged
 ```
 
+Then the whole site in one read-only pass (every sitemap URL, headers and
+CSP, feeds, robots.txt, llms.txt, llms-full.txt, security.txt, 404s,
+hreflang, canonical, JSON-LD, no scheduled post reachable); output in
+German, FEHLER and WARNUNG apart, exit code 0 only without FEHLER:
+
+```sh
+npm run verify:live
+```
+
 In Firefox: open `https://timurmanjosov.com/` (lands in your browser
 language), switch language and theme, use search and the project filter,
 open /contact (your address), /privacy (your name as controller). The

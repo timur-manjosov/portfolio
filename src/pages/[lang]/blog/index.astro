@@ -1,10 +1,11 @@
 ---
+import CategoryNav from "../../../components/CategoryNav.astro";
 import PostList from "../../../components/PostList.astro";
 import { LANGS, type Lang } from "../../../i18n/ui";
 import { localePath, useTranslations } from "../../../i18n/utils";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import { allPosts, forListing } from "../../../lib/content";
-import { allCategories, categoryUrl } from "../../../lib/taxonomy";
+import { allPosts, forListing, postUrl } from "../../../lib/content";
+import { blogNode, itemList } from "../../../lib/seo";
 
 export function getStaticPaths() {
   return LANGS.map((lang) => ({ params: { lang } }));
@@ -13,7 +14,10 @@ export function getStaticPaths() {
 const lang = Astro.params.lang as Lang;
 const t = useTranslations(lang);
 const posts = forListing(await allPosts(), lang);
-const categories = await allCategories();
+const list = itemList(
+  `/${lang}/blog/`,
+  posts.map((p) => ({ name: p.entry.data.title, url: postUrl(p) })),
+);
 ---
 
 <BaseLayout
@@ -22,6 +26,9 @@ const categories = await allCategories();
   description={t("blog.description")}
   section="blog"
   alternates={{ de: "/de/blog/", en: "/en/blog/" }}
+  pageType="CollectionPage"
+  mainEntity={list["@id"] as string}
+  jsonLd={[blogNode(lang), list]}
 >
   <div class="container page">
     <header class="page-header">
@@ -29,25 +36,16 @@ const categories = await allCategories();
       <p>{t("blog.description")}</p>
     </header>
 
-    <nav aria-labelledby="blog-categories" class="section-footer">
-      <h2 id="blog-categories" class="visually-hidden">{t("blog.categories")}</h2>
-      <ul class="tag-list">
-        {
-          categories.map((c) => (
-            <li>
-              <a href={categoryUrl(lang, c.id)}>{c.data.label[lang]}</a>
-            </li>
-          ))
-        }
-        <li><a href={localePath(lang, "blog/tags/")}>{t("blog.tags")}</a></li>
-        <li><a href={localePath(lang, "blog/archive/")}>{t("blog.archive")}</a></li>
-        <li><a href={localePath(lang, "feed.xml")}>{t("nav.feed")}</a></li>
-      </ul>
-    </nav>
+    <CategoryNav lang={lang} posts={posts} current="all" />
 
-    <section class="section" aria-labelledby="all-posts">
+    <section class="section section--tight" aria-labelledby="all-posts">
       <h2 id="all-posts" class="visually-hidden">{t("home.allPosts")}</h2>
-      <PostList lang={lang} posts={posts} />
+      <PostList lang={lang} posts={posts} byYear />
     </section>
+    <p class="section-footer">
+      <a href={localePath(lang, "blog/tags/")}>{t("blog.allTags")}</a>
+      · <a href={localePath(lang, "blog/archive/")}>{t("blog.archive")}</a>
+      · <a href={localePath(lang, "feed.xml")}>{t("nav.feed")}</a>
+    </p>
   </div>
 </BaseLayout>

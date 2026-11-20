@@ -11,6 +11,7 @@ import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createGzip } from "node:zlib";
 
 const config = JSON.parse(readFileSync(new URL("../deploy/site-config.json", import.meta.url), "utf8"));
 
@@ -25,9 +26,21 @@ const TYPES = {
   ".png": "image/png",
   ".woff2": "font/woff2",
   ".asc": "text/plain; charset=utf-8",
+  // Markdown twins. What Caddy sends for .md depends on the server's MIME
+  // table and is only visible live (verify:live warns if it is not text/*).
+  ".md": "text/markdown; charset=utf-8",
+  ".webmanifest": "application/manifest+json",
 };
 
-export function startServer(dist = "dist", port = 0, { languageDoor = true } = {}) {
+// Compressible types, like Caddy's `encode zstd gzip` (tools/caddy-site-block.mjs).
+const COMPRESSIBLE = /^(text\/|application\/(json|xml|rss\+xml)|image\/svg\+xml)/;
+
+/**
+ * `compress`: gzip text responses when the client accepts it, the way the
+ * production server does. Off by default so the HTTP tests see the plain
+ * bodies; Lighthouse runs (tools/lighthouse.mjs) switch it on.
+ */
+export function startServer(dist = "dist", port = 0, { languageDoor = true, compress = false } = {}) {
   const redirects = new Map(config.redirects.map((r) => [r.from, r]));
   const door = languageDoor ? config.languageDoor : null;
   const server = createServer((req, res) => {
@@ -73,12 +86,16 @@ export function startServer(dist = "dist", port = 0, { languageDoor = true } = {
     const cache = pathname.startsWith("/_astro/")
       ? "public, max-age=31536000, immutable"
       : "public, max-age=0, must-revalidate";
+    const type = TYPES[extname(file)] ?? "application/octet-stream";
+    const gzip = compress && COMPRESSIBLE.test(type) && /\bgzip\b/.test(req.headers["accept-encoding"] ?? "");
     res.writeHead(status, {
-      "Content-Type": TYPES[extname(file)] ?? "application/octet-stream",
+      "Content-Type": type,
       "Cache-Control": cache,
+      ...(gzip ? { "Content-Encoding": "gzip", Vary: "Accept-Encoding" } : {}),
     });
     if (req.method === "HEAD") return res.end();
-    createReadStream(file).pipe(res);
+    if (gzip) createReadStream(file).pipe(createGzip()).pipe(res);
+    else createReadStream(file).pipe(res);
   });
   return new Promise((resolve) => {
     server.listen(port, "127.0.0.1", () => resolve(server));
@@ -88,7 +105,8 @@ export function startServer(dist = "dist", port = 0, { languageDoor = true } = {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   const languageDoor = !args.includes("--no-door");
-  const [dist = "dist", port = "4321"] = args.filter((a) => a !== "--no-door");
-  const server = await startServer(dist, Number(port), { languageDoor });
+  const compress = args.includes("--gzip");
+  const [dist = "dist", port = "4321"] = args.filter((a) => !a.startsWith("--"));
+  const server = await startServer(dist, Number(port), { languageDoor, compress });
   console.log(`Serving ${dist} on http://127.0.0.1:${server.address().port}/`);
 }

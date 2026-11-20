@@ -7,7 +7,9 @@
 //   node tools/brand-assets.mjs [--chromium <path>]   (default /usr/bin/chromium)
 //
 // Writes public/images/og-default.png (1200×630), public/favicon.svg,
-// public/images/favicon-16.png, favicon-32.png, public/apple-touch-icon.png.
+// public/images/favicon-16.png, favicon-32.png, icon-192.png, icon-512.png,
+// public/apple-touch-icon.png and public/manifest.webmanifest (R6: complete
+// icon set for installable/bookmarked use, finding B18).
 import { readFileSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { ui } from "../src/i18n/ui.ts";
@@ -75,6 +77,15 @@ async function render(html, width, height, path, transparent = false) {
 await render(og, 1200, 630, "public/images/og-default.png");
 await render(icon(16), 16, 16, "public/images/favicon-16.png", true);
 await render(icon(32), 32, 32, "public/images/favicon-32.png", true);
+// Android/Chromium home-screen and bookmark sizes, opaque like the touch icon.
+for (const size of [192, 512]) {
+  await render(
+    `<!doctype html><html><head><style>${css} body{width:${size}px;height:${size}px}</style></head><body>${mark(size, 0, Math.round(size * 0.39))}</body></html>`,
+    size,
+    size,
+    `public/images/icon-${size}.png`,
+  );
+}
 // Apple draws its own rounded corners and needs an opaque square.
 await render(
   `<!doctype html><html><head><style>${css} body{width:180px;height:180px}</style></head><body>${mark(180, 0, 70)}</body></html>`,
@@ -102,3 +113,27 @@ writeFileSync(
 `,
 );
 console.log("wrote public/favicon.svg");
+
+// Web app manifest: name, icons and the light page colour. No start URL
+// beyond the site root (the language door picks the language).
+writeFileSync(
+  "public/manifest.webmanifest",
+  `${JSON.stringify(
+    {
+      name: "Timur Manjosov",
+      short_name: "Timur M.",
+      start_url: "/",
+      display: "browser",
+      background_color: c.bg,
+      theme_color: c.bg,
+      icons: [
+        { src: "/images/icon-192.png", sizes: "192x192", type: "image/png" },
+        { src: "/images/icon-512.png", sizes: "512x512", type: "image/png" },
+        { src: "/favicon.svg", sizes: "any", type: "image/svg+xml" },
+      ],
+    },
+    null,
+    2,
+  )}\n`,
+);
+console.log("wrote public/manifest.webmanifest");

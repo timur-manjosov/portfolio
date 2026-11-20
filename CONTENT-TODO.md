@@ -121,11 +121,30 @@ until a build on or after that day (`docs/PUBLISHING.md`).
       (`blockchain`, DE + EN, 2026-10-30). Check the claim that the white
       paper understates the risk and the footnote on Grunspan/Pérez-Marco.
 - [ ] **Content-Security-Policy für statische Seiten** (`tech`, DE only,
-      2026-11-06, scheduled). Check that its general advice matches how you
-      want to present your own site; it contains no details of your server.
+      2026-11-06; public since that day's build). Check that its general
+      advice matches how you want to present your own site; it contains no
+      details of your server.
 - [ ] **Subset Sum: NP-vollständig und trotzdem oft leicht** (`theory`, DE
-      only, 2026-11-13, scheduled). Check the phase-transition section
-      (Mertens' formula, the 200-instance table).
+      only, 2026-11-13; public since that day's build). Check the
+      phase-transition section (Mertens' formula, the 200-instance table).
+
+### Von Timur zu lesen (revision 6)
+
+- [ ] **Bitcoin: what gets decided in the coming decades** (`opinion`, EN,
+      2026-11-18, `status: draft-review`): the translation of your German
+      text, same paragraphs, tables and numbers. Read it against the German
+      version; the places where translating was hard are listed in
+      `docs/FINAL-REPORT.md` (Revision 6). The German post is your own text
+      and carries no review flag.
+- [ ] **Fact check of the Bitcoin post** (`docs/VERIFICATION.md`, R6 §3):
+      seven small corrections and one weakening are in both versions;
+      decide the items marked "nur gemeldet", above all which price the
+      status paragraph and the budget table should share (both are your
+      inputs and stay as written until you decide).
+- [ ] **Aporia** (project, DE + EN, `status: draft-review`): written from
+      the README, `Cargo.toml` and the CI workflow of
+      `timur-manjosov/aporia`. Check the wording and the stage `active`
+      (inferred from the first publication on 2026-11-10).
 
 ### Other
 
